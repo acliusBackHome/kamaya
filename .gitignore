@@ -1,0 +1,7 @@
+main
+test.out
+*.output
+*.o
+*.yy.*
+*.tab.*
+crash
