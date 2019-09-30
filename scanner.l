@@ -46,6 +46,7 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 %%
 
 {ws}                    {}
+{digit}+{letter}        {return ERRORFORMAT;}
 "void"                  {return VOID;}
 "main"                  {return MAIN;}
 "("                     {return LP;}
@@ -75,7 +76,9 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "|"                     {return OR;}
 \/\/[^\n]*              {}
 \/\*(\*+[^\/]|[^\*\/])*\*\/ {}
+"++"                    {return ADDONE;}
 "+"                     {return ADD;}
+"--"                    {return SUBONE;}
 "-"                     {return SUB;}
 "*"                     {return MUL;}
 "/"                     {return DIV;}
@@ -107,11 +110,14 @@ void initName(){
   nameTable[(int)LOGICAND] = enum2str(LOGICAND);
   nameTable[(int)LOGICOR] = enum2str(LOGICOR);
   nameTable[(int)ADD] = enum2str(ADD);
+  nameTable[(int)ADDONE] = enum2str(ADDONE);
   nameTable[(int)SUB] = enum2str(SUB);
+  nameTable[(int)SUBONE] = enum2str(SUBONE);
   nameTable[(int)MUL] = enum2str(MUL);
   nameTable[(int)DIV] = enum2str(DIV);
   nameTable[(int)MOD] = enum2str(MOD);
   nameTable[(int)POW] = enum2str(POW);
+  nameTable[(int)ERRORFORMAT] = enum2str(ERRORFORMAT);
 }
 
 string getName(int token) {

@@ -15,7 +15,8 @@ int yylex();
 %token ASSIGN
 %token NOT OR AND
 %token LOGICAND LOGICOR
-%token ADD SUB MUL DIV MOD POW
+%token ADDONE SUBONE ADD SUB MUL DIV MOD POW
+%token ERRORFORMAT
 
 %left ADD SUB
 %left MUL DIV POW
