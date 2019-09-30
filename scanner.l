@@ -11,12 +11,14 @@ using namespace std;
 
 map<int, string> nameTable;
 map<string, string> symbolTabel;
+string before;
 
 enum {
   LT, LE, EQ, NE, GT, GE
 };
 
 unsigned long install_id(){
+  before = yytext;
   if (symbolTabel.find(yytext) != symbolTabel.end()) {
     return (unsigned long)symbolTabel[yytext].c_str();
   }
@@ -25,11 +27,14 @@ unsigned long install_id(){
 }
 
 unsigned long install_num(){
-  return install_id();
+  if (symbolTabel.find(before) != symbolTabel.end()) {
+    symbolTabel[before] = yytext;
+    return atoi(yytext);
+  }
 }
 %}
 
-delim                   [\t\n\r\f\v]
+delim                   [\t\n\r\f\v ]
 ws                      {delim}+
 letter                  [A-Za-z]
 digit                   [0-9]
@@ -99,12 +104,11 @@ int main() {
   int token = -0x3f3f3f3f;
   initName();
   while(token = yylex()){
-    printf("\n%-20d%-20s%-20s", token, getName(token).c_str(), yytext);
-    if (yylval != -0x3f3f3f3f) {
+    printf("%-20s%-20s", getName(token).c_str(), yytext);
+    if (token == NUMBER || token ==ID) {
       printf("%-20lu", (unsigned long)yylval);
     }
-    yylval = -0x3f3f3f3f;
+    printf("\n");
   }
-  printf("\n");
   return 0;
 }

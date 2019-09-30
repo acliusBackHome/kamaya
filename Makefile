@@ -14,6 +14,8 @@ clean:
 	mv *.tab.* *.yy.* *.output crash
 
 test: main
-	./main < test.cpp
+	./main < 1.c > 1.out
+	./main < 2.c > 2.out
+	./main < 3.c > 3.out
 
 run: clean main
