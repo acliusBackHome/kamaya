@@ -7,17 +7,18 @@ int yylex();
 %}
 
 %token MAIN
-%token LP RP LB RB
+%token LP RP LB RB ML MR
 %token SEMICOLON
-%token IF ELSE
-// %token LT LE EQ NE GT GE
+%token IF ELSE WHILE
 %token RELOP NUMBER ID
 %token INT CHAR VOID
 %token ASSIGN
-%token NOT OR
+%token NOT OR AND
+%token LOGICAND LOGICOR
+%token ADD SUB MUL DIV MOD POW
 
-%left '+' '-'
-%left '*' '/'
+%left ADD SUB
+%left MUL DIV POW
 %right U_neg
 
 %%
