@@ -5,6 +5,19 @@
 
 > Another stupid tiny c complier.
 
+## Dirs
+```
+.
+├── trash       # 垃圾文件夹
+├── dist        # 构建文件夹
+│   └── bin     # 可执行文件所在文件夹
+├── src         # 源代码
+├── test        # 测试文件夹
+└── util        # 工具文件夹
+```
+
+我们要编写的是 src 文件夹中的源代码。
+
 ## Install
 
 ```sh

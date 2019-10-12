@@ -1,7 +1,2 @@
-main
-*.out
-*.output
-*.o
-*.yy.*
-*.tab.*
-crash
+test/*.out
+trash/*

@@ -1,21 +1,21 @@
 all: run
 
-scanner.yy.cpp: scanner.l parser.tab.cpp
+dist/scanner.yy.cpp: src/scanner.l dist/parser.tab.cpp
 	flex -o $@ $<
 
-parser.tab.cpp: parser.y
+dist/parser.tab.cpp: src/parser.y
 	bison -vdty -o $@ $<
 
-main: parser.tab.cpp scanner.yy.cpp
-	g++ -o $@ $^
+main: dist/parser.tab.cpp dist/scanner.yy.cpp
+	g++ -o dist/bin/$@ $^
 
 clean:
 	clear
-	mv *.tab.* *.yy.* *.output crash
+	mv dist/*.tab.* dist/*.yy.* dist/*.output test/*.out trash
 
 test: main
-	./main < 1.c > 1.out
-	./main < 2.c > 2.out
-	./main < 3.c > 3.out
+	./dist/bin/main < test/1.c > test/1.out
+	./dist/bin/main < test/2.c > test/2.out
+	./dist/bin/main < test/3.c > test/3.out
 
-run: clean main
+run: main
