@@ -48,6 +48,12 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 {ws}                    {}
 {digit}+{letter}        {return ERRORFORMAT;}
 "void"                  {return VOID;}
+"char"                  {return CHAR;}
+"bool"                  {return BOOL;}
+"float"                 {return FLOAT;}
+"long"                  {return LONG;}
+"short"                 {return SHORT;}
+"double"                {return DOUBLE;}
 "main"                  {return MAIN;}
 "("                     {return LP;}
 ")"                     {return RP;}
@@ -57,6 +63,7 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "]"                     {return MR;}
 "int"                   {return INT;}
 ";"                     {return SEMICOLON;}
+","                      {return COMMA;}
 "if"                    {return IF;}
 "else"                  {return ELSE;}
 "while"                 {return WHILE;}
