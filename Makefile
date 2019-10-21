@@ -14,8 +14,9 @@ clean:
 	mv dist/*.tab.* dist/*.yy.* dist/*.output test/*.out trash
 
 test: main
-	./dist/bin/main < test/1.c > test/1.out
-	./dist/bin/main < test/2.c > test/2.out
-	./dist/bin/main < test/3.c > test/3.out
+	for dir in $(shell ls test/*.c);\
+		do \
+			./dist/bin/main < $$dir > $$dir.out; \
+		done
 
 run: main
