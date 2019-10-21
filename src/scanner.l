@@ -132,7 +132,7 @@ int yywrap()
   return 1;
 }
 
-int main() {
+/*int main() {
   int token = -0x3f3f3f3f;
   initName();
   while(token = yylex()){
@@ -143,4 +143,4 @@ int main() {
     printf("\n");
   }
   return 0;
-}
+}*/
