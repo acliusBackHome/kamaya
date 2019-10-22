@@ -1,6 +1,7 @@
 #ifndef KAMAYA_HPP
 #define KAMAYA_HPP
 #include <bits/stdc++.h>
+#define YYSTYPE unsigned long
 #include "parser.tab.hpp"
 #include "MessageTree.hpp"
 

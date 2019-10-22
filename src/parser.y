@@ -1,6 +1,4 @@
 %{
-#define YYSTYPE unsigned long
-
 #include "kamaya.hpp"
 using namespace std;
 int yylex(void);
@@ -58,11 +56,11 @@ function_declaration
 function_definition
   : main_function_definition
   | type_specifier ID LP RP compound_statement {
-    sprintf(buff, "function definition %s %lu ", nameTable[$1].c_str(), $2);
+    sprintf(buff, "function definition %s %s ", nameTable[$1].c_str(), (char*)$2);
     $$ = tree.new_node(buff);
   }
   | type_specifier ID LP arugument_list RP compound_statement {
-    sprintf(buff, "function definition %s %lu ", nameTable[$1].c_str(), $2);
+    sprintf(buff, "function definition %s %s ", nameTable[$1].c_str(), (char*)$2);
     $$ = tree.new_node(buff);
   }
   ;
@@ -106,7 +104,7 @@ type_specifier
     cout << "bool" << endl;
   }
 	;
-  
+
 id_dclaration
   : ID {
     $$ = $1;
@@ -115,7 +113,7 @@ id_dclaration
   ;
 
 var_declaration_list
-    : id_dclaration 
+    : id_dclaration
     | assign_expression
     | id_dclaration COMMA var_declaration_list
     | assign_expression COMMA var_declaration_list

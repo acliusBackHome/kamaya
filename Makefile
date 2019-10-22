@@ -6,8 +6,10 @@ dist/scanner.yy.cpp: src/scanner.l dist/parser.tab.cpp
 dist/parser.tab.cpp: src/parser.y
 	bison -vdty -o $@ $<
 
-dist/kamaya.cpp:
-	cp src/kamaya.hpp src/kamaya.cpp src/MessageTree.hpp dist/
+copy:
+	cp src/*.hpp src/*.cpp dist/
+
+dist/kamaya.cpp: copy
 
 main: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp
 	g++ -o dist/bin/$@ $^
