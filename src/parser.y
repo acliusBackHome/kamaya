@@ -16,7 +16,7 @@ int yylex(void);
 %token MAIN
 %token LP RP LB RB ML MR
 %token SEMICOLON COMMA
-%token IF ELSE WHILE
+%token IF ELSE WHILE FOR DO
 %token RELOP NUMBER ID
 %token INT CHAR VOID BOOL DOUBLE FLOAT LONG SHORT
 %token ASSIGN
@@ -31,17 +31,30 @@ int yylex(void);
 
 %%
 program
-  : function {}
-  | program function {}
+  : external_declaration
+  | program external_declaration
   ;
 
-function
-  : main_function
+external_declaration
+	: function_definition
+	| var_declaration
+  | function_declaration
+	;
+
+function_declaration
+  : type_specifier ID LP RP SEMICOLON
+  | type_specifier ID LP arugument_list RP SEMICOLON
+  ;
+
+function_definition
+  : main_function_definition
+  | type_specifier ID LP RP compound_statement
+  | type_specifier ID LP arugument_list RP compound_statement
   ;
 
 arugument_list
-  : type_specifier id_clearation
-  | type_specifier id_clearation COMMA arugument_list
+  : type_specifier id_dclaration
+  | type_specifier id_dclaration COMMA arugument_list
   ;
 
 type_specifier
@@ -78,6 +91,7 @@ type_specifier
     cout << "bool" << endl;
   }
 	;
+<<<<<<< HEAD
 
   id_clearation
     : ID {
@@ -88,26 +102,45 @@ type_specifier
 
 decleration_list
     : id_clearation
+=======
+  
+id_dclaration
+  : ID {
+    $$ = $1;
+    cout << "ID Declearation:" << $1 << endl;
+  }
+  ;
+
+val_declaration_list
+    : id_dclaration 
+>>>>>>> 实现循环语句和主函数外部声明的判断
     | assign_expression
-    | id_clearation COMMA decleration_list
-    | assign_expression COMMA decleration_list
+    | id_dclaration COMMA val_declaration_list
+    | assign_expression COMMA val_declaration_list
     ;
 
-declaration
-  : type_specifier decleration_list SEMICOLON {
+var_declaration
+  : type_specifier val_declaration_list SEMICOLON {
     cout << "decleration:" << $1 << " " << $2 << endl;
   }
   ;
 
 assign_expression
-  : id_clearation ASSIGN expression {
+  : id_dclaration ASSIGN expression {
     $$ = $1;
     cout << "assignment:" << $1 << '=' << $3 << endl;
   }
   ;
 
+constant_expression
+  : NUMBER {
+    cout << "Const Declearation: number" << $1 << endl;
+  }
+  ;
+
 multiplicative_expression
-  : NUMBER
+  : constant_expression
+  | ID
   | multiplicative_expression MUL NUMBER {
     $$ = $1 * $3;
     cout << $1 << '*' << $3 << endl;
@@ -130,27 +163,66 @@ additive_expression
   }
 	;
 
+bool_expression
+  : additive_expression {
+    $$ = $1;
+  }
+  | bool_expression RELOP additive_expression {
+    cout << "bool expression" << endl;
+    /*switch($3) {
+      case LT:
+        $$ = $1 < $3;
+      break;
+      case LE:
+        $$ = $1 <= $3;
+      break;
+      case EQ:
+        $$ = $1 == $3;
+      break;
+      case NW:
+        $$ = $1 != $3;
+      break;
+      case GT:
+        $$ = $1 > $3;
+      break;
+      case GE:
+        $$ = $1 >= $3;
+      break;
+    }*/
+  }
+  ;
+
 expression
 // $$表示式子左边的成员，$1，$2分别表示式子右边的第一个成员和第二个成员
 // （空格分割）
   : LP expression RP {
     $$ = $2;
-    cout << "(" << $2 << ")" << endl;
   }
   | assign_expression {
     // $$ = get_ID_value[$1]
   }
-  | additive_expression
+  | bool_expression
 ;
 
+iteration_statement
+  : WHILE LP expression RP statement
+  | DO statement WHILE LP expression RP SEMICOLON
+  | FOR LP expression_statement expression_statement RP statement
+  | FOR LP expression_statement expression_statement expression RP statement
+  | FOR LP var_declaration expression_statement RP statement
+  | FOR LP var_declaration expression_statement expression RP statement
+  ;
+
+expression_statement
+  : expression SEMICOLON
+  | SEMICOLON
+  ;
+
 statement
-  : declaration {}
-  | expression SEMICOLON {
-    cout<< "expression:" << $1 << endl;
-  }
-  | SEMICOLON {
-    cout << "empty statement" << endl;
-  }
+  : var_declaration
+  | expression_statement
+  | iteration_statement
+  | compound_statement
   ;
 
 statement_list
@@ -167,13 +239,11 @@ compound_statement
   }
   ;
 
-main_function
+main_function_definition
   : type_specifier MAIN LP RP compound_statement {
-    cout << "main_function : type_specifier: " << $1 << endl;
+    cout << "main_function_definition : type_specifier: " << $1 << endl;
   }
-  | type_specifier MAIN LP arugument_list RP compound_statement {
-
-  }
+  | type_specifier MAIN LP arugument_list RP compound_statement {}
   ;
 
 %%

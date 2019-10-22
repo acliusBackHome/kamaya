@@ -53,10 +53,12 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "]"                     {return MR;}
 "int"                   {return INT;}
 ";"                     {return SEMICOLON;}
-","                      {return COMMA;}
+","                     {return COMMA;}
 "if"                    {return IF;}
 "else"                  {return ELSE;}
 "while"                 {return WHILE;}
+"for"                   {return FOR;}
+"do"                    {return DO;}
 {id}                    {yylval = install_id(); return ID;}
 {number}                {yylval = install_num(); return NUMBER;}
 "<"                     {yylval = LT; return RELOP;}
