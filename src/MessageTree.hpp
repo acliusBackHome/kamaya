@@ -79,7 +79,7 @@ private:
             has_next_children.push_back(depth);
         }
         for(size_t i = 0; i < node_children[node_id].size(); ++i) {
-            printf(pre_fix.c_str());
+            printf("%s", pre_fix.c_str());
             size_t next_node = node_children[node_id][i];
             if (i == node_children[node_id].size() - 1) {
                 //printf("pop_back(%u)\n", has_next_children[has_next_children.size() - 1]);

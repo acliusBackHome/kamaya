@@ -4,13 +4,7 @@
 #include "kamaya.hpp"
 using namespace std;
 int yylex(void);
-
-// extern "C"//为了能够在C++程序里面调用C函数，必须把每一个需要使用的C函数，其声明都包括在extern "C"{}
-//           //块里面，这样C++链接时才能成功链接它们。extern "C"用来在C++环境下设置C链接类型。
-// {
-//   //lex.l中也有类似的这段extern "C"，可以把它们合并成一段，放到共同的头文件main.h中
-//   void yyerror(const char *s);
-// }
+MessageTree tree("root");
 %}
 
 %token MAIN
@@ -273,5 +267,6 @@ void yyerror (const char* s) {
 int main() {
   initName();
   yyparse();
+  tree.print();
   return  0;
 }
