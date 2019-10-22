@@ -91,18 +91,6 @@ type_specifier
     cout << "bool" << endl;
   }
 	;
-<<<<<<< HEAD
-
-  id_clearation
-    : ID {
-      $$ = $1;
-      cout << "ID Declearation:" << $1 << endl;
-    }
-    ;
-
-decleration_list
-    : id_clearation
-=======
   
 id_dclaration
   : ID {
@@ -113,7 +101,6 @@ id_dclaration
 
 var_declaration_list
     : id_dclaration 
->>>>>>> 实现循环语句和主函数外部声明的判断
     | assign_expression
     | id_dclaration COMMA var_declaration_list
     | assign_expression COMMA var_declaration_list
@@ -125,6 +112,44 @@ var_declaration
   }
   ;
 
+// 以下是表达式
+constant_expression
+  : NUMBER {
+    cout << "Const Declearation: number" << $1 << endl;
+  }
+  ;
+
+primary_expression
+	: ID
+	| constant_expression
+	| '(' expression ')'
+
+postfix_expression
+	: primary_expression
+	| postfix_expression '[' expression ']'
+	//| postfix_expression '(' ')' 函数调用
+	//| postfix_expression '(' argument_expression_list ')'
+	| postfix_expression '.' ID
+	//| postfix_expression PTR_OP IDENTIFIER PTR_OP = "->"
+	| postfix_expression ADDONE {
+    cout << "postfix self increment" << endl;
+  }
+	| postfix_expression SUBONE {
+    cout << "postfix self decrement" << endl;
+  }
+	//| '(' type_name ')' '{' initializer_list '}'
+	//| '(' type_name ')' '{' initializer_list ',' '}'
+
+unary_expression
+	: postfix_expression
+	| ADDONE unary_expression {
+    cout << "prefix self increment" << endl;
+  }
+	| SUBONE unary_expression {
+    cout << "prefix self decrement" << endl;
+  }
+	;
+
 assign_expression
   : id_dclaration ASSIGN expression {
     $$ = $1;
@@ -132,15 +157,8 @@ assign_expression
   }
   ;
 
-constant_expression
-  : NUMBER {
-    cout << "Const Declearation: number" << $1 << endl;
-  }
-  ;
-
 multiplicative_expression
-  : constant_expression
-  | ID
+  : unary_expression
   | multiplicative_expression MUL NUMBER {
     $$ = $1 * $3;
     cout << $1 << '*' << $3 << endl;
