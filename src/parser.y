@@ -111,16 +111,16 @@ id_dclaration
   }
   ;
 
-val_declaration_list
+var_declaration_list
     : id_dclaration 
 >>>>>>> 实现循环语句和主函数外部声明的判断
     | assign_expression
-    | id_dclaration COMMA val_declaration_list
-    | assign_expression COMMA val_declaration_list
+    | id_dclaration COMMA var_declaration_list
+    | assign_expression COMMA var_declaration_list
     ;
 
 var_declaration
-  : type_specifier val_declaration_list SEMICOLON {
+  : type_specifier var_declaration_list SEMICOLON {
     cout << "decleration:" << $1 << " " << $2 << endl;
   }
   ;
