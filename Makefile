@@ -16,7 +16,7 @@ clean:
 	clear
 	-mv dist/*.output dist/*.cpp dist/*.hpp test/*.out trash
 
-test:
+test: main
 	for dir in $(shell ls test/*.c);\
 		do \
 			./dist/bin/main < $$dir > $$dir.out; \

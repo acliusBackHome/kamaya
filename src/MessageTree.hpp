@@ -35,18 +35,35 @@ public:
     }
 
     /**
-     * 往树中添加新节点, 指定父节点
+     * 往树中添加新节点
      * @param parent 父节点编号
      * @param msg 新节点的信息
      * @return 新节点的编号
      */
-    size_t add_new_node(size_t parent, const string& msg) {
+    size_t new_node(const string& msg) {
         node_msg.push_back(msg);
-        node_parent.push_back(parent);
+        node_parent.push_back((size_t)(-1));
         node_children.emplace_back();
         size_t this_node = node_msg.size() - 1;
-        node_children[parent].push_back(this_node);
         return this_node;
+    }
+
+    /**
+     *  设置节点的父节点
+     * @param node_id 被设置的节点id
+     * @param parent 父节点id
+     */
+    inline void set_parent(size_t node_id, size_t parent) {
+        if(node_id >= node_msg.size() || parent >= node_msg.size()) {
+            printf("set_parent:无效的节点id(%lu, %lu)\n", node_id, parent);
+            return;
+        }
+        if(node_parent[node_id] == (size_t)(-1)) {
+            node_parent[node_id] = parent;
+            node_children[parent].push_back(node_id);
+        } else {
+            printf("该节点%lu已经有了父节点\n", node_id);
+        }
     }
 
     inline void print() const {
@@ -82,15 +99,10 @@ private:
             printf("%s", pre_fix.c_str());
             size_t next_node = node_children[node_id][i];
             if (i == node_children[node_id].size() - 1) {
-                //printf("pop_back(%u)\n", has_next_children[has_next_children.size() - 1]);
                 auto it = find(has_next_children.begin(), has_next_children.end(), depth);
                 if(it != has_next_children.end()) {
                     has_next_children.erase(it);
                 }
-                /*for(auto each : has_next_children) {
-                    printf("%u ", each);
-                }*/
-                //putchar('\n');
                 print_node(next_node, has_next_children, depth + 1, true);
             } else {
                 print_node(next_node, has_next_children, depth + 1, false);

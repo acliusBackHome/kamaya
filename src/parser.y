@@ -5,6 +5,7 @@
 using namespace std;
 int yylex(void);
 MessageTree tree("root");
+char buff[1024];
 %}
 
 %token MAIN
@@ -25,25 +26,45 @@ MessageTree tree("root");
 
 %%
 program
-  : external_declaration
-  | program external_declaration
+  : external_declaration {
+    tree.set_parent($1, 0);
+  }
+  | program external_declaration {
+    tree.set_parent($2, 0);
+  }
   ;
 
 external_declaration
-	: function_definition
-	| var_declaration
-  | function_declaration
+	: function_definition {
+    $$ = $1;
+  }
+	| var_declaration {
+    $$ = $1;
+  }
+  | function_declaration {
+    $$ = $1;
+  }
 	;
 
 function_declaration
-  : type_specifier ID LP RP SEMICOLON
-  | type_specifier ID LP arugument_list RP SEMICOLON
+  : type_specifier ID LP RP SEMICOLON {
+    $$ = tree.new_node(buff);
+  }
+  | type_specifier ID LP arugument_list RP SEMICOLON {
+    $$ = tree.new_node(buff);
+  }
   ;
 
 function_definition
   : main_function_definition
-  | type_specifier ID LP RP compound_statement
-  | type_specifier ID LP arugument_list RP compound_statement
+  | type_specifier ID LP RP compound_statement {
+    sprintf(buff, "function definition %s %lu ", nameTable[$1].c_str(), $2);
+    $$ = tree.new_node(buff);
+  }
+  | type_specifier ID LP arugument_list RP compound_statement {
+    sprintf(buff, "function definition %s %lu ", nameTable[$1].c_str(), $2);
+    $$ = tree.new_node(buff);
+  }
   ;
 
 arugument_list

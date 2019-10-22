@@ -9,7 +9,6 @@
 extern std::map<int, std::string> nameTable;
 extern std::map<std::string, std::string> symbolTabel;
 extern std::string before;
-extern MessageTree tree;
 
 enum {
   LT, LE, EQ, NE, GT, GE
