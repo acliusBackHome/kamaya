@@ -1,16 +1,16 @@
 %{
 #define YYSTYPE unsigned long
 
-// #include "../dist/scanner.yy.cpp"
-#include<iostream>
+#include "kamaya.hpp"
 using namespace std;
 int yylex(void);
-extern "C"//为了能够在C++程序里面调用C函数，必须把每一个需要使用的C函数，其声明都包括在extern "C"{}      
-          //块里面，这样C++链接时才能成功链接它们。extern "C"用来在C++环境下设置C链接类型。  
-{
-  //lex.l中也有类似的这段extern "C"，可以把它们合并成一段，放到共同的头文件main.h中  
-  void yyerror(const char *s); 
-}
+
+// extern "C"//为了能够在C++程序里面调用C函数，必须把每一个需要使用的C函数，其声明都包括在extern "C"{}
+//           //块里面，这样C++链接时才能成功链接它们。extern "C"用来在C++环境下设置C链接类型。
+// {
+//   //lex.l中也有类似的这段extern "C"，可以把它们合并成一段，放到共同的头文件main.h中
+//   void yyerror(const char *s);
+// }
 %}
 
 %token MAIN
@@ -26,7 +26,7 @@ extern "C"//为了能够在C++程序里面调用C函数，必须把每一个需�
 %token ERRORFORMAT
 
 %left ADD SUB
-%left MUL DIV 
+%left MUL DIV
 %right U_neg POW
 
 %%
@@ -47,7 +47,7 @@ arugument_list
 type_specifier
   : VOID {
     $$ = VOID;
-    cout << "void" << endl;
+    cout << "void: " << nameTable[VOID] << endl;
   }
 	| CHAR {
     $$ = CHAR;
@@ -78,7 +78,7 @@ type_specifier
     cout << "bool" << endl;
   }
 	;
-  
+
   id_clearation
     : ID {
       $$ = $1;
@@ -87,7 +87,7 @@ type_specifier
     ;
 
 decleration_list
-    : id_clearation 
+    : id_clearation
     | assign_expression
     | id_clearation COMMA decleration_list
     | assign_expression COMMA decleration_list
@@ -183,6 +183,7 @@ void yyerror (const char* s) {
 }
 
 int main() {
+  initName();
   yyparse();
   return  0;
 }

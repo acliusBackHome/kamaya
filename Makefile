@@ -6,12 +6,15 @@ dist/scanner.yy.cpp: src/scanner.l dist/parser.tab.cpp
 dist/parser.tab.cpp: src/parser.y
 	bison -vdty -o $@ $<
 
-main: dist/parser.tab.cpp dist/scanner.yy.cpp
+dist/kamaya.cpp:
+	cp src/kamaya.hpp src/kamaya.cpp dist/
+
+main: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp
 	g++ -o dist/bin/$@ $^
 
 clean:
 	clear
-	mv dist/*.tab.* dist/*.yy.* dist/*.output test/*.out trash
+	-mv dist/*.output dist/*.cpp dist/*.hpp test/*.out trash
 
 test: main
 	for dir in $(shell ls test/*.c);\
