@@ -45,6 +45,7 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "short"                 {return SHORT;}
 "double"                {return DOUBLE;}
 "main"                  {return MAIN;}
+"return"                  {return RETURN;}
 "("                     {return LP;}
 ")"                     {return RP;}
 "{"                     {return LB;}

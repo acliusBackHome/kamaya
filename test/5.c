@@ -1,3 +1,7 @@
 void lala () {
     
 }
+
+int main() {
+    
+}

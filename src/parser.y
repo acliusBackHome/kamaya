@@ -2,11 +2,11 @@
 #include "kamaya.hpp"
 using namespace std;
 int yylex(void);
-MessageTree tree("root");
+MessageTree tree("program");
 char buff[1024];
 %}
 
-%token MAIN
+%token MAIN RETURN
 %token LP RP LB RB ML MR
 %token SEMICOLON COMMA
 %token IF ELSE WHILE FOR DO
@@ -45,152 +45,214 @@ external_declaration
 	;
 
 function_declaration
-  : type_specifier ID LP RP SEMICOLON {
+  : type_specifier id_delaration LP RP SEMICOLON {
+    sprintf(buff, "function definition %s", nameTable[$1].c_str());
     $$ = tree.new_node(buff);
+    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
   }
-  | type_specifier ID LP arugument_list RP SEMICOLON {
+  | type_specifier id_delaration LP argument_list RP SEMICOLON {
+    sprintf(buff, "function definition %s", nameTable[$1].c_str());
     $$ = tree.new_node(buff);
+    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
+    tree.set_parent($4, $$);
   }
   ;
 
 function_definition
-  : main_function_definition
-  | type_specifier ID LP RP compound_statement {
-    sprintf(buff, "function definition %s %s ", nameTable[$1].c_str(), (char*)$2);
-    $$ = tree.new_node(buff);
+  : main_function_definition {
+    $$ = $1;
   }
-  | type_specifier ID LP arugument_list RP compound_statement {
-    sprintf(buff, "function definition %s %s ", nameTable[$1].c_str(), (char*)$2);
+  | type_specifier id_delaration LP RP compound_statement {
+    sprintf(buff, "function definition %s", nameTable[$1].c_str());
     $$ = tree.new_node(buff);
+    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
+    tree.set_parent($5, $$);
+  }
+  | type_specifier id_delaration LP argument_list RP compound_statement {
+    sprintf(buff, "function definition %s", nameTable[$1].c_str());
+    $$ = tree.new_node(buff);
+    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
+    tree.set_parent($4, $$);
+    tree.set_parent($6, $$);
   }
   ;
 
-arugument_list
-  : type_specifier id_dclaration
-  | type_specifier id_dclaration COMMA arugument_list
+argument_list
+  : type_specifier id_delaration {
+    $$ = tree.new_node("argument_list");
+    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
+  }
+  | type_specifier id_delaration COMMA argument_list {
+    tree.set_parent($1, $4);
+    tree.set_parent($2, $4);
+    $$ = $4;
+  }
   ;
 
 type_specifier
   : VOID {
-    $$ = VOID;
-    cout << "void: " << nameTable[VOID] << endl;
+    sprintf(buff, "type specifier %s", nameTable[VOID].c_str());
+    $$ = tree.new_node(buff);
   }
 	| CHAR {
-    $$ = CHAR;
-    cout << "char" << endl;
+    sprintf(buff, "type specifier %s", nameTable[CHAR].c_str());
+    $$ = tree.new_node(buff);
   }
 	| SHORT {
-    $$ = SHORT;
-    cout << "short" << endl;
+    sprintf(buff, "type specifier %s", nameTable[SHORT].c_str());
+    $$ = tree.new_node(buff);
   }
 	| INT {
-    $$ = INT;
-    cout << "int" << endl;
+    sprintf(buff, "type specifier %s", nameTable[INT].c_str());
+    $$ = tree.new_node(buff);
   }
 	| LONG {
-    $$ = LONG;
-    cout << "long" << endl;
+    sprintf(buff, "type specifier %s", nameTable[LONG].c_str());
+    $$ = tree.new_node(buff);
   }
 	| FLOAT {
-    $$ = FLOAT;
-    cout << "float" << endl;
+    sprintf(buff, "type specifier %s", nameTable[FLOAT].c_str());
+    $$ = tree.new_node(buff);
   }
 	| DOUBLE {
-    $$ = DOUBLE;
-    cout << "double" << endl;
+    sprintf(buff, "type specifier %s", nameTable[DOUBLE].c_str());
+    $$ = tree.new_node(buff);
   }
 	| BOOL {
-    $$ = BOOL;
-    cout << "bool" << endl;
+    sprintf(buff, "type specifier %s", nameTable[BOOL].c_str());
+    $$ = tree.new_node(buff);
   }
 	;
 
-id_dclaration
+id_delaration
   : ID {
-    $$ = $1;
-    cout << "ID Declearation:" << $1 << endl;
+    sprintf(buff, "ID declaration %s", (const char*)$1);
+    $$ = tree.new_node(buff);
   }
   ;
 
 var_declaration_list
-    : id_dclaration
-    | assign_expression
-    | id_dclaration COMMA var_declaration_list
-    | assign_expression COMMA var_declaration_list
+    : id_delaration {
+      $$ = tree.new_node("var_declaration_list");
+      tree.set_parent($1, $$);
+    }
+    | assign_expression {
+      $$ = tree.new_node("var_declaration_list");
+      tree.set_parent($1, $$);
+    }
+    | id_delaration COMMA var_declaration_list {
+      tree.set_parent($1, $3);
+      $$ = $3;
+    }
+    | assign_expression COMMA var_declaration_list {
+      tree.set_parent($1, $3);
+      $$ = $3;
+    }
     ;
 
 var_declaration
   : type_specifier var_declaration_list SEMICOLON {
-    cout << "decleration:" << $1 << " " << $2 << endl;
+    $$ = tree.new_node("var declaration");
+    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
   }
   ;
 
 // 以下是表达式
 constant_expression
   : NUMBER {
-    cout << "Const Declearation: number" << $1 << endl;
+    sprintf(buff, "const declaration %lu", $1);
+    $$ = tree.new_node(buff);
   }
   ;
 
 primary_expression
-	: ID
-	| constant_expression
-	| '(' expression ')'
+	: id_delaration {
+    $$ = $1;
+  }
+	| constant_expression {
+    $$ = $1;
+  }
+	| LP expression RP {
+    $$ =  $2;
+  }
 
 postfix_expression
-	: primary_expression
+	: primary_expression {
+    $$ = $1;
+  }
 	| postfix_expression '[' expression ']'
 	//| postfix_expression '(' ')' 函数调用
 	//| postfix_expression '(' argument_expression_list ')'
-	| postfix_expression '.' ID
+	//| postfix_expression '.' id_delaration
 	//| postfix_expression PTR_OP IDENTIFIER PTR_OP = "->"
 	| postfix_expression ADDONE {
-    cout << "postfix self increment" << endl;
+    $$ = tree.new_node("postfix self increment");
+    tree.set_parent($1, $$);
   }
 	| postfix_expression SUBONE {
-    cout << "postfix self decrement" << endl;
+    $$ = tree.new_node("postfix self decrement");
+    tree.set_parent($1, $$);
   }
 	//| '(' type_name ')' '{' initializer_list '}'
 	//| '(' type_name ')' '{' initializer_list ',' '}'
 
 unary_expression
-	: postfix_expression
+	: postfix_expression {
+    $$ = $1;
+  }
 	| ADDONE unary_expression {
-    cout << "prefix self increment" << endl;
+    $$ = tree.new_node("prefix self increment");
+    tree.set_parent($2, $$);
   }
 	| SUBONE unary_expression {
-    cout << "prefix self decrement" << endl;
+    $$ = tree.new_node("prefix self decrement");
+    tree.set_parent($2, $$);
   }
 	;
 
 assign_expression
-  : id_dclaration ASSIGN expression {
-    $$ = $1;
-    cout << "assignment:" << $1 << '=' << $3 << endl;
+  : id_delaration ASSIGN expression {
+    $$ = tree.new_node("expression operator = ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
   ;
 
 multiplicative_expression
-  : unary_expression
-  | multiplicative_expression MUL NUMBER {
-    $$ = $1 * $3;
-    cout << $1 << '*' << $3 << endl;
+  : unary_expression {
+    $$ = $1;
   }
-  | multiplicative_expression DIV NUMBER {
-    $$ = $1 / $3;
-    cout << $1 << '/' << $3 << endl;
+  | multiplicative_expression MUL unary_expression {
+    $$ = tree.new_node("expression operator * ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | multiplicative_expression DIV unary_expression {
+    $$ = tree.new_node("expression operator / ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
   ;
 
 additive_expression
-	: multiplicative_expression
+	: multiplicative_expression {
+    $$ = $1;
+  }
 	| additive_expression ADD multiplicative_expression {
-    $$ = $1 + $3;
-    cout << $1 << '+' << $3 << endl;
+    $$ = tree.new_node("expression operator + ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
 	| additive_expression SUB multiplicative_expression {
-    $$ = $1 - $3;
-    cout << $1 << '-' << $3 << endl;
+    $$ = tree.new_node("expression operator - ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
 	;
 
@@ -199,82 +261,147 @@ bool_expression
     $$ = $1;
   }
   | bool_expression RELOP additive_expression {
-    cout << "bool expression" << endl;
     /*switch($3) {
       case LT:
-        $$ = $1 < $3;
+        $$ = tree.new_node("expression operator < ");
       break;
       case LE:
-        $$ = $1 <= $3;
+        $$ = tree.new_node("expression operator <= ");
       break;
       case EQ:
-        $$ = $1 == $3;
+        $$ = tree.new_node("expression operator == ");
       break;
-      case NW:
-        $$ = $1 != $3;
+      case NE:
+        $$ = tree.new_node("expression operator != ");
       break;
       case GT:
-        $$ = $1 > $3;
+        $$ = tree.new_node("expression operator > ");
       break;
       case GE:
-        $$ = $1 >= $3;
+        $$ = tree.new_node("expression operator >= ");
+      break;
+      default:
+        cout << "bool expression error" << endl;
       break;
     }*/
+    $$ = tree.new_node("bool expression operator");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
   ;
 
 expression
-// $$表示式子左边的成员，$1，$2分别表示式子右边的第一个成员和第二个成员
-// （空格分割）
-  : LP expression RP {
-    $$ = $2;
+  : assign_expression {
+    $$ = $1;
   }
-  | assign_expression {
-    // $$ = get_ID_value[$1]
+  | bool_expression {
+    $$ = $1;
   }
-  | bool_expression
 ;
 
 iteration_statement
-  : WHILE LP expression RP statement
-  | DO statement WHILE LP expression RP SEMICOLON
-  | FOR LP expression_statement expression_statement RP statement
-  | FOR LP expression_statement expression_statement expression RP statement
-  | FOR LP var_declaration expression_statement RP statement
-  | FOR LP var_declaration expression_statement expression RP statement
+  : WHILE LP expression RP statement {
+    $$ = tree.new_node("while statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($5, $$);
+  }
+  | DO statement WHILE LP expression RP SEMICOLON {
+    $$ = tree.new_node("do while statement");
+    tree.set_parent($2, $$);
+    tree.set_parent($5, $$);
+  }
+  | FOR LP expression_statement expression_statement RP statement {
+    $$ = tree.new_node("for statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($4, $$);
+    tree.set_parent($6, $$);
+  }
+  | FOR LP expression_statement expression_statement expression RP statement {
+    $$ = tree.new_node("for statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($4, $$);
+    tree.set_parent($5, $$);
+    tree.set_parent($7, $$);
+  }
+  | FOR LP var_declaration expression_statement RP statement {
+    $$ = tree.new_node("for statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($4, $$);
+    tree.set_parent($6, $$);
+  }
+  | FOR LP var_declaration expression_statement expression RP statement {
+    $$ = tree.new_node("for statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($4, $$);
+    tree.set_parent($5, $$);
+    tree.set_parent($7, $$);
+  }
   ;
 
 expression_statement
-  : expression SEMICOLON
-  | SEMICOLON
+  : expression SEMICOLON {
+    $$ = $1;
+  }
+  | SEMICOLON {
+    $$ = tree.new_node("empty statement");
+  }
   ;
 
 statement
-  : var_declaration
-  | expression_statement
-  | iteration_statement
-  | compound_statement
+  : var_declaration {
+    $$ = $1;
+  }
+  | expression_statement {
+    $$ = $1;
+  }
+  | iteration_statement {
+    $$ = $1;
+  }
+  | compound_statement {
+    $$ = $1;
+  }
+  | RETURN SEMICOLON {
+    $$ = tree.new_node("return statement");
+  }
+  | RETURN expression SEMICOLON {
+    $$ = tree.new_node("return statement");
+    tree.set_parent($1, $$);
+  }
   ;
 
 statement_list
-  : statement {}
-  | statement_list statement {}
+  : statement {
+    $$ = tree.new_node("statement_list");
+    tree.set_parent($1, $$);
+  }
+  | statement_list statement {
+    $$ = $1;
+    tree.set_parent($2, $$);
+  }
   ;
 
 compound_statement
   : LB RB {
-    cout << "empty compound_statement" << endl;
+    $$ = tree.new_node("compound statement");
   }
   | LB statement_list RB {
-    cout << "compound_statement: with statement_list" << endl;
+    $$ = tree.new_node("compound statement");
+    tree.set_parent($2, $$);
   }
   ;
 
 main_function_definition
   : type_specifier MAIN LP RP compound_statement {
-    cout << "main_function_definition : type_specifier: " << $1 << endl;
+    $$ = tree.new_node("main function definition");
+    tree.set_parent($1, $$);
+    tree.set_parent($5, $$);
   }
-  | type_specifier MAIN LP arugument_list RP compound_statement {}
+  | type_specifier MAIN LP argument_list RP compound_statement {
+    $$ = tree.new_node("main function definition");
+    tree.set_parent($1, $$);
+    tree.set_parent($4, $$);
+    tree.set_parent($6, $$);
+  }
   ;
 
 %%
@@ -287,5 +414,6 @@ int main() {
   initName();
   yyparse();
   tree.print();
+  printf("%lu\n", tree.get_node_num());
   return  0;
 }

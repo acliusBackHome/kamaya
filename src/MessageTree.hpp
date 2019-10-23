@@ -62,13 +62,23 @@ public:
             node_parent[node_id] = parent;
             node_children[parent].push_back(node_id);
         } else {
-            printf("该节点%lu已经有了父节点\n", node_id);
+            printf("该节点%lu已经有了父节点, 不能再设父节点为%lu\n", node_id, parent);
         }
     }
 
+    /**
+     *  打印树
+     */
     inline void print() const {
         vector<size_t> has_next_children;
         print_node(0, has_next_children, 1, true);
+    }
+
+    /**
+     *  获取树的节点数
+     */
+    inline size_t get_node_num() {
+        return node_msg.size();
     }
 
 private:
@@ -84,7 +94,7 @@ private:
                 printf(" |-");
             }
         }
-        printf("%s\n", node_msg[node_id].c_str());
+        printf("%lu:%s\n", node_id, node_msg[node_id].c_str());
         string pre_fix;
         for(size_t i = 1; i < depth; ++i) {
             pre_fix.append("  ");
@@ -93,8 +103,8 @@ private:
             pre_fix[1 + 2 * (each - 1)] = '|';
         }
         for(size_t i = 0; i < node_children[node_id].size(); ++i) {
-            printf("%s", pre_fix.c_str());
             size_t next_node = node_children[node_id][i];
+            printf("%s", pre_fix.c_str());
             if(has_next_children.empty() || has_next_children[has_next_children.size() - 1] < depth) {
                 has_next_children.push_back(depth);
             }
