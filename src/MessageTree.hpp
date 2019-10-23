@@ -79,9 +79,9 @@ private:
     void print_node(size_t node_id, vector<size_t> & has_next_children, size_t depth, bool last_child) const {
         if(node_id != 0) {
             if(last_child) {
-                printf(" |__");
+                printf(" |_");
             } else {
-                printf(" |--");
+                printf(" |-");
             }
         }
         printf("%s\n", node_msg[node_id].c_str());
@@ -92,12 +92,12 @@ private:
         for(auto each : has_next_children) {
             pre_fix[1 + 2 * (each - 1)] = '|';
         }
-        if(has_next_children.empty() || has_next_children[has_next_children.size() - 1] < depth) {
-            has_next_children.push_back(depth);
-        }
         for(size_t i = 0; i < node_children[node_id].size(); ++i) {
             printf("%s", pre_fix.c_str());
             size_t next_node = node_children[node_id][i];
+            if(has_next_children.empty() || has_next_children[has_next_children.size() - 1] < depth) {
+                has_next_children.push_back(depth);
+            }
             if (i == node_children[node_id].size() - 1) {
                 auto it = find(has_next_children.begin(), has_next_children.end(), depth);
                 if(it != has_next_children.end()) {
