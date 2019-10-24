@@ -6,6 +6,7 @@ using namespace std;
 map<int, string> nameTable;
 map<string, string> symbolTabel;
 string before;
+int row_now = 1;
 
 unsigned long install_id(){
   before = yytext;
@@ -26,7 +27,8 @@ unsigned long install_num(){
 }
 %}
 
-delim                   [\t\n\r\f\v ]
+delim                   [\t\r\f\v ]
+lf                         \n
 ws                      {delim}+
 letter                  [A-Za-z]
 digit                   [0-9]
@@ -35,6 +37,7 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 
 %%
 
+{lf}                      {row_now++;}
 {ws}                    {}
 {digit}+{letter}        {return ERRORFORMAT;}
 "void"                  {return VOID;}
@@ -89,16 +92,3 @@ int yywrap()
 {
   return 1;
 }
-
-/*int main() {
-  int token = -0x3f3f3f3f;
-  initName();
-  while(token = yylex()){
-    printf("%-20s%-20s", getName(token).c_str(), yytext);
-    if (token == NUMBER || token ==ID) {
-      printf("%-20lu", (unsigned long)yylval);
-    }
-    printf("\n");
-  }
-  return 0;
-}*/

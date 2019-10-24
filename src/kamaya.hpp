@@ -10,6 +10,7 @@
 extern std::map<int, std::string> nameTable;
 extern std::map<std::string, std::string> symbolTabel;
 extern std::string before;
+extern int row_now;
 
 enum {
   LT, LE, EQ, NE, GT, GE

@@ -414,6 +414,6 @@ int main() {
   initName();
   yyparse();
   tree.print();
-  printf("%lu\n", tree.get_node_num());
+  printf("节点数%lu\n 已扫描的行数 %d \n", tree.get_node_num(), row_now);
   return  0;
 }
