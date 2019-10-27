@@ -10,16 +10,17 @@ char buff[1024];
 %token LP RP LB RB ML MR
 %token SEMICOLON COMMA
 %token IF ELSE WHILE FOR DO
-%token RELOP NUMBER ID
+%token LT LE EQ NE GT GE NUMBER ID
 %token INT CHAR VOID BOOL DOUBLE FLOAT LONG SHORT
 %token ASSIGN
-%token NOT OR AND
+%token NOT OR AND XOR
 %token LOGICAND LOGICOR
-%token ADDONE SUBONE ADD SUB MUL DIV MOD POW
+%token ADDONE SUBONE ADD SUB MUL DIV MOD
+%token LEFT_OP RIGHT_OP
 %token ERRORFORMAT
 
 %left ADD SUB
-%left MUL DIV
+%left MUL DIV MOD
 %right U_neg POW
 
 %%
@@ -238,6 +239,10 @@ multiplicative_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
+  | multiplicative_expression MOD NUMBER {
+    $$ = $1 % $3;
+    cout << $1 << '%' << $3 << endl;
+  }
   ;
 
 additive_expression
@@ -256,10 +261,13 @@ additive_expression
   }
 	;
 
-bool_expression
-  : additive_expression {
-    $$ = $1;
+shift_expression
+	: additive_expression
+	| shift_expression LEFT_OP additive_expression {
+    $$ = $1 << $3;
+    cout << $1 << "<<" << $3 << endl;
   }
+<<<<<<< HEAD
   | bool_expression RELOP additive_expression {
     /*switch($3) {
       case LT:
@@ -287,8 +295,84 @@ bool_expression
     $$ = tree.new_node("bool expression operator");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
+=======
+	| shift_expression RIGHT_OP additive_expression {
+    $$ = $1 >> $3;
+    cout << $1 << ">>" << $3 << endl;
+>>>>>>> ADD yacc action function and some token.
   }
-  ;
+	;
+
+relation_expression
+	: shift_expression
+	| relation_expression LT shift_expression {
+    $$ = $1 < $3;
+    cout << $1 << '<' << $3 << endl;
+  }
+	| relation_expression LE shift_expression {
+    $$ = $1 <= $3;
+    cout << $1 << "<=" << $3 << endl;
+  }
+	| relation_expression GT shift_expression {
+    $$ = $1 > $3;
+    cout << $1 << '>' << $3 << endl;
+  }
+	| relation_expression GE shift_expression {
+    $$ = $1 >= $3;
+    cout << $1 << ">=" << $3 << endl;
+  }
+	;
+equality_expression
+	: relation_expression
+	| equality_expression EQ relation_expressioin {
+    $$ = $1 == $3;
+    cout << $1 << "==" << $3 << endl;
+  }
+	| equality_expression NE relation_expression {
+    $$ = $1 != $3;
+    cout << $1 << "!=" << $3 << endl;
+  }
+	;
+
+and_expression
+	: equality_expression
+	| and_expression AND equality_expression {
+    $$ = $1 & $3;
+    cout << $1 << '&' << $3 << endl;
+  }
+	;
+
+exclusive_or_expression
+	: and_expression
+	| exclusive_or_expression XOR and_expression {
+    $$ = $1 ^ $3;
+    cout << $1 << '^' << $3 << endl;
+  } 
+	;
+
+or_expression
+	: exclusive_or_expression
+	| or_expression OR exclusive_or_expression {
+    $$ = $1 | $3;
+    cout << $1 << '|' << $3 << endl;
+  }
+	;
+
+logic_and_expression
+	: or_expression
+	| logic_and_expression LOGICAND or_expression {
+    $$ = $1 && $3;
+    cout << $1 << "&&" << $3 << endl;
+  }
+	;
+
+logic_or_expression
+	: logic_and_expression
+	| logic_or_expression LOGICOR logic_and_expression {
+    $$ = $1 || $3;
+    cout << $1 << "||" << $3 << endl;
+  }
+	;
 
 expression
   : assign_expression {
@@ -336,6 +420,17 @@ iteration_statement
     tree.set_parent($5, $$);
     tree.set_parent($7, $$);
   }
+  ;
+
+selection_statement
+  : IF LP expression RP statement
+  | IF LP expression RP statement ELSE statement
+  | IF LP expression RP statement else_if_list  ELSE statement
+  ; 
+
+else_if_list
+  : ELSE IF statement
+  | else_if_list ELSE IF statement
   ;
 
 expression_statement

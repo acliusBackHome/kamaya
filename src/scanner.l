@@ -65,12 +65,12 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "do"                    {return DO;}
 {id}                    {yylval = install_id(); return ID;}
 {number}                {yylval = install_num(); return NUMBER;}
-"<"                     {yylval = LT; return RELOP;}
-"<="                    {yylval = LE; return RELOP;}
-"=="                    {yylval = EQ; return RELOP;}
-"!="                    {yylval = NE; return RELOP;}
-">"                     {yylval = GT; return RELOP;}
-">="                    {yylval = GE; return RELOP;}
+"<"                     {yylval = LT; return LT;}
+"<="                    {yylval = LE; return LE;}
+"=="                    {yylval = EQ; return EQ;}
+"!="                    {yylval = NE; return NE;}
+">"                     {yylval = GT; return GT;}
+">="                    {yylval = GE; return GE;}
 "="                     {return ASSIGN;}
 "!"                     {return NOT;}
 "&&"                    {return LOGICAND;}
@@ -85,7 +85,9 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "-"                     {return SUB;}
 "*"                     {return MUL;}
 "/"                     {return DIV;}
-"^"                     {return POW;}
+"^"                     {return XOR;}
+"<<"			{return LEFT_OP;}
+">>"			{return RIGHT_OP;}
 %%
 
 int yywrap()

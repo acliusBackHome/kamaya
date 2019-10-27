@@ -13,7 +13,12 @@ void initName(){
   nameTable[(int)IF] = enum2str(IF);
   nameTable[(int)ELSE] = enum2str(ELSE);
   nameTable[(int)WHILE] = enum2str(WHILE);
-  nameTable[(int)RELOP] = enum2str(RELOP);
+  nameTable[(int)LT] = enum2str(LT);
+  nameTable[(int)LE] = enum2str(LE);
+  nameTable[(int)EQ] = enum2str(EQ);
+  nameTable[(int)NE] = enum2str(NE);
+  nameTable[(int)GT] = enum2str(GT);
+  nameTable[(int)GE] = enum2str(GE);
   nameTable[(int)NUMBER] = enum2str(NUMBER);
   nameTable[(int)ID] = enum2str(ID);
   nameTable[(int)INT] = enum2str(INT);
@@ -32,7 +37,9 @@ void initName(){
   nameTable[(int)MUL] = enum2str(MUL);
   nameTable[(int)DIV] = enum2str(DIV);
   nameTable[(int)MOD] = enum2str(MOD);
-  nameTable[(int)POW] = enum2str(POW);
+  nameTable[(int)XOR] = enum2str(POW);
+  nameTable[(int)LEFT_OP] = enum2str(LEFT_OP);
+  nameTable[(int)RIGHT_OP] = enum2str(RIGHT_OP);
   nameTable[(int)ERRORFORMAT] = enum2str(ERRORFORMAT);
 }
 
