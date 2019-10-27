@@ -35,16 +35,16 @@ program
   ;
 
 external_declaration
-	: function_definition {
+  : function_definition {
     $$ = $1;
   }
-	| var_declaration {
+  | var_declaration {
     $$ = $1;
   }
   | function_declaration {
     $$ = $1;
   }
-	;
+  ;
 
 function_declaration
   : type_specifier id_delaration LP RP SEMICOLON {
@@ -101,35 +101,35 @@ type_specifier
     sprintf(buff, "type specifier %s", nameTable[VOID].c_str());
     $$ = tree.new_node(buff);
   }
-	| CHAR {
+  | CHAR {
     sprintf(buff, "type specifier %s", nameTable[CHAR].c_str());
     $$ = tree.new_node(buff);
   }
-	| SHORT {
+  | SHORT {
     sprintf(buff, "type specifier %s", nameTable[SHORT].c_str());
     $$ = tree.new_node(buff);
   }
-	| INT {
+  | INT {
     sprintf(buff, "type specifier %s", nameTable[INT].c_str());
     $$ = tree.new_node(buff);
   }
-	| LONG {
+  | LONG {
     sprintf(buff, "type specifier %s", nameTable[LONG].c_str());
     $$ = tree.new_node(buff);
   }
-	| FLOAT {
+  | FLOAT {
     sprintf(buff, "type specifier %s", nameTable[FLOAT].c_str());
     $$ = tree.new_node(buff);
   }
-	| DOUBLE {
+  | DOUBLE {
     sprintf(buff, "type specifier %s", nameTable[DOUBLE].c_str());
     $$ = tree.new_node(buff);
   }
-	| BOOL {
+  | BOOL {
     sprintf(buff, "type specifier %s", nameTable[BOOL].c_str());
     $$ = tree.new_node(buff);
   }
-	;
+  ;
 
 id_delaration
   : ID {
@@ -174,58 +174,109 @@ constant_expression
   ;
 
 primary_expression
-	: id_delaration {
+  : id_delaration {
     $$ = $1;
   }
-	| constant_expression {
+  | constant_expression {
     $$ = $1;
   }
-	| LP expression RP {
+  | LP expression RP {
     $$ =  $2;
   }
 
 postfix_expression
-	: primary_expression {
+  : primary_expression {
     $$ = $1;
   }
-	| postfix_expression '[' expression ']'
-	//| postfix_expression '(' ')' 函数调用
-	//| postfix_expression '(' argument_expression_list ')'
-	//| postfix_expression '.' id_delaration
-	//| postfix_expression PTR_OP IDENTIFIER PTR_OP = "->"
-	| postfix_expression ADDONE {
+  | postfix_expression '[' expression ']'
+  //| postfix_expression '(' ')' 函数调用
+  //| postfix_expression '(' argument_expression_list ')'
+  //| postfix_expression '.' id_delaration
+  //| postfix_expression PTR_OP IDENTIFIER PTR_OP = "->"
+  | postfix_expression ADDONE {
     $$ = tree.new_node("postfix self increment");
     tree.set_parent($1, $$);
   }
-	| postfix_expression SUBONE {
+  | postfix_expression SUBONE {
     $$ = tree.new_node("postfix self decrement");
     tree.set_parent($1, $$);
   }
-	//| '(' type_name ')' '{' initializer_list '}'
-	//| '(' type_name ')' '{' initializer_list ',' '}'
+  //| '(' type_name ')' '{' initializer_list '}'
+  //| '(' type_name ')' '{' initializer_list ',' '}'
 
 unary_expression
-	: postfix_expression {
+  : postfix_expression {
     $$ = $1;
   }
-	| ADDONE unary_expression {
+  | ADDONE unary_expression {
     $$ = tree.new_node("prefix self increment");
     tree.set_parent($2, $$);
   }
-	| SUBONE unary_expression {
+  | SUBONE unary_expression {
     $$ = tree.new_node("prefix self decrement");
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 assign_expression
-  : id_delaration ASSIGN expression {
+  : conditional_expression {
+    $$ = $1;
+  }
+  | id_delaration ASSIGN expression {
     $$ = tree.new_node("expression operator = ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | id_dclaration MUL_ASSIGN expression {
-  }    
+    $$ = tree.new_node("expression operator *= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration DIV_ASSIGN expression {
+    $$ = tree.new_node("expression operator /= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration MOD_ASSIGN expression {
+    $$ = tree.new_node("expression operator %= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration ADD_ASSIGN expression {
+    $$ = tree.new_node("expression operator += ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration SUB_ASSIGN expression {
+    $$ = tree.new_node("expression operator -= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration LEFT_ASSIGN expression {
+    $$ = tree.new_node("expression operator <<= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration RIGHT_ASSIGN expression {
+    $$ = tree.new_node("expression operator >>= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration AND_ASSIGN expression {
+    $$ = tree.new_node("expression operator &= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration XOR_ASSIGN expression {
+    $$ = tree.new_node("expression operator ^= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | id_dclaration OR_ASSIGN expression {
+    $$ = tree.new_node("expression operator |= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
   ;
 
 multiplicative_expression
@@ -243,145 +294,158 @@ multiplicative_expression
     tree.set_parent($3, $$);
   }
   | multiplicative_expression MOD NUMBER {
-    $$ = $1 % $3;
-    cout << $1 << '%' << $3 << endl;
+    $$ = tree.new_node("expression operator % ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
   ;
 
 additive_expression
-	: multiplicative_expression {
+  : multiplicative_expression {
     $$ = $1;
   }
-	| additive_expression ADD multiplicative_expression {
+  | additive_expression ADD multiplicative_expression {
     $$ = tree.new_node("expression operator + ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-	| additive_expression SUB multiplicative_expression {
+  | additive_expression SUB multiplicative_expression {
     $$ = tree.new_node("expression operator - ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-	;
+  ;
 
 shift_expression
-	: additive_expression
-	| shift_expression LEFT_OP additive_expression {
-    $$ = $1 << $3;
-    cout << $1 << "<<" << $3 << endl;
+  : additive_expression {
+    $$ = $1;
   }
-  | bool_expression RELOP additive_expression {
-    /*switch($3) {
-      case LT:
-        $$ = tree.new_node("expression operator < ");
-      break;
-      case LE:
-        $$ = tree.new_node("expression operator <= ");
-      break;
-      case EQ:
-        $$ = tree.new_node("expression operator == ");
-      break;
-      case NE:
-        $$ = tree.new_node("expression operator != ");
-      break;
-      case GT:
-        $$ = tree.new_node("expression operator > ");
-      break;
-      case GE:
-        $$ = tree.new_node("expression operator >= ");
-      break;
-      default:
-        cout << "bool expression error" << endl;
-      break;
-    }*/
-    $$ = tree.new_node("bool expression operator");
+  | shift_expression LEFT_OP additive_expression {
+    $$ = tree.new_node("expression operator << ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-	;
+  | shift_expression RIGHT_OP additive_expression {
+    $$ = tree.new_node("expression operator >> ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
 
 relation_expression
-	: shift_expression
-	| relation_expression LT shift_expression {
-    $$ = $1 < $3;
-    cout << $1 << '<' << $3 << endl;
+  : shift_expression {
+    $$ = $1;
   }
-	| relation_expression LE shift_expression {
-    $$ = $1 <= $3;
-    cout << $1 << "<=" << $3 << endl;
+  | relation_expression LT shift_expression {
+    $$ = tree.new_node("expression operator < ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
-	| relation_expression GT shift_expression {
-    $$ = $1 > $3;
-    cout << $1 << '>' << $3 << endl;
+  | relation_expression LE shift_expression {
+    $$ = tree.new_node("expression operator <= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
-	| relation_expression GE shift_expression {
-    $$ = $1 >= $3;
-    cout << $1 << ">=" << $3 << endl;
+  | relation_expression GT shift_expression {
+    $$ = tree.new_node("expression operator > ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
-	;
+  | relation_expression GE shift_expression {
+    $$ = tree.new_node("expression operator >= ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
+
 equality_expression
-	: relation_expression
-	| equality_expression EQ relation_expressioin {
-    $$ = $1 == $3;
-    cout << $1 << "==" << $3 << endl;
+  : relation_expression {
+    $$ = $1;
   }
-	| equality_expression NE relation_expression {
-    $$ = $1 != $3;
-    cout << $1 << "!=" << $3 << endl;
+  | equality_expression EQ relation_expressioin {
+    $$ = tree.new_node("expression operator == ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
-	;
+  | equality_expression NE relation_expression {
+    $$ = tree.new_node("expression operator != ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
 
 and_expression
-	: equality_expression
-	| and_expression AND equality_expression {
-    $$ = $1 & $3;
-    cout << $1 << '&' << $3 << endl;
+  : equality_expression {
+    $$ = $1;
   }
-	;
+  | and_expression AND equality_expression {
+    $$ = tree.new_node("expression operator & ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
 
 exclusive_or_expression
-	: and_expression
-	| exclusive_or_expression XOR and_expression {
-    $$ = $1 ^ $3;
-    cout << $1 << '^' << $3 << endl;
+  : and_expression {
+    $$ = $1;
+  }
+  | exclusive_or_expression XOR and_expression {
+    $$ = tree.new_node("expression operator ^ ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   } 
-	;
+  ;
 
 or_expression
-	: exclusive_or_expression
-	| or_expression OR exclusive_or_expression {
-    $$ = $1 | $3;
-    cout << $1 << '|' << $3 << endl;
+  : exclusive_or_expression {
+    $$ = $1;
   }
-	;
+  | or_expression OR exclusive_or_expression {
+    $$ = tree.new_node("expression operator | ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
 
 logic_and_expression
-	: or_expression
-	| logic_and_expression LOGICAND or_expression {
-    $$ = $1 && $3;
-    cout << $1 << "&&" << $3 << endl;
+  : or_expression {
+    $$ = $1;
   }
-	;
+  | logic_and_expression LOGICAND or_expression {
+    $$ = tree.new_node("expression operator && ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
 
 logic_or_expression
-	: logic_and_expression
-	| logic_or_expression LOGICOR logic_and_expression {
-    $$ = $1 || $3;
-    cout << $1 << "||" << $3 << endl;
+  : logic_and_expression {
+    $$ = $1;
   }
-	;
+  | logic_or_expression LOGICOR logic_and_expression {
+    $$ = tree.new_node("expression operator || ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
 
 conditional_expression
-	: logic_or_expression
-	| logic_or_expression QUESTION_MARK expression COLON conditional_expression
-	;
+  : logic_or_expression {
+    $$ = $1;
+  }
+  | logic_or_expression QUESTION_MARK expression COLON conditional_expression {
+    // TODO:三目运算符动作
+  }
+  ;
 
 expression
   : assign_expression {
     $$ = $1;
   }
-  | bool_expression {
-    $$ = $1;
+  | expression COMMA assign_expression {
+    $$ = tree.new_node("expression operator , ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
 ;
 
