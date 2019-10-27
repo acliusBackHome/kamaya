@@ -59,6 +59,7 @@ void initName(){
   nameTable[(int)RIGHT_OP] = enum2str(RIGHT_OP);
   nameTable[(int)QUESTION_MARK] = enum2str(QUESTION_MARK);
   nameTable[(int)COLON] = enum2str(COLON);
+  nameTable[(int)RETURN] = enum2str(RETURN);
   nameTable[(int)ERRORFORMAT] = enum2str(ERRORFORMAT);
 }
 

@@ -12,10 +12,6 @@ extern std::map<std::string, std::string> symbolTabel;
 extern std::string before;
 extern int row_now;
 
-enum {
-  LT, LE, EQ, NE, GT, GE
-};
-
 void initName();
 std::string getName(int);
 void yyerror(const char *);

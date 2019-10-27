@@ -71,12 +71,12 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "break"                 {return BREAK;}
 {id}                    {yylval = install_id(); return ID;}
 {number}                {yylval = install_num(); return NUMBER;}
-"<"                     {yylval = LT; return LT;}
-"<="                    {yylval = LE; return LE;}
-"=="                    {yylval = EQ; return EQ;}
-"!="                    {yylval = NE; return NE;}
-">"                     {yylval = GT; return GT;}
-">="                    {yylval = GE; return GE;}
+"<"                     {return LT;}
+"<="                    {return LE;}
+"=="                    {return EQ;}
+"!="                    {return NE;}
+">"                     {return GT;}
+">="                    {return GE;}
 "="                     {return ASSIGN;}
 "*="                    {return MUL_ASSIGN;}
 "/="                    {return DIV_ASSIGN;}
@@ -101,6 +101,7 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "-"                     {return SUB;}
 "*"                     {return MUL;}
 "/"                     {return DIV;}
+"%"                     {return MOD;}
 "^"                     {return XOR;}
 "<<"                    {return LEFT_OP;}
 ">>"                    {return RIGHT_OP;}

@@ -216,6 +216,10 @@ unary_expression
     $$ = tree.new_node("prefix self decrement");
     tree.set_parent($2, $$);
   }
+  | NOT multiplicative_expression {
+    $$ = tree.new_node("prefix logic NOT");
+    tree.set_parent($2, $$);
+  }
   ;
 
 assign_expression
@@ -293,7 +297,7 @@ multiplicative_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | multiplicative_expression MOD NUMBER {
+  | multiplicative_expression MOD unary_expression {
     $$ = tree.new_node("expression operator % ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -362,7 +366,7 @@ equality_expression
   : relation_expression {
     $$ = $1;
   }
-  | equality_expression EQ relation_expressioin {
+  | equality_expression EQ relation_expression {
     $$ = tree.new_node("expression operator == ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -445,12 +449,7 @@ expression
   : assign_expression {
     $$ = $1;
   }
-  | expression COMMA assign_expression {
-    $$ = tree.new_node("expression operator , ");
-    tree.set_parent($1, $$);
-    tree.set_parent($3, $$);
-  }
-;
+  ;
 
 iteration_statement
   : WHILE LP expression RP statement {
@@ -531,7 +530,8 @@ labeled_statement
     tree.set_parent($4, $$);
   }
   | DEFAULT COLON statement {
-    $$ = $3;
+    $$ = tree.new_node("default statement"); 
+    tree.set_parent($3, $$);
   }
 
 jump_statement
@@ -573,7 +573,7 @@ statement
   }
   | RETURN expression SEMICOLON {
     $$ = tree.new_node("return statement");
-    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
   }
   ;
 
