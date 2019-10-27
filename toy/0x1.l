@@ -1,29 +1,21 @@
+%option yylineno
 %{
-  #include "0x1.tab.hpp"
-  #include <bits/stdc++.h>
   #include "0x1.hpp"
-  #define YYSTYPE double
   using namespace std;
-  void unrecognized_char(string);
-  void yyerror(string);
+  int yycolumn = 0;
 %}
 delim      [\t\f\v\r ]
 ws         {delim}+
 digit      [0-9]
 number     {digit}*(\.{digit}+)?([Ee][+\-]?{digit}+)?
-mark       [\+\-\*/\n\(\)]
+mark       [\+\-\*\(\)]
 %%
-{ws}       {cout << "ws" << endl;}
-{number}   {yylval = stod(yytext); cout << yylval; return NUMBER;}
-{mark}     {cout << yytext; return yytext[0];}
-.          {unrecognized_char(yytext);}
+{ws}       {}
+{number}   {ECHO; yylval = stod(yytext); return NUMBER;}
+{mark}     {ECHO; return yytext[0];}
+\n         {ECHO; yycolumn = 0; return yytext[0];}
+.          {ECHO; return ERROR;}
 %%
 int yywrap(){
   return 1;
-}
-void unrecognized_char(string ch){
-  yyerror("Unrecognized string: " + string(ch));
-}
-void yyerror(string msg){
-  cout << "Error at line " << cur_lineno() << " " << msg << endl;
 }
