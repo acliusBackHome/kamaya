@@ -60,9 +60,15 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 ","                     {return COMMA;}
 "if"                    {return IF;}
 "else"                  {return ELSE;}
+"switch"                {return SWITCH;}
+"case"                  {return CASE;}
+"default"               {return DEFAULT;}
 "while"                 {return WHILE;}
 "for"                   {return FOR;}
 "do"                    {return DO;}
+"goto"                  {return GOTO;}
+"continue"              {return CONTINUE;}
+"break"                 {return BREAK;}
 {id}                    {yylval = install_id(); return ID;}
 {number}                {yylval = install_num(); return NUMBER;}
 "<"                     {yylval = LT; return LT;}

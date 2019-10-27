@@ -13,7 +13,13 @@ void initName(){
   nameTable[(int)COMMA] = enum2str(COMMA);
   nameTable[(int)IF] = enum2str(IF);
   nameTable[(int)ELSE] = enum2str(ELSE);
+  nameTable[(int)SWITCH] = enum2str(SWITCH);
+  nameTable[(int)CASE] = enum2str(CASE);
+  nameTable[(int)DEFAULT] = enum2str(DEFAULT);
   nameTable[(int)WHILE] = enum2str(WHILE);
+  nameTable[(int)GOTO] = enum2str(GOTO);
+  nameTable[(int)CONTINUE] = enum2str(CONTINUE);
+  nameTable[(int)BREAK] = enum2str(BREAK);
   nameTable[(int)LT] = enum2str(LT);
   nameTable[(int)LE] = enum2str(LE);
   nameTable[(int)EQ] = enum2str(EQ);

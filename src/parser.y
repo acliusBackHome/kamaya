@@ -9,7 +9,7 @@ char buff[1024];
 %token MAIN RETURN
 %token LP RP LB RB ML MR
 %token SEMICOLON COMMA
-%token IF ELSE WHILE FOR DO
+%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT GOTO CONTINUE BREAK
 %token LT LE EQ NE GT GE NUMBER ID
 %token INT CHAR VOID BOOL DOUBLE FLOAT LONG SHORT
 %token ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
@@ -227,52 +227,52 @@ assign_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration MUL_ASSIGN expression {
+  | id_delaration MUL_ASSIGN expression {
     $$ = tree.new_node("expression operator *= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration DIV_ASSIGN expression {
+  | id_delaration DIV_ASSIGN expression {
     $$ = tree.new_node("expression operator /= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration MOD_ASSIGN expression {
+  | id_delaration MOD_ASSIGN expression {
     $$ = tree.new_node("expression operator %= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration ADD_ASSIGN expression {
+  | id_delaration ADD_ASSIGN expression {
     $$ = tree.new_node("expression operator += ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration SUB_ASSIGN expression {
+  | id_delaration SUB_ASSIGN expression {
     $$ = tree.new_node("expression operator -= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration LEFT_ASSIGN expression {
+  | id_delaration LEFT_ASSIGN expression {
     $$ = tree.new_node("expression operator <<= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration RIGHT_ASSIGN expression {
+  | id_delaration RIGHT_ASSIGN expression {
     $$ = tree.new_node("expression operator >>= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration AND_ASSIGN expression {
+  | id_delaration AND_ASSIGN expression {
     $$ = tree.new_node("expression operator &= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration XOR_ASSIGN expression {
+  | id_delaration XOR_ASSIGN expression {
     $$ = tree.new_node("expression operator ^= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | id_dclaration OR_ASSIGN expression {
+  | id_delaration OR_ASSIGN expression {
     $$ = tree.new_node("expression operator |= ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -434,7 +434,10 @@ conditional_expression
     $$ = $1;
   }
   | logic_or_expression QUESTION_MARK expression COLON conditional_expression {
-    // TODO:三目运算符动作
+    $$ = tree.new_node("expression operator ?: ");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+    tree.set_parent($5, $$);
   }
   ;
 
@@ -489,14 +492,22 @@ iteration_statement
   ;
 
 selection_statement
-  : IF LP expression RP statement
-  | IF LP expression RP statement ELSE statement
-  | IF LP expression RP statement else_if_list  ELSE statement
-  ; 
-
-else_if_list
-  : ELSE IF statement
-  | else_if_list ELSE IF statement
+  : IF LP expression RP statement {
+    $$ = tree.new_node("if statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($5, $$);
+  }
+  | IF LP expression RP statement ELSE statement {
+    $$ = tree.new_node("if else statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($5, $$);
+    tree.set_parent($7, $$);
+  }
+  | SWITCH LP expression RP statement {
+    $$ = tree.new_node("switch statement");
+    tree.set_parent($3, $$);
+    tree.set_parent($5, $$);
+  }
   ;
 
 expression_statement
@@ -505,6 +516,33 @@ expression_statement
   }
   | SEMICOLON {
     $$ = tree.new_node("empty statement");
+  }
+  ;
+
+labeled_statement
+  : id_delaration COLON statement {
+    $$ = tree.new_node("id_colon statement");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | CASE constant_expression COLON statement {
+    $$ = tree.new_node("case statement");
+    tree.set_parent($2, $$);
+    tree.set_parent($4, $$);
+  }
+  | DEFAULT COLON statement {
+    $$ = $3;
+  }
+
+jump_statement
+  : GOTO id_delaration SEMICOLON {
+    $$ = $2;
+  }
+  | CONTINUE SEMICOLON {
+    // TODO: continue
+  }
+  | BREAK SEMICOLON {
+    // TODO: break
   }
   ;
 
@@ -519,6 +557,15 @@ statement
     $$ = $1;
   }
   | compound_statement {
+    $$ = $1;
+  }
+  | selection_statement {
+    $$ = $1;
+  }
+  | labeled_statement {
+    $$ = $1;
+  }
+  | jump_statement {
     $$ = $1;
   }
   | RETURN SEMICOLON {
