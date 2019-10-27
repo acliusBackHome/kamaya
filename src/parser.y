@@ -12,11 +12,12 @@ char buff[1024];
 %token IF ELSE WHILE FOR DO
 %token LT LE EQ NE GT GE NUMBER ID
 %token INT CHAR VOID BOOL DOUBLE FLOAT LONG SHORT
-%token ASSIGN
+%token ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token NOT OR AND XOR
 %token LOGICAND LOGICOR
 %token ADDONE SUBONE ADD SUB MUL DIV MOD
 %token LEFT_OP RIGHT_OP
+%token QUESTION_MARK COLON
 %token ERRORFORMAT
 
 %left ADD SUB
@@ -223,6 +224,8 @@ assign_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
+  | id_dclaration MUL_ASSIGN expression {
+  }    
   ;
 
 multiplicative_expression
@@ -267,7 +270,6 @@ shift_expression
     $$ = $1 << $3;
     cout << $1 << "<<" << $3 << endl;
   }
-<<<<<<< HEAD
   | bool_expression RELOP additive_expression {
     /*switch($3) {
       case LT:
@@ -295,11 +297,6 @@ shift_expression
     $$ = tree.new_node("bool expression operator");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
-=======
-	| shift_expression RIGHT_OP additive_expression {
-    $$ = $1 >> $3;
-    cout << $1 << ">>" << $3 << endl;
->>>>>>> ADD yacc action function and some token.
   }
 	;
 
@@ -372,6 +369,11 @@ logic_or_expression
     $$ = $1 || $3;
     cout << $1 << "||" << $3 << endl;
   }
+	;
+
+conditional_expression
+	: logic_or_expression
+	| logic_or_expression QUESTION_MARK expression COLON conditional_expression
 	;
 
 expression

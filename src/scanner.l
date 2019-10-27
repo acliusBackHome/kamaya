@@ -72,6 +72,16 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 ">"                     {yylval = GT; return GT;}
 ">="                    {yylval = GE; return GE;}
 "="                     {return ASSIGN;}
+"*="			{return MUL_ASSIGN;}
+"/="			{return DIV_ASSIGN;}
+"%="			{return MOD_ASSIGN;}
+"+="			{return ADD_ASSIGN;}
+"-="			{return SUB_ASSIGN;}
+"<<="			{return LEFT_ASSIGN;}
+">>="			{return RIGHT_ASSIGN;}
+"&="			{return AND_ASSIGN;}
+"^="			{return XOR_ASSIGN;}
+"|="			{return OR_ASSIGN;}
 "!"                     {return NOT;}
 "&&"                    {return LOGICAND;}
 "&"                     {return AND;}
@@ -88,6 +98,8 @@ number                  {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "^"                     {return XOR;}
 "<<"			{return LEFT_OP;}
 ">>"			{return RIGHT_OP;}
+"?"			{return QUESTION_MARK;}
+":"			{return COLON;}
 %%
 
 int yywrap()
