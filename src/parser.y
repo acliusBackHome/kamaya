@@ -184,13 +184,35 @@ primary_expression
     $$ =  $2;
   }
 
+argument_expression_list
+	: assign_expression {
+    $$ = tree.new_node("argument_expression_list");
+    tree.set_parent($1, $$);
+  }
+	| argument_expression_list COMMA assign_expression {
+    $$ = $1;
+    tree.set_parent($3, $1);
+  }
+	;
+
 postfix_expression
   : primary_expression {
     $$ = $1;
   }
-  | postfix_expression '[' expression ']'
-  //| postfix_expression '(' ')' 函数调用
-  //| postfix_expression '(' argument_expression_list ')'
+  | postfix_expression ML expression MR {
+    $$ = tree.new_node("postfix []");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  | postfix_expression LP RP {
+    $$ = tree.new_node("function call");
+    tree.set_parent($1, $$);
+  }
+  | postfix_expression LP argument_expression_list RP {
+    $$ = tree.new_node("function call");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
   //| postfix_expression '.' id_delaration
   //| postfix_expression PTR_OP IDENTIFIER PTR_OP = "->"
   | postfix_expression ADDONE {
