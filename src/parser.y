@@ -13,7 +13,7 @@ char buff[1024];
 %token LT LE EQ NE GT GE NUMBER ID
 %token INT CHAR VOID BOOL DOUBLE FLOAT LONG SHORT
 %token ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
-%token NOT OR AND XOR
+%token NOT OR AND XOR BIT_NOT
 %token LOGICAND LOGICOR
 %token ADDONE SUBONE ADD SUB MUL DIV MOD
 %token LEFT_OP RIGHT_OP
@@ -143,7 +143,7 @@ var_declaration_list
       $$ = tree.new_node("var_declaration_list");
       tree.set_parent($1, $$);
     }
-    | assign_expression {
+    | assignment_expression {
       $$ = tree.new_node("var_declaration_list");
       tree.set_parent($1, $$);
     }
@@ -151,7 +151,7 @@ var_declaration_list
       tree.set_parent($1, $3);
       $$ = $3;
     }
-    | assign_expression COMMA var_declaration_list {
+    | assignment_expression COMMA var_declaration_list {
       tree.set_parent($1, $3);
       $$ = $3;
     }
@@ -184,17 +184,6 @@ primary_expression
     $$ =  $2;
   }
 
-argument_expression_list
-	: assign_expression {
-    $$ = tree.new_node("argument_expression_list");
-    tree.set_parent($1, $$);
-  }
-	| argument_expression_list COMMA assign_expression {
-    $$ = $1;
-    tree.set_parent($3, $1);
-  }
-	;
-
 postfix_expression
   : primary_expression {
     $$ = $1;
@@ -225,6 +214,18 @@ postfix_expression
   }
   //| '(' type_name ')' '{' initializer_list '}'
   //| '(' type_name ')' '{' initializer_list ',' '}'
+  ;
+
+  argument_expression_list
+	: assignment_expression {
+    $$ = tree.new_node("argument_expression_list");
+    tree.set_parent($1, $$);
+  }
+	| argument_expression_list COMMA assignment_expression {
+    $$ = $1;
+    tree.set_parent($3, $1);
+  }
+	;
 
 unary_expression
   : postfix_expression {
@@ -238,13 +239,40 @@ unary_expression
     $$ = tree.new_node("prefix self decrement");
     tree.set_parent($2, $$);
   }
-  | NOT multiplicative_expression {
-    $$ = tree.new_node("prefix logic NOT");
+  | unary_operator cast_expression {
+    $$ = tree.new_node("prefix expression");
+    tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
   ;
 
-assign_expression
+unary_operator
+	: AND {
+    $$ = tree.new_node("&");
+  }
+	| MUL {
+    $$ = tree.new_node("*");
+  }
+	| ADD {
+    $$ = tree.new_node("+");
+  }
+	| SUB {
+    $$ = tree.new_node("-");
+  }
+	| BIT_NOT {
+    $$ = tree.new_node("~");
+  }
+	| NOT {
+    $$ = tree.new_node("!");
+  }
+	;
+
+cast_expression
+	: unary_expression
+	// | LP type_name RP cast_expression
+	;
+
+assignment_expression
   : conditional_expression {
     $$ = $1;
   }
@@ -468,7 +496,7 @@ conditional_expression
   ;
 
 expression
-  : assign_expression {
+  : assignment_expression {
     $$ = $1;
   }
   ;

@@ -19,7 +19,6 @@ unsigned long install_id() {
 
 unsigned long install_num() {
   if (symbolTabel.find(before) != symbolTabel.end()) {
-    symbolTabel[before] = yytext;
     return atoi(yytext);
   } else {
     return atoi(yytext);
@@ -89,6 +88,7 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "^="                                {return XOR_ASSIGN;}
 "|="                                {return OR_ASSIGN;}
 "!"                                 {return NOT;}
+"~"                                 {return BIT_NOT;}
 "&&"                                {return LOGICAND;}
 "&"                                 {return AND;}
 "||"                                {return LOGICOR;}
