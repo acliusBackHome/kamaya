@@ -9,7 +9,7 @@ char buff[1024];
 %token MAIN RETURN
 %token LP RP LB RB ML MR
 %token SEMICOLON COMMA
-%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT GOTO CONTINUE BREAK
+%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT GOTO CONTINUE BREAK CONST RESTRICT VOLATILE TYPEDEF EXTERN STATIC AUTO REGISTER
 %token LT LE EQ NE GT GE NUMBER ID
 %token INT CHAR VOID BOOL DOUBLE FLOAT LONG SHORT
 %token ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
@@ -96,41 +96,6 @@ argument_list
   }
   ;
 
-type_specifier
-  : VOID {
-    sprintf(buff, "type specifier %s", nameTable[VOID].c_str());
-    $$ = tree.new_node(buff);
-  }
-  | CHAR {
-    sprintf(buff, "type specifier %s", nameTable[CHAR].c_str());
-    $$ = tree.new_node(buff);
-  }
-  | SHORT {
-    sprintf(buff, "type specifier %s", nameTable[SHORT].c_str());
-    $$ = tree.new_node(buff);
-  }
-  | INT {
-    sprintf(buff, "type specifier %s", nameTable[INT].c_str());
-    $$ = tree.new_node(buff);
-  }
-  | LONG {
-    sprintf(buff, "type specifier %s", nameTable[LONG].c_str());
-    $$ = tree.new_node(buff);
-  }
-  | FLOAT {
-    sprintf(buff, "type specifier %s", nameTable[FLOAT].c_str());
-    $$ = tree.new_node(buff);
-  }
-  | DOUBLE {
-    sprintf(buff, "type specifier %s", nameTable[DOUBLE].c_str());
-    $$ = tree.new_node(buff);
-  }
-  | BOOL {
-    sprintf(buff, "type specifier %s", nameTable[BOOL].c_str());
-    $$ = tree.new_node(buff);
-  }
-  ;
-
 id_delaration
   : ID {
     sprintf(buff, "ID declaration %s", (const char*)$1);
@@ -164,6 +129,163 @@ var_declaration
     tree.set_parent($2, $$);
   }
   ;
+
+storage_class_specifier
+	: TYPEDEF
+	| EXTERN
+	| STATIC
+	| AUTO
+	| REGISTER
+	;
+
+// 类型声明
+type_specifier
+  : VOID {
+    sprintf(buff, "type specifier %s", nameTable[VOID].c_str());
+    $$ = tree.new_node(buff);
+  }
+  | CHAR {
+    sprintf(buff, "type specifier %s", nameTable[CHAR].c_str());
+    $$ = tree.new_node(buff);
+  }
+  | SHORT {
+    sprintf(buff, "type specifier %s", nameTable[SHORT].c_str());
+    $$ = tree.new_node(buff);
+  }
+  | INT {
+    sprintf(buff, "type specifier %s", nameTable[INT].c_str());
+    $$ = tree.new_node(buff);
+  }
+  | LONG {
+    sprintf(buff, "type specifier %s", nameTable[LONG].c_str());
+    $$ = tree.new_node(buff);
+  }
+  | FLOAT {
+    sprintf(buff, "type specifier %s", nameTable[FLOAT].c_str());
+    $$ = tree.new_node(buff);
+  }
+  | DOUBLE {
+    sprintf(buff, "type specifier %s", nameTable[DOUBLE].c_str());
+    $$ = tree.new_node(buff);
+  }
+  | BOOL {
+    sprintf(buff, "type specifier %s", nameTable[BOOL].c_str());
+    $$ = tree.new_node(buff);
+  }
+  // | enum_specifier
+  // | struct_or_union_specifier
+  ;
+
+// 类型修饰
+type_qualifier
+	: CONST {
+    $$ = tree.new_node("const");
+  }
+	| RESTRICT {
+    $$ = tree.new_node("restrict");
+  }
+	| VOLATILE {
+    $$ = tree.new_node("volatile");
+  }
+	;
+
+// 类型的修饰符列表
+type_qualifier_list
+	: type_qualifier {
+    $$ = tree.new_node("type_qualifier_list");
+    tree.set_parent($1, $$);
+  }
+	| type_qualifier_list type_qualifier {
+    $$ = $1;
+    tree.set_parent($2, $$);
+  }
+	;
+
+// 修饰并声明的列表
+specifier_qualifier_list
+	: type_specifier {
+    $$ = tree.new_node("specifier_qualifier_list");
+    tree.set_parent($1, $$);
+  }
+	| type_specifier specifier_qualifier_list {
+    $$ = $2;
+    tree.set_parent($1, $$);
+  }
+	| type_qualifier {
+    $$ = tree.new_node("specifier_qualifier_list");
+    tree.set_parent($1, $$);
+  }
+	| type_qualifier specifier_qualifier_list {
+    $$ = $1;
+    tree.set_parent($2, $$);
+  }
+	;
+
+pointer
+	: MUL {
+    $$ = tree.new_node("pointer");
+  }
+	| MUL type_qualifier_list {
+    $$ = tree.new_node("pointer");
+    tree.set_parent($2, $$);
+  }
+	| MUL pointer {
+    $$ = tree.new_node("pointer");
+    tree.set_parent($1, $$);
+  }
+	| MUL type_qualifier_list pointer {
+    $$ = tree.new_node("pointer");
+    tree.set_parent($2, $$);
+    tree.set_parent($3, $$);
+  }
+	;
+
+// 用于声明数组或者多维数组或者函数指针
+direct_abstract_declarator
+	: LP abstract_declarator RP {
+    $$ = $1;
+  }
+  // 例:int a[][][];
+	| ML MR {
+    $$ = tree.new_node("direct_abstract_declarator");
+  }
+	| ML assignment_expression MR
+	| direct_abstract_declarator ML MR
+	| direct_abstract_declarator ML assignment_expression MR
+	// | ML '*' MR
+	// | direct_abstract_declarator ML '*' MR
+  // 函数指针声明: int (*p)(int,int)
+	//| LP RP
+  //| LP parameter_type_list RP
+	//| direct_abstract_declarator LP RP
+	//| direct_abstract_declarator LP parameter_type_list RP
+	;
+
+abstract_declarator
+	: pointer {
+    $$ = $1;
+  }
+	| direct_abstract_declarator {
+    $$ = $1;
+  }
+	| pointer direct_abstract_declarator {
+    $$ = $1;
+    tree.set_parent($2, $$);
+  }
+	;
+
+type_name
+	: specifier_qualifier_list {
+    $$ = tree.new_node("type_name");
+    tree.set_parent($1, $$);
+  }
+	| specifier_qualifier_list abstract_declarator {
+    $$ = tree.new_node("type_name");
+    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
+  }
+	;
+
 
 // 以下是表达式
 constant_expression
@@ -212,8 +334,8 @@ postfix_expression
     $$ = tree.new_node("postfix self decrement");
     tree.set_parent($1, $$);
   }
-  //| '(' type_name ')' '{' initializer_list '}'
-  //| '(' type_name ')' '{' initializer_list ',' '}'
+  //| LP type_name RP '{' initializer_list '}'
+  //| LP type_name RP '{' initializer_list ',' '}'
   ;
 
   argument_expression_list
@@ -268,8 +390,14 @@ unary_operator
 	;
 
 cast_expression
-	: unary_expression
-	// | LP type_name RP cast_expression
+	: unary_expression {
+    $$ = $1;
+  }
+	| LP type_name RP cast_expression {
+    $$ = tree.new_node("cast expression");
+    tree.set_parent($2, $$);
+    tree.set_parent($4, $$);
+  }
 	;
 
 assignment_expression

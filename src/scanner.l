@@ -68,6 +68,12 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "goto"                              {return GOTO;}
 "continue"                          {return CONTINUE;}
 "break"                             {return BREAK;}
+"restrict"                          {return RESTRICT;}
+"volatile"                          {return VOLATILE;}
+"extern"                            {return EXTERN;}
+"static"                            {return STATIC;}
+"auto"                              {return AUTO;}
+"register"                          {return REGISTER;}
 {id}                                {yylval = install_id(); return ID;}
 {number}                            {yylval = install_num(); return NUMBER;}
 "<"                                 {return LT;}
