@@ -11,8 +11,12 @@ copy:
 
 dist/kamaya.cpp: copy
 
-main: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp
+compile: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp
 	g++ -o dist/bin/$@ $^
+
+main:
+	make clean
+	make compile
 
 clean:
 	clear
