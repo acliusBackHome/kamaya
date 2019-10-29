@@ -1,9 +1,11 @@
+%locations
+%define parse.error verbose
 %{
-#include "kamaya.hpp"
-using namespace std;
-int yylex(void);
-MessageTree tree("program");
-char buff[1024];
+  #include "kamaya.hpp"
+  using namespace std;
+  int yylex(void);
+  MessageTree tree("program");
+  char buff[1024];
 %}
 
 %token MAIN RETURN
@@ -1003,7 +1005,7 @@ labeled_statement
     tree.set_parent($4, $$);
   }
   | DEFAULT COLON statement {
-    $$ = tree.new_node("default statement"); 
+    $$ = tree.new_node("default statement");
     tree.set_parent($3, $$);
   }
 
@@ -1043,6 +1045,10 @@ expression_statement
   }
   | SEMICOLON {
     $$ = tree.new_node("empty statement");
+  }
+  | error {
+    $$ =  tree.new_node(errorstr);
+    yyerrok;
   }
   ;
 
@@ -1162,11 +1168,16 @@ declaration_list
 
 %%
 
-void yyerror (const char* s) {
-  cout << s << endl;
+string errorstr, inputfile;
+
+void yyerror(const char* msg) {
+  errorstr = inputfile + ": ";
+  for (int i = 0; i < yylloc.first_column; i++) errorstr += " ";
+  errorstr += "^ lineno[" + to_string((int)yylloc.last_line) + "]columnno[" + to_string((int)yylloc.first_column) + "]: " + msg;
 }
 
-int main() {
+int main(int argc, char** argv) {
+  inputfile = argv[0]; // In fact, this is exec file
   initName();
   yyparse();
   tree.print();

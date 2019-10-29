@@ -1,3 +1,5 @@
+%option yylineno
+
 %{
 #include "kamaya.hpp"
 
@@ -8,6 +10,7 @@ map<string, string> symbolTabel;
 map<string, string> stringTabel;
 string before;
 int row_now = 1;
+int yycolumn = 0;
 
 unsigned long install_id() {
   before = yytext;
@@ -46,7 +49,7 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 
 %%
 
-{lf}                                {row_now++;}
+{lf}                                {row_now++; yycolumn = 0;}
 {ws}                                {}
 {digit}+{letter}                    {return ERRORFORMAT;}
 L?\"(\\.|[^\\"\n])*\"	              {yylval = install_string(); return STRING_LITERAL;}

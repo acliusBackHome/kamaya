@@ -1,4 +1,5 @@
-void main() {
+#include <stdio.h>
+int main() {
     int a, b = 1;
     a = b + 10 / 2 ^ 3 ^ 2 ^ 3; // pay attention to operation priority
     if (a != 0) {
@@ -10,5 +11,5 @@ void main() {
             i = b;
         }
     }
-    print(a) // you can change this to your output function
+    putchar(a) // you can change this to your output function
 }
