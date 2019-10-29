@@ -9,6 +9,7 @@
 
 extern std::map<int, std::string> nameTable;
 extern std::map<std::string, std::string> symbolTabel;
+extern std::map<std::string, std::string> stringTabel;
 extern std::string before;
 extern int row_now;
 

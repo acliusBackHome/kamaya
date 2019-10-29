@@ -5,6 +5,7 @@ using namespace std;
 
 map<int, string> nameTable;
 map<string, string> symbolTabel;
+map<string, string> stringTabel;
 string before;
 int row_now = 1;
 
@@ -24,6 +25,15 @@ unsigned long install_num() {
     return atoi(yytext);
   }
 }
+
+unsigned long install_string() {
+  before = yytext;
+  if (stringTabel.find(yytext) != stringTabel.end()) {
+    return (unsigned long)stringTabel[yytext].c_str();
+  }
+  stringTabel[yytext] = yytext;
+  return (unsigned long)stringTabel[yytext].c_str();
+}
 %}
 
 delim                               [\t\r\f\v ]
@@ -39,6 +49,7 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 {lf}                                {row_now++;}
 {ws}                                {}
 {digit}+{letter}                    {return ERRORFORMAT;}
+L?\"(\\.|[^\\"\n])*\"	              {yylval = install_string(); return STRING_LITERAL;}
 "void"                              {return VOID;}
 "char"                              {return CHAR;}
 "bool"                              {return BOOL;}
@@ -80,8 +91,8 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "inline"                            {return INLINE;}
 "sizeof"                            {return SIZEOF;}
 "struct"                            {return STRUCT;}
-"union"                            {return UNION;}
-"enum"                            {return ENUM;}
+"union"                             {return UNION;}
+"enum"                              {return ENUM;}
 {id}                                {yylval = install_id(); return ID;}
 {number}                            {yylval = install_num(); return NUMBER;}
 "<"                                 {return LT;}
