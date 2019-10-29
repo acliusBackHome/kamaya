@@ -77,9 +77,9 @@ public:
         print_node(0, has_next_children, 1, true, vis);
         has_next_children.clear();
         for (size_t i = 1; i < get_node_num(); ++i) {
-            if(!vis[i]) {
+            if(!vis[i] && node_parent[i] == (size_t) (-1)) {
                 printf("异常子树:\n");
-                print_node(i, has_next_children, 1, true, vis);
+                print_node(i, has_next_children, 2, true, vis);
                 has_next_children.clear();
             }
         }

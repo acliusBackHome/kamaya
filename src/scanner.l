@@ -57,6 +57,9 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "int"                               {return INT;}
 ";"                                 {return SEMICOLON;}
 ","                                 {return COMMA;}
+"..."                               {return ELLIPSIS;}
+"."                                 {return POINT;}
+"->"                                {return PTR_OPERATOR;}
 "if"                                {return IF;}
 "else"                              {return ELSE;}
 "switch"                            {return SWITCH;}
@@ -74,6 +77,11 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 "static"                            {return STATIC;}
 "auto"                              {return AUTO;}
 "register"                          {return REGISTER;}
+"inline"                            {return INLINE;}
+"sizeof"                            {return SIZEOF;}
+"struct"                            {return STRUCT;}
+"union"                            {return UNION;}
+"enum"                            {return ENUM;}
 {id}                                {yylval = install_id(); return ID;}
 {number}                            {yylval = install_num(); return NUMBER;}
 "<"                                 {return LT;}
