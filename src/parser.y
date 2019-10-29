@@ -4,7 +4,6 @@
   #include "kamaya.hpp"
   using namespace std;
   int yylex(void);
-  MessageTree tree("program");
   char buff[1024];
 %}
 
@@ -1047,7 +1046,10 @@ expression_statement
     $$ = tree.new_node("empty statement");
   }
   | error {
-    $$ =  tree.new_node(errorstr);
+    size_t last_node = tree.last_node;
+    $$ =  tree.new_node(errorStr);
+    tree.set_parent(last_node, $$);
+    errorNodes.push_back($$);
     yyerrok;
   }
   ;
@@ -1168,19 +1170,14 @@ declaration_list
 
 %%
 
-string errorstr, inputfile;
+string errorStr, inputFile;
 
 void yyerror(const char* msg) {
-  errorstr = inputfile + ": ";
-  for (int i = 0; i < yylloc.first_column; i++) errorstr += " ";
-  errorstr += "^ lineno[" + to_string((int)yylloc.last_line) + "]columnno[" + to_string((int)yylloc.first_column) + "]: " + msg;
-}
-
-int main(int argc, char** argv) {
-  inputfile = argv[0]; // In fact, this is exec file
-  initName();
-  yyparse();
-  tree.print();
-  printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), row_now);
-  return  0;
+  string appendstr = inputFile + ":" + to_string(yylloc.first_line + 1) + ":" + to_string(yylloc.first_column + 1) + ": " + msg + '\n' +
+                     filestrings[yylloc.first_line] + '\n';
+  for (int i = 0; i < yylloc.first_column; i++) appendstr += " ";
+  appendstr += "^";
+  errorStrings.push_back(appendstr);
+  // errorStr = "^ lineno[" + to_string((int)yylloc.last_line) + "]columnno[" + to_string((int)yylloc.first_column) + "]: " + msg;
+  errorStr = msg;
 }

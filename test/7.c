@@ -1,6 +1,6 @@
-#include <stdio.h>
+void putchar(int){}
 int main() {
-    int a, b = 1;
+    int a, b = 1
     a = b + 10 / 2 ^ 3 ^ 2 ^ 3; // pay attention to operation priority
     if (a != 0) {
         while (a < 10 && b < 10) {

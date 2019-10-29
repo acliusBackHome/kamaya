@@ -13,6 +13,7 @@ using namespace std;
 
 class MessageTree {
 public:
+    size_t last_node;
     /**
      * 构造函数, 树初始时必须有一个根, 根编号0
      * @param msg 根的信息
@@ -46,7 +47,7 @@ public:
         node_parent.push_back((size_t) (-1));
         node_children.emplace_back();
         size_t this_node = node_msg.size() - 1;
-        return this_node;
+        return last_node = this_node;
     }
 
     /**
@@ -65,6 +66,10 @@ public:
         } else {
             printf("该节点%zu已经有了父节点, 不能再设父节点为%zu\n", node_id, parent);
         }
+    }
+
+    inline size_t get_parent(size_t node_id) {
+      return node_parent[node_id];
     }
 
     /**

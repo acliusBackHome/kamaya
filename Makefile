@@ -12,7 +12,7 @@ copy:
 dist/kamaya.cpp: copy
 
 compile: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp
-	g++ -o dist/bin/main $^
+	g++ -o dist/bin/main $^ -std=c++11
 
 main:
 	make clean
@@ -25,7 +25,7 @@ clean:
 test: main
 	for dir in $(shell ls test/*.c);\
 		do \
-			./dist/bin/main < $$dir > $$dir.out; \
+			./dist/bin/main $$dir > $$dir.out; \
 		done
 
 run: main

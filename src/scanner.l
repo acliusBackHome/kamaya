@@ -8,8 +8,10 @@ using namespace std;
 map<int, string> nameTable;
 map<string, string> symbolTabel;
 map<string, string> stringTabel;
+vector<string> filestrings, errorStrings;
+vector<size_t> errorNodes;
+MessageTree tree("program");
 string before;
-int row_now = 1;
 int yycolumn = 0;
 
 unsigned long install_id() {
@@ -49,7 +51,7 @@ number                              {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 
 %%
 
-{lf}                                {row_now++; yycolumn = 0;}
+{lf}                                {yycolumn = 0;}
 {ws}                                {}
 {digit}+{letter}                    {return ERRORFORMAT;}
 L?\"(\\.|[^\\"\n])*\"	              {yylval = install_string(); return STRING_LITERAL;}
@@ -140,4 +142,44 @@ L?\"(\\.|[^\\"\n])*\"	              {yylval = install_string(); return STRING_LI
 int yywrap()
 {
   return 1;
+}
+
+int main(int argc, char** argv) {
+  if (argc < 2) {
+    cout << argv[0] << ": fatal error: no input files" << endl
+         << "compilation terminated." << endl;
+    return 1;
+  }
+  inputFile = argv[1]; // In fact, this is exec file
+  FILE* file;
+  char strline[2048];
+  if (!(file = fopen(argv[1], "r"))) {
+    cout << argv[0] << ": error: " << argv[1] << ": " << "No such file or directory" << endl
+         << argv[0] << ": fatal error: no input files" << endl
+         << "compilation terminated." << endl;
+    return 1;
+  }
+  while (fgets(strline, sizeof(strline), file) != NULL) {
+    int len = strlen(strline);
+    if (strline[len - 1] == '\n') {
+      strline[len - 1] = 0;
+    }
+    filestrings.push_back(strline);
+  }
+  rewind(file);
+  yyset_in(file);
+  initName();
+  yyparse();
+  tree.print();
+  printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
+  fclose(file);
+  if (errorNodes.size()) {
+    cout << "错误报告" << endl;
+    for(int i = 0; i < errorNodes.size(); i++) {
+      size_t pid = tree.get_parent(errorNodes[i]);
+      cout << inputFile + ": In " << to_string(pid) << ": " << tree.get_msg(pid) << endl;
+      cout << errorStrings[i] << endl;
+    }
+  }
+  return  0;
 }

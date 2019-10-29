@@ -14,8 +14,10 @@
 extern std::map<int, std::string> nameTable;
 extern std::map<std::string, std::string> symbolTabel;
 extern std::map<std::string, std::string> stringTabel;
-extern std::string before, errorstr, inputfile;
-extern int row_now;
+extern std::string before, errorStr, inputFile;
+extern std::vector<std::string> filestrings, errorStrings;
+extern std::vector<size_t> errorNodes;
+extern MessageTree tree;
 extern int yycolumn;
 extern int yylineno;
 extern int yyleng;
