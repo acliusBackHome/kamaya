@@ -177,21 +177,32 @@ cast_expression
   }
 	;
 
-multiplicative_expression
+power_expression
   : cast_expression {
     $$ = $1;
   }
-  | multiplicative_expression MUL cast_expression {
+  | cast_expression XOR power_expression {
+    $$ = tree.new_node("expression operator ^");
+    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
+  }
+  ;
+
+multiplicative_expression
+  : power_expression {
+    $$ = $1;
+  }
+  | multiplicative_expression MUL power_expression {
     $$ = tree.new_node("expression operator * ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | multiplicative_expression DIV cast_expression {
+  | multiplicative_expression DIV power_expression {
     $$ = tree.new_node("expression operator / ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-  | multiplicative_expression MOD cast_expression {
+  | multiplicative_expression MOD power_expression {
     $$ = tree.new_node("expression operator % ");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -283,20 +294,9 @@ and_expression
   }
   ;
 
-exclusive_or_expression
-  : and_expression {
-    $$ = $1;
-  }
-  | exclusive_or_expression XOR and_expression {
-    $$ = tree.new_node("expression operator ^ ");
-    tree.set_parent($1, $$);
-    tree.set_parent($3, $$);
-  } 
-  ;
-
 inclusive_or_expression
-	: exclusive_or_expression
-	| inclusive_or_expression OR exclusive_or_expression
+	: and_expression
+	| inclusive_or_expression OR and_expression
 	;
 
 logic_and_expression
