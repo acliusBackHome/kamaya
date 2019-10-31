@@ -1046,10 +1046,11 @@ expression_statement
     $$ = tree.new_node("empty statement");
   }
   | error {
-    size_t last_node = tree.last_node;
+    // size_t last_node = tree.last_node;
     $$ =  tree.new_node(errorStr);
-    tree.set_parent(last_node, $$);
-    errorNodes.push_back($$);
+    // tree.set_parent(last_node, $$);
+    // errorNodes.push_back($$);
+    tree.error_push($$);
     yyerrok;
   }
   ;

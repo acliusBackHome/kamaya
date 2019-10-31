@@ -9,7 +9,6 @@ map<int, string> nameTable;
 map<string, string> symbolTabel;
 map<string, string> stringTabel;
 vector<string> filestrings, errorStrings;
-vector<size_t> errorNodes;
 MessageTree tree("program");
 string before;
 int yycolumn = 0;
@@ -170,13 +169,20 @@ int main(int argc, char** argv) {
   yyset_in(file);
   initName();
   yyparse();
+
+  // 连接错误结点
+
+  tree.last_combine();
+
   tree.print();
   printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
   fclose(file);
-  if (errorNodes.size()) {
+  int sz = tree.error_cnt();
+  if (sz) {
     cout << "错误报告" << endl;
-    for(int i = 0; i < errorNodes.size(); i++) {
-      size_t pid = tree.get_parent(errorNodes[i]);
+    for(int i = 0; i < sz; i++) {
+      size_t eid = tree.get_error(i);
+      size_t pid = tree.get_parent(eid);
       cout << inputFile + ": In " << to_string(pid) << ": " << tree.get_msg(pid) << endl;
       cout << errorStrings[i] << endl;
     }

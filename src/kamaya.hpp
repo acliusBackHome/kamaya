@@ -16,7 +16,6 @@ extern std::map<std::string, std::string> symbolTabel;
 extern std::map<std::string, std::string> stringTabel;
 extern std::string before, errorStr, inputFile;
 extern std::vector<std::string> filestrings, errorStrings;
-extern std::vector<size_t> errorNodes;
 extern MessageTree tree;
 extern int yycolumn;
 extern int yylineno;

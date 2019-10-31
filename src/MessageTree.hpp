@@ -4,6 +4,8 @@
 #ifndef NKU_PRACTICE_MESSAGETREE_H
 #define NKU_PRACTICE_MESSAGETREE_H
 
+#define MESSAGE_TREE_DEBUG
+
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -13,7 +15,6 @@ using namespace std;
 
 class MessageTree {
 public:
-    size_t last_node;
     /**
      * 构造函数, 树初始时必须有一个根, 根编号0
      * @param msg 根的信息
@@ -47,7 +48,8 @@ public:
         node_parent.push_back((size_t) (-1));
         node_children.emplace_back();
         size_t this_node = node_msg.size() - 1;
-        return last_node = this_node;
+        last_nodes.insert(this_node);
+        return this_node;
     }
 
     /**
@@ -65,6 +67,9 @@ public:
             node_children[parent].push_back(node_id);
         } else {
             printf("该节点%zu已经有了父节点, 不能再设父节点为%zu\n", node_id, parent);
+        }
+        if (last_nodes.find(node_id) != last_nodes.end()) {
+            last_nodes.erase(node_id);
         }
     }
 
@@ -98,10 +103,57 @@ public:
         return node_msg.size();
     }
 
+    /**
+     *  记录错误节点
+     */
+    inline void error_push(size_t error_id) {
+        error_nodes.push_back(error_id);
+    }
+
+    /**
+     *  获取错误节点数
+     */
+    inline int error_cnt() {
+        return error_nodes.size();
+    }
+
+    /**
+     *  获取错误节点
+     */
+    inline size_t get_error(int idx) {
+        if (idx < 0 || idx >= error_nodes.size()) {
+            return -1;
+        }
+        return error_nodes[idx];
+    }
+
+    /**
+     *  组织错误节点及剩余节点，错误节点是那些由于发生错误而未被组织进树里的节点
+     */
+    inline void last_combine() {
+        int idx = 0;
+        for (auto i : last_nodes) {
+            #ifdef MESSAGE_TREE_DEBUG
+            if (idx >= error_nodes.size()) {
+                puts("COMPILER ERROR: OUT RANGE OF ERROR NODES.");
+                exit(1);
+            }
+            if (i == error_nodes[idx]) {
+                puts("COMPILER ERROR: SAME TAG ERROR AND LAST OF NODE.");
+                exit(1);
+            }
+            #endif
+            if (i > error_nodes[idx]) { // 必须在逻辑上保证错误节点不是剩余节点
+                idx ++;
+            }
+            set_parent(i, error_nodes[idx]); // 必须保证在程序正确的情况下错误节点能容纳所有剩余节点
+        }
+    }
 private:
     vector<string> node_msg;
-    vector<size_t> node_parent;
+    vector<size_t> node_parent, error_nodes;
     vector<vector<size_t> > node_children;
+    set<size_t> last_nodes; // 剩下的节点
 
     void print_node(size_t node_id, vector<size_t> &has_next_children, size_t depth, bool last_child,
                     bool *vis) const {
