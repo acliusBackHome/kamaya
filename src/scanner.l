@@ -9,7 +9,7 @@ map<int, string> nameTable;
 map<string, string> symbolTabel;
 map<string, string> stringTabel;
 vector<string> filestrings, errorStrings;
-MessageTree tree("program");
+ParseTree tree("program");
 string before;
 int yycolumn = 0;
 

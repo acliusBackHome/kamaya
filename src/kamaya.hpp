@@ -7,7 +7,7 @@
 #define YYSTYPE unsigned long
 
 #include "parser.tab.hpp"
-#include "MessageTree.hpp"
+#include "ParseTree.hpp"
 
 #define enum2str(name) string(#name)
 
@@ -16,7 +16,7 @@ extern std::map<std::string, std::string> symbolTabel;
 extern std::map<std::string, std::string> stringTabel;
 extern std::string before, errorStr, inputFile;
 extern std::vector<std::string> filestrings, errorStrings;
-extern MessageTree tree;
+extern ParseTree tree;
 extern int yycolumn;
 extern int yylineno;
 extern int yyleng;
