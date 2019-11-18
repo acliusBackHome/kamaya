@@ -154,6 +154,11 @@ unary_expression
     $$ = tree.new_node("sizeof");
     tree.set_parent($3, $$);
   }
+  | error RP {
+    $$ =  tree.new_node(errorStr);
+    tree.error_push($$);
+    if (!feof(file)) yyerrok;
+  }
   ;
 
 unary_operator
@@ -939,6 +944,11 @@ direct_abstract_declarator
     tree.set_parent($3, temp);
     tree.set_parent(temp, $$);
   }
+  | error RP {
+    $$ =  tree.new_node(errorStr);
+    tree.error_push($$);
+    if (!feof(file)) yyerrok;
+  }
   ;
 
 initializer
@@ -953,6 +963,11 @@ initializer
   | LB initializer_list COMMA RB {
     $$ = tree.new_node("initializer 3");
     tree.set_parent($1, $$);
+  }
+  | error RB {
+    $$ =  tree.new_node(errorStr);
+    tree.error_push($$);
+    if (!feof(file)) yyerrok;
   }
   ;
 
@@ -1045,6 +1060,7 @@ labeled_statement
     $$ = tree.new_node("default statement");
     tree.set_parent($3, $$);
   }
+  ;
 
 compound_statement
   : LB RB {
@@ -1057,6 +1073,11 @@ compound_statement
     tree.node($$)->set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
     tree.set_parent($3, $$);
+  }
+  | error RB {
+    $$ =  tree.new_node(errorStr);
+    tree.error_push($$);
+    if (!feof(file)) yyerrok;
   }
   ;
 
@@ -1087,13 +1108,10 @@ expression_statement
   | SEMICOLON {
     $$ = tree.new_node("empty statement");
   }
-  | error {
-    // size_t last_node = tree.last_node;
+  | error SEMICOLON {
     $$ =  tree.new_node(errorStr);
-    // tree.set_parent(last_node, $$);
-    // errorNodes.push_back($$);
     tree.error_push($$);
-    yyerrok;
+    if (!feof(file)) yyerrok;
   }
   ;
 

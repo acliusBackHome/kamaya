@@ -21,6 +21,7 @@ extern int yycolumn;
 extern int yylineno;
 extern int yyleng;
 extern char *yytext;
+extern FILE *file;
 
 void initName();
 std::string getName(int);

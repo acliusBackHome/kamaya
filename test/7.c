@@ -1,4 +1,4 @@
-void putchar(int){}
+void putchar(int a){
 int main() {
     int a, b = 1;
     a = b + 10 / 2 ^ 3 ^ 2 ^ 3; // pay attention to operation priority
