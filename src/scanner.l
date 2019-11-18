@@ -136,6 +136,12 @@ L?\"(\\.|[^\\"\n])*\"	              {yylval = install_string(); return STRING_LI
 ">>"                                {return RIGHT_OP;}
 "?"                                 {return QUESTION_MARK;}
 ":"                                 {return COLON;}
+.                                   {
+                                      string msg = "error: stray ‘" + string(yytext) + "’ in program";
+                                      yyerror(msg.c_str());
+                                      cout << errorStrings[errorStrings.size() - 1] << endl;
+                                      exit(0);
+                                    }
 %%
 
 int yywrap()
