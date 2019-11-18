@@ -12,6 +12,7 @@ vector<string> filestrings, errorStrings;
 ParseTree tree("program");
 string before;
 int yycolumn = 0;
+FILE* file;
 
 unsigned long install_id() {
   before = yytext;
@@ -156,7 +157,6 @@ int main(int argc, char** argv) {
     return 1;
   }
   inputFile = argv[1]; // In fact, this is exec file
-  FILE* file;
   char strline[2048];
   if (!(file = fopen(argv[1], "r"))) {
     cout << argv[0] << ": error: " << argv[1] << ": " << "No such file or directory" << endl
