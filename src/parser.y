@@ -38,8 +38,8 @@ program
 
 id_delaration
   : ID {
-    sprintf(buff, "ID declaration %s", (const char*)$1);
-    $$ = tree.new_node(buff);
+    $$ = tree.new_node("", IDENTIFIER);
+    tree.node($$)->set_symbol((const char*)$1);
   }
   | MAIN {
     $$ = tree.new_node("ID declaration main");

@@ -66,22 +66,8 @@ size_t ParseTree::get_node_num() const {
     return node_msg.size();
 }
 
-void ParseTree::set_node_symbol(size_t node_id, const string &symbol) {
-    if (!check_node(node_id)) {
-        return;
-    }
-    nodes[node_id].set_symbol(symbol);
-}
-
-string ParseTree::get_node_symbol(size_t node_id) const {
-    if (!check_node(node_id)) {
-        return "";
-    }
-    return nodes[node_id].get_symbol();
-}
-
 void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
-                             size_t depth, bool last_child, bool *vis) const {
+                           size_t depth, bool last_child, bool *vis) const {
     if (node_id != 0) {
         if (last_child) {
             printf(" |_");
@@ -89,7 +75,11 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
             printf(" |-");
         }
     }
-    printf("%zu:%s\n", node_id, node_msg[node_id].c_str());
+    if(nodes[node_id].node_type == IDENTIFIER) {
+        printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
+    } else {
+        printf("%zu:%s\n", node_id, node_msg[node_id].c_str());
+    }
     vis[node_id] = true;
     string pre_fix;
     for (size_t i = 1; i < depth; ++i) {
@@ -118,10 +108,29 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
 
 bool ParseTree::check_node(size_t node_id) const {
     if (node_id >= node_msg.size()) {
-        printf("错误,树中没有节点%zu\n", node_id);
+        printf("警告:树中没有节点%zu\n", node_id);
         return false;
     }
     return true;
+}
+
+ParseTree::Node* ParseTree::node(size_t node_id) {
+    if(check_node(node_id)){
+        return &nodes[node_id];
+    }
+    return nullptr;
+}
+
+ParseTree::~ParseTree() {
+    for(auto &node : nodes) {
+        for(auto & each : node.keys) {
+            switch ((NodeKey) each.first) {
+                case SYMBOL:
+                    delete (string *) each.second;
+                    break;
+            }
+        }
+    }
 }
 
 #pragma clang diagnostic pop

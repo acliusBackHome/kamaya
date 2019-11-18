@@ -18,6 +18,41 @@ using namespace std;
 
 class ParseTree {
 public:
+    class Node {
+        friend class ParseTree;
+
+        size_t node_id;
+        NodeType node_type;
+        // 字段到字段值的映射, 值是一个指针需要经过转换
+        map<int, size_t> keys;
+    public:
+
+        explicit Node(size_t _node_id, NodeType type);
+
+        Node(const Node &other);
+
+        string get_key_name(NodeKey type) const;
+
+        /**
+         * 设置节点的symbol键对应的值
+         * @param symbol
+         */
+        void set_symbol(const string &symbol);
+
+        /**
+         * 获取节点的symbol键对应的值
+         * @param symbol
+         */
+        string get_symbol() const;
+
+        string get_node_info() const;
+
+    private:
+
+    };
+
+    friend class Node;
+
     /**
      * 构造函数, 树初始时必须有一个根, 根编号0
      * @param msg 根的信息
@@ -83,34 +118,12 @@ public:
      */
     void last_combine();
 
-    //以下是对节点操作的接口
+    //对节点操作的接口
+    Node *node(size_t node_id);
 
-    void set_node_symbol(size_t node_id, const string &symbol);
-
-    string get_node_symbol(size_t node_id) const;
+    ~ParseTree();
 
 private:
-    struct Node {
-        size_t node_id;
-        NodeType node_type;
-        map<int, size_t> keys;
-        // 字段名到字段值的映射
-        // 字段: 类型 意义
-        // symbol: string* 变量名, 函数名等
-        //
-
-        explicit Node(size_t _node_id, NodeType type);
-
-        const string get_key_name(NodeKey type);
-
-        void set_symbol(const string &symbol);
-
-        const string &get_symbol() const;
-
-        ~Node();
-
-    };
-
     vector<Node> nodes;
     vector<string> node_msg;
     vector<size_t> node_parent, error_nodes;
@@ -121,6 +134,7 @@ private:
                     size_t depth, bool last_child, bool *vis) const;
 
     bool check_node(size_t node_id) const;
+
 };
 
 #endif //NKU_PRACTICE_PARSE_TREE_H

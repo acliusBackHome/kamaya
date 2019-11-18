@@ -2,6 +2,7 @@
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 void ParseTree::error_push(size_t error_id) {
     error_nodes.push_back(error_id);
 }
