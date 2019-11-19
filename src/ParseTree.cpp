@@ -4,7 +4,7 @@
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 ParseTree::ParseTree(const string &msg) {
-    nodes.emplace_back(0, NORMAL);
+    nodes.emplace_back(0, N_NORMAL);
     node_parent.push_back(0);
     node_msg.push_back(msg);
     node_children.emplace_back();
@@ -25,6 +25,10 @@ size_t ParseTree::new_node(const string &msg, NodeType node_type) {
     nodes.emplace_back(this_node, node_type);
     last_nodes.insert(this_node);
     return this_node;
+}
+
+size_t ParseTree::new_node(NodeType node_type) {
+    return new_node("", node_type);
 }
 
 void ParseTree::set_parent(size_t node_id, size_t parent) {
@@ -75,7 +79,7 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
             printf(" |-");
         }
     }
-    if(nodes[node_id].node_type == IDENTIFIER) {
+    if (nodes[node_id].node_type == N_IDENTIFIER || nodes[node_id].node_type == N_CONST) {
         printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
     } else {
         printf("%zu:%s\n", node_id, node_msg[node_id].c_str());
@@ -114,23 +118,133 @@ bool ParseTree::check_node(size_t node_id) const {
     return true;
 }
 
-ParseTree::Node* ParseTree::node(size_t node_id) {
-    if(check_node(node_id)){
+ParseTree::Node *ParseTree::node(size_t node_id) {
+    if (check_node(node_id)) {
         return &nodes[node_id];
     }
     return nullptr;
 }
 
 ParseTree::~ParseTree() {
-    for(auto &node : nodes) {
-        for(auto & each : node.keys) {
+    for (auto &node : nodes) {
+        for (auto &each : node.keys) {
             switch ((NodeKey) each.first) {
-                case SYMBOL:
+                case K_SYMBOL:
                     delete (string *) each.second;
+                    break;
+                case K_TYPE:
+                    delete (int *) each.second;
+                    break;
+                case K_CONST_VALUE:
+                    delete (ConstValueType *) each.second;
                     break;
             }
         }
     }
 }
+
+ParseTree::ConstValueType::~ConstValueType() {
+    switch (type) {
+        case V_SHORT:
+        case V_INT:
+        case V_LONG:
+            delete (long long *) value_pointer;
+            break;
+        case V_FLOAT:
+        case V_DOUBLE:
+            delete (double *) value_pointer;
+            break;
+        case V_BOOL:
+            delete (bool *) value_pointer;
+            break;
+        case V_CHAR:
+        case V_CONST_STRING:
+            delete (string *) value_pointer;
+            break;
+        default:
+            break;
+    }
+}
+
+ParseTree::ConstValueType::ConstValueType(VariableType _type, long long value) {
+    switch (type = _type) {
+        case V_SHORT:
+        case V_INT:
+        case V_LONG: {
+            auto *temp = new long long;
+            *temp = value;
+            value_pointer = temp;
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+ParseTree::ConstValueType::ConstValueType(VariableType _type, double value) {
+    switch (type = _type) {
+        case V_FLOAT:
+        case V_DOUBLE: {
+            auto *temp = new double;
+            *temp = value;
+            value_pointer = temp;
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+ParseTree::ConstValueType::ConstValueType(VariableType _type, bool value) {
+    switch (type = _type) {
+        case V_BOOL: {
+            auto *temp = new bool;
+            *temp = value;
+            value_pointer = temp;
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+ParseTree::ConstValueType::ConstValueType(VariableType _type, const string &value) {
+    switch (type = _type) {
+        case V_CHAR:
+        case V_CONST_STRING: {
+            value_pointer = new string(value);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+string ParseTree::ConstValueType::get_info() const {
+    char buff[64];
+    switch (type) {
+        case V_SHORT:
+        case V_INT:
+        case V_LONG:
+            sprintf(buff, " const value: %lld,", *((long long *) value_pointer));
+            break;
+        case V_FLOAT:
+        case V_DOUBLE:
+            sprintf(buff, " const value: %lf,", *((double *) value_pointer));
+            break;
+        case V_BOOL:
+            sprintf(buff, " const value: %d,", *((bool *) value_pointer));
+            break;
+        case V_CHAR:
+        case V_CONST_STRING:
+            sprintf(buff, " const value: %s,", ((string *) value_pointer)->c_str());
+            break;
+            //其他类型没有常量定义
+        default:
+            break;
+    }
+    return string(buff);
+}
+
 
 #pragma clang diagnostic pop

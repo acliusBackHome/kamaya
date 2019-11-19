@@ -38,11 +38,12 @@ program
 
 id_delaration
   : ID {
-    $$ = tree.new_node("", IDENTIFIER);
+    $$ = tree.new_node(N_IDENTIFIER);
     tree.node($$)->set_symbol((const char*)$1);
   }
   | MAIN {
-    $$ = tree.new_node("ID declaration main");
+    $$ = tree.new_node(N_IDENTIFIER);
+    tree.node($$)->set_symbol("main");
   }
   ;
 
@@ -52,15 +53,15 @@ primary_expression
     $$ = $1;
   }
   | NUMBER {
-    sprintf(buff, "const value %lu", $1);
-    $$ = tree.new_node(buff);
+    $$ = tree.new_node(N_CONST);
+    tree.node($$)->set_const_signed_value(V_LONG, $1);
   }
   | STRING_LITERAL {
-    sprintf(buff, "const string %s", (const char*)$1);
-    $$ = tree.new_node(buff);
+    $$ = tree.new_node(N_CONST);
+    tree.node($$)->set_const_string_value(V_LONG, string((const char*)$1));
   }
   | LP expression RP {
-    $$ =  $2;
+    $$ = $2;
   }
   ;
 
