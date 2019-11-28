@@ -20,21 +20,27 @@ int ParseTree::error_cnt() {
 
 void ParseTree::last_combine() {
     int idx = 0;
-    for (auto i : last_nodes) {
-#ifdef PARSE_TREE_DEBUG
+    set<size_t> tmp_nodes(last_nodes);
+    for (auto i : tmp_nodes) {
         if (idx >= error_nodes.size()) {
+#ifdef PARSE_TREE_DEBUG
             puts("COMPILER ERROR: OUT RANGE OF ERROR NODES.");
-            exit(1);
+#endif
+            break;
         }
         if (i == error_nodes[idx]) {
+#ifdef PARSE_TREE_DEBUG
             puts("COMPILER ERROR: SAME TAG ERROR AND LAST OF NODE.");
-            exit(1);
-        }
 #endif
+            continue;
+        }
         if (i > error_nodes[idx]) { // 必须在逻辑上保证错误节点不是剩余节点
             idx++;
         }
         set_parent(i, error_nodes[idx]); // 必须保证在程序正确的情况下错误节点能容纳所有剩余节点
+    }
+    for (auto i : last_nodes) {
+        set_parent(i, 0);
     }
 }
 

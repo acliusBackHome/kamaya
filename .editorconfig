@@ -13,3 +13,6 @@ indent_style = tab
 
 [src/MessageTree.hpp]
 indent_size = 4
+
+[src/Parse*]
+indent_size = 4
