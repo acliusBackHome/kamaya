@@ -41,7 +41,7 @@ void ParseTree::set_parent(size_t node_id, size_t parent) {
         node_parent[node_id] = parent;
         node_children[parent].push_back(node_id);
     } else {
-        printf("该节点%zu已经有了父节点, 不能再设父节点为%zu\n", node_id, parent);
+        printf("该节点%zu已经有了父节点%zu, 不能再设父节点为%zu\n", node_id, node_parent[node_id], parent);
     }
     if (last_nodes.find(node_id) != last_nodes.end()) {
         last_nodes.erase(node_id);

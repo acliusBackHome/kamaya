@@ -266,6 +266,18 @@ public:
 
     ~ParseTree();
 
+#ifdef PARSE_TREE_DEBUG
+    /**
+        * 检查子节点生成情况
+        */
+    void watch_children_nodes() const;
+
+    /**
+        * 检查剩余结点情况
+        */
+    void watch_last_nodes() const;
+#endif
+
 private:
     vector<ParseNode> nodes;
     vector<string> node_msg;
