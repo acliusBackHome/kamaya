@@ -17,49 +17,12 @@
 using namespace std;
 
 class ParseTree {
-    struct ConstValueType {
-        VariableType type;
-        void *value_pointer;
-
-        /**
-         * 有符号整数构造函数
-         * @param type
-         * @param value
-         */
-        ConstValueType(VariableType _type, long long value);
-
-        /**
-         * 浮点数
-         * @param type
-         * @param value
-         */
-        ConstValueType(VariableType _type, double value);
-
-        /**
-         * 布尔值
-         * @param type
-         * @param value
-         */
-        ConstValueType(VariableType _type, bool value);
-
-        /**
-         * 字符串
-         * @param type
-         * @param value
-         */
-        ConstValueType(VariableType _type, const string &value);
-
-        string get_info() const;
-
-        ~ConstValueType();
-    };
-
 public:
     class Node {
         friend class ParseTree;
 
         size_t node_id;
-        NodeType node_type;
+        NodeType type;
         // 字段到字段值的映射, 值是一个指针需要经过转换
         map<int, size_t> keys;
 
@@ -69,13 +32,11 @@ public:
 
         Node(const Node &other);
 
-        static string get_key_name(NodeKey type);
-
-        static string get_type_name(VariableType type);
-
-        static string get_node_type_name(NodeType type);
-
-        VariableType get_type() const;
+        /**
+         * 获取节点的类型
+         * @return
+         */
+        NodeType get_type() const;
 
         /**
          * 设置节点的symbol键对应的值
@@ -90,55 +51,34 @@ public:
         string get_symbol() const;
 
         /**
-         * 设置该节点为有符号整数常量
-         * @param type
-         * @param value
-         */
-        void set_const_signed_value(VariableType type, long long value);
-
-        /**
-         * 获取节点的有符号整数常量的值
+         * 设置常量值: 有符号整数
          * @return
          */
-        long long get_const_signed_value() const;
+        void set_const(long long value);
 
         /**
-         * 设置该节点为浮点数常量
-         * @param type
-         * @param value
-         */
-        void set_const_float_value(VariableType type, double value);
-
-        /**
-         * 获取节点的浮点数常量的值
+         * 设置常量值: 无符号整数
          * @return
          */
-        double get_const_float_value() const;
+        void set_const(unsigned long long value);
 
         /**
-         * 设置节点为布尔值常量
-         * @param type
-         * @param value
-         */
-        void set_const_bool_value(VariableType type, bool value);
-
-        /**
-         * 获取节点的布尔值常量
+         * 设置常量值: 浮点数
          * @return
          */
-        bool get_const_bool_value() const;
+        void set_const(long double value);
 
         /**
-         * 设置节点为字符串常量
-         * @param type
-         * @param value
+         * 设置常量值: 布尔
+         * @return
          */
-        void set_const_string_value(VariableType type, const string& value);
+        void set_const(bool value);
 
         /**
-         * 获取节点的字符串常量值
+         * 设置常量值: 字符串
+         * @return
          */
-        string get_const_string_value() const;
+        void set_const(const string &value);
 
         /**
          * 获取节点信息
@@ -146,13 +86,62 @@ public:
          */
         string get_node_info() const;
 
-    private:
         /**
-         * 设置节点的变量类型
+         * 获取节点键的名字
          * @param type
+         * @return
          */
-        void set_type(VariableType type);
+        static string get_key_name(NodeKey type);
 
+        /**
+         * 获取节点类型的名字
+         * @param type
+         * @return
+         */
+        static string get_node_type_name(NodeType type);
+
+        /**
+         * 获取类型名字
+         * @param type
+         * @return
+         */
+        static string get_const_type_name(ConstValueType type);
+
+    private:
+
+        /**
+         * 当常量值更新时需要执行的函数:
+         * 负责检查键值是否存在,如果存在需要删除之
+         */
+        void update_const();
+
+        /**
+         *  删除常量所涉及的字段
+         */
+        void delete_const();
+
+        /**
+         * 获取该节点的常量类型,
+         * 如果不是常量类型节点,则返回-1
+         * 否则返回ConstValueType
+         * @return
+         */
+        int get_const_type() const;
+
+        /**
+         * 输出时用, 获取表示常量的值的字符串
+         * @return
+         */
+        string get_const_value_str() const;
+
+        /**
+         * 删除所有keys所指向的具体对象, 这本来是析构函数所做的事
+         * 但是因为vector会构造一个临时对象, 而本人觉得没有必要为每个
+         * 节点的每个key都重新new再delete一遍,所以放到整个语法树析构时执行此动作
+         * 该动作delete keys所指向的各个具体对象
+         * @return
+         */
+        void delete_all_keys();
     };
 
     friend class Node;
@@ -183,6 +172,50 @@ public:
      * @return
      */
     size_t new_node(NodeType node_type = N_NORMAL);
+
+
+    /**
+     * 生成一个新的常量无符号整数的节点
+     * @param unsigned_num
+     * @return 节点编号
+     */
+    size_t make_const_node(unsigned long long unsigned_num);
+
+    /**
+     * 生成一个新的常量有符号整数的节点
+     * @param signed_num
+     * @return 节点编号
+     */
+    size_t make_const_node(long long signed_num);
+
+    /**
+     * 生成一个新的常量浮点数的节点
+     * @param float_num
+     * @return 节点编号
+     */
+    size_t make_const_node(long double float_num);
+
+    /**
+     * 生成一个新的常量布尔值的节点
+     * @param bool
+     * @return 节点编号
+     */
+    size_t make_const_node(bool b);
+
+    /**
+     * 生成一个新的常量字符串的节点, 传入参数是字符串,
+     * 要求该指针在该树的声明周期内有效
+     * @param str
+     * @return 节点编号
+     */
+    size_t make_const_node(const string &str);
+
+    /**
+     * 生成一个标识符节点
+     * @param symbol id的符号
+     * @return 节点编号
+     */
+    size_t make_identifier_node(const string &symbol);
 
     /**
      *  设置节点的父节点

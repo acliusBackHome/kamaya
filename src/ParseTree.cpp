@@ -79,10 +79,15 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
             printf(" |-");
         }
     }
-    if (nodes[node_id].node_type == N_IDENTIFIER || nodes[node_id].node_type == N_CONST) {
-        printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
-    } else {
-        printf("%zu:%s\n", node_id, node_msg[node_id].c_str());
+    switch (nodes[node_id].type) {
+        case N_IDENTIFIER:
+        case N_CONST:
+            printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
+            break;
+        case N_NORMAL:
+        case N_UNKNOWN:
+            printf("%zu:%s\n", node_id, node_msg[node_id].c_str());
+            break;
     }
     vis[node_id] = true;
     string pre_fix;
@@ -125,125 +130,46 @@ ParseTree::Node *ParseTree::node(size_t node_id) {
     return nullptr;
 }
 
+size_t ParseTree::make_const_node(unsigned long long unsigned_num) {
+    size_t new_one = new_node(N_CONST);
+    nodes[new_one].set_const(unsigned_num);
+    return new_one;
+}
+
+size_t ParseTree::make_const_node(long long signed_num) {
+    size_t new_one = new_node(N_CONST);
+    nodes[new_one].set_const(signed_num);
+    return new_one;
+}
+
+size_t ParseTree::make_const_node(long double float_num) {
+    size_t new_one = new_node(N_CONST);
+    nodes[new_one].set_const(float_num);
+    return new_one;
+}
+
+size_t ParseTree::make_const_node(bool b) {
+    size_t new_one = new_node(N_CONST);
+    nodes[new_one].set_const(b);
+    return new_one;
+}
+
+size_t ParseTree::make_const_node(const string &str) {
+    size_t new_one = new_node(N_CONST);
+    nodes[new_one].set_const(str);
+    return new_one;
+}
+
+size_t ParseTree::make_identifier_node(const string &symbol) {
+    size_t new_one = new_node(N_IDENTIFIER);
+    nodes[new_one].set_symbol(symbol);
+    return new_one;
+}
+
 ParseTree::~ParseTree() {
-    for (auto &node : nodes) {
-        for (auto &each : node.keys) {
-            switch ((NodeKey) each.first) {
-                case K_SYMBOL:
-                    delete (string *) each.second;
-                    break;
-                case K_TYPE:
-                    delete (int *) each.second;
-                    break;
-                case K_CONST_VALUE:
-                    delete (ConstValueType *) each.second;
-                    break;
-            }
-        }
+    for (auto &each : nodes) {
+        each.delete_all_keys();
     }
-}
-
-ParseTree::ConstValueType::~ConstValueType() {
-    switch (type) {
-        case V_SHORT:
-        case V_INT:
-        case V_LONG:
-            delete (long long *) value_pointer;
-            break;
-        case V_FLOAT:
-        case V_DOUBLE:
-            delete (double *) value_pointer;
-            break;
-        case V_BOOL:
-            delete (bool *) value_pointer;
-            break;
-        case V_CHAR:
-        case V_CONST_STRING:
-            delete (string *) value_pointer;
-            break;
-        default:
-            break;
-    }
-}
-
-ParseTree::ConstValueType::ConstValueType(VariableType _type, long long value) {
-    switch (type = _type) {
-        case V_SHORT:
-        case V_INT:
-        case V_LONG: {
-            auto *temp = new long long;
-            *temp = value;
-            value_pointer = temp;
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-ParseTree::ConstValueType::ConstValueType(VariableType _type, double value) {
-    switch (type = _type) {
-        case V_FLOAT:
-        case V_DOUBLE: {
-            auto *temp = new double;
-            *temp = value;
-            value_pointer = temp;
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-ParseTree::ConstValueType::ConstValueType(VariableType _type, bool value) {
-    switch (type = _type) {
-        case V_BOOL: {
-            auto *temp = new bool;
-            *temp = value;
-            value_pointer = temp;
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-ParseTree::ConstValueType::ConstValueType(VariableType _type, const string &value) {
-    switch (type = _type) {
-        case V_CHAR:
-        case V_CONST_STRING: {
-            value_pointer = new string(value);
-            break;
-        }
-        default:
-            break;
-    }
-}
-
-string ParseTree::ConstValueType::get_info() const {
-    char buff[64];
-    switch (type) {
-        case V_SHORT:
-        case V_INT:
-        case V_LONG:
-            sprintf(buff, " const value: %lld,", *((long long *) value_pointer));
-            break;
-        case V_FLOAT:
-        case V_DOUBLE:
-            sprintf(buff, " const value: %lf,", *((double *) value_pointer));
-            break;
-        case V_BOOL:
-            sprintf(buff, " const value: %d,", *((bool *) value_pointer));
-            break;
-        case V_CHAR:
-        case V_CONST_STRING:
-            sprintf(buff, " const value: %s,", ((string *) value_pointer)->c_str());
-            break;
-            //其他类型没有常量定义
-        default:
-            break;
-    }
-    return string(buff);
 }
 
 
