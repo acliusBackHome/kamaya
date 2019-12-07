@@ -1,5 +1,5 @@
 #include "foo.h"
-int main() {
+void _start() {
   PRINT("%d", 1);
-  return 0;
+  // 这里产生了一个段错误，即使不调用 PRINT 也会产生，原因尚不明确
 }

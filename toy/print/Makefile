@@ -1,15 +1,22 @@
-run: clean foo.c print.nasm macro.inc
-	gcc -m32 -fno-stack-protector -c -o foo.o foo.c
-	ar -crv libfoo.a foo.o
-	nasm -f elf32 -P"macro.inc" -o print.o print.nasm
-	ld -m elf_i386 -o print.bin print.o libfoo.a
+CC := gcc
+AR := ar
+ASM := nasm
+LD := ld
+
+run: libfoo print.nasm macro.inc
+	$(ASM) -f elf32 -P"macro.inc" -o print.o print.nasm
+	$(LD) -m elf_i386 -o print.bin print.o libfoo.a
 	echo "run ./print.bin to watch the result"
 
-hello: clean
-	-rm hello hello.o
-	nasm -f elf32 -o hello.o hello.nasm
-	ld -m elf_i386 -o hello.bin hello.o
-	echo "run ./hello.bin to watch result"
+footest: libfoo
+	$(CC) -m32 -S foo_test.c
+	$(CC) -m32 -c foo_test.c
+	$(LD) -m elf_i386 -o foo_test.bin foo_test.o libfoo.a
+	echo "run ./foo_test.bin to watch the result"
+
+libfoo: clean
+	$(CC) -m32 -fno-stack-protector -c -o foo.o foo.c
+	$(AR) -crv libfoo.a foo.o
 
 clean:
-	-rm *.o *.a
+	-rm *.o *.a *.bin
