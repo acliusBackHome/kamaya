@@ -71,10 +71,13 @@ string getName(int token) {
 }
 
 void yyUserActon() {
+  if (yylloc.last_line != yylineno) {
+    yycolumn = 0;
+  }
   yylloc.first_line = yylineno - 1;
   yylloc.last_line = yylineno;
   yylloc.first_column = yycolumn;
   yylloc.last_column = yycolumn + yyleng;
   yycolumn += yyleng;
-  // cout << endl << yylloc.first_line << yylloc.last_line << yylloc.first_column << yylloc.last_column << endl;
+  // cout << endl << yylloc.first_line << ", " << yylloc.last_line << ", " << yylloc.first_column << ", " << yylloc.last_column << endl;
 }
