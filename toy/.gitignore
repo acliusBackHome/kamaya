@@ -4,3 +4,4 @@
 *.output
 *.o
 *.a
+print/foo_test.s

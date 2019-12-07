@@ -1,3 +1,5 @@
+#include "foo.h"
+
 void SYS_PRINT(char *string, int len);
 
 #define BUFLEN 1024
