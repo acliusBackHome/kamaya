@@ -155,8 +155,7 @@ unary_expression
     tree.set_parent($3, $$);
   }
   | error RP {
-    $$ =  tree.new_node(errorStr);
-    tree.error_push($$);
+    $$ = tree.get_error(tree.error_cnt()-1);
     if (!feof(file)) yyerrok;
   }
   ;
@@ -945,8 +944,7 @@ direct_abstract_declarator
     tree.set_parent(temp, $$);
   }
   | error RP {
-    $$ =  tree.new_node(errorStr);
-    tree.error_push($$);
+    $$ = tree.get_error(tree.error_cnt()-1);
     if (!feof(file)) yyerrok;
   }
   ;
@@ -965,8 +963,7 @@ initializer
     tree.set_parent($1, $$);
   }
   | error RB {
-    $$ =  tree.new_node(errorStr);
-    tree.error_push($$);
+    $$ = tree.get_error(tree.error_cnt()-1);
     if (!feof(file)) yyerrok;
   }
   ;
@@ -1075,8 +1072,7 @@ compound_statement
     tree.set_parent($3, $$);
   }
   | error RB {
-    $$ =  tree.new_node(errorStr);
-    tree.error_push($$);
+    $$ = tree.get_error(tree.error_cnt()-1);
     if (!feof(file)) yyerrok;
   }
   ;
@@ -1109,8 +1105,7 @@ expression_statement
     $$ = tree.new_node("empty statement");
   }
   | error SEMICOLON {
-    $$ =  tree.new_node(errorStr);
-    tree.error_push($$);
+    $$ = tree.get_error(tree.error_cnt()-1);
     if (!feof(file)) yyerrok;
   }
   ;
@@ -1254,10 +1249,11 @@ string errorStr, inputFile;
 
 void yyerror(const char* msg) {
   string appendstr = inputFile + ":" + to_string(yylloc.first_line + 1) + ":" + to_string(yylloc.first_column + 1) + ": " + msg + '\n' +
-                     filestrings[yylloc.first_line] + '\n';
+                     (filestrings.size() == yylloc.first_line ? "" : filestrings[yylloc.first_line]) + '\n';
   for (int i = 0; i < yylloc.first_column; i++) appendstr += " ";
   appendstr += "^";
   errorStrings.push_back(appendstr);
-  // errorStr = "^ lineno[" + to_string((int)yylloc.last_line) + "]columnno[" + to_string((int)yylloc.first_column) + "]: " + msg;
   errorStr = msg;
+  size_t eid =  tree.new_node(errorStr);
+  tree.error_push(eid);
 }

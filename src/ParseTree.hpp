@@ -264,18 +264,28 @@ public:
      */
     ParseNode *node(size_t node_id);
 
+    /**
+     *  获取局部根节点
+     */
+    size_t native_root(size_t idx);
+
     ~ParseTree();
 
 #ifdef PARSE_TREE_DEBUG
     /**
-        * 检查子节点生成情况
-        */
+     *  检查子节点生成情况
+     */
     void watch_children_nodes() const;
 
     /**
-        * 检查剩余结点情况
-        */
+     *  检查剩余结点情况
+     */
     void watch_last_nodes() const;
+
+    /**
+     *  检查错误结点
+     */
+     void watch_error_nodes() const;
 #endif
 
 private:
