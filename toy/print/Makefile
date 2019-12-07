@@ -1,8 +1,8 @@
 run: clean foo.c print.nasm macro.inc
-	gcc -m32 -c -o foo.o foo.c
+	gcc -m32 -fno-stack-protector -c -o foo.o foo.c
 	ar -crv libfoo.a foo.o
 	nasm -f elf32 -P"macro.inc" -o print.o print.nasm
-	ld -m elf_i386 -o print.bin print.o -L. -lfoo
+	ld -m elf_i386 -o print.bin print.o libfoo.a
 	echo "run ./print.bin to watch the result"
 
 hello: clean
