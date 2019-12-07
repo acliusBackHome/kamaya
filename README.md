@@ -5,6 +5,15 @@
 
 > Another stupid tiny c complier.
 
+## DEPENDENCES UPDATE： NASM32
+
+run
+```
+apt install -y nasm
+# or
+yum install -y nasm
+```
+
 ## CLI UPDATE: HOW TO RUN? JUST FUCK THIS IN CMD: MAKE TEST
 我们会帮你完成前置工作的，请放心。
 
