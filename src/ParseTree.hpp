@@ -20,6 +20,7 @@ using namespace std;
 
 
 class ParseTree {
+    friend class ParseNode;
 public:
     /**
      * 构造函数, 树初始时必须有一个根, 根编号0
@@ -99,15 +100,38 @@ public:
      * @param address 变量地址
      * @return
      */
-    size_t make_variable_node(const ParseType &type, const string &symbol, size_t address);
+    // size_t make_variable_node(const ParseType &type, const string &symbol, size_t address);
 
     /**
      * 生成一个类型声明节点
      * @param type 这个节点所声明的类型
      * @return
      */
-    size_t make_type_specifiers(const ParseType &type);
+    size_t make_type_specifier_node(const ParseType &type);
 
+    /**
+     * 生成一个修饰类型声明节点
+     * @return
+     */
+    size_t make_declaration_specifier_node();
+
+    /**
+     * 生成一个声明器节点
+     * @return
+     */
+    size_t make_declarator_node();
+
+    /**
+     * 生成一个直接声明器节点
+     * @return
+     */
+    size_t make_direct_declarator_node();
+
+    /**
+     * 生成一个参数列表节点
+     * @return
+     */
+    size_t make_parameter_list();
 
     /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
@@ -193,6 +217,72 @@ private:
 
     bool check_node(size_t node_id) const;
 
+};
+
+/**
+ * 用于表示变量记录
+ */
+class ParseVariable {
+public:
+    /**
+     * 默认构造函数, 初始化
+     * type = T_UNKNOWN
+     * symbol = ""
+     * address = (size_t)-1
+     */
+    ParseVariable();
+
+    /**
+     * 简易地赋值
+     * @param _type
+     * @param _symbol
+     * @param _address
+     */
+    ParseVariable(const ParseType &_type, const string &_symbol, size_t _address = (size_t) -1);
+
+    /**
+     * 简单地复制构造
+     * @param other
+     */
+    ParseVariable(const ParseVariable &other);
+
+    /**
+     * 获得变量的类型
+     * @return
+     */
+    ParseType get_type() const;
+
+    /**
+     * 获得变量的符号
+     * @return
+     */
+    string get_symbol() const;
+
+    /**
+     * 获得变量的地址,如果没有赋值,则返回
+     * (size_t) -1
+     * @return
+     */
+    size_t get_address() const;
+
+    /**
+     * 在构造后再赋予地址
+     * @param _address
+     */
+    void set_address(size_t _address);
+
+    /**
+     * 获得变量的信息
+     * @return
+     */
+    string get_info() const;
+
+    ParseVariable &operator=(const ParseVariable &other);
+
+private:
+    ParseType type;
+    string symbol;
+    size_t address;
 };
 
 #endif //NKU_PRACTICE_PARSE_TREE_H

@@ -41,10 +41,26 @@ enum NodeType {
     // symbol: 变量名
     // var_address: 变量地址
     // var_type: 变量类型
-            N_VARIABLE = 4,
+    //        N_VARIABLE = 4,
     // 类型声明:
     // type: 声明的类型
             N_TYPE_SPE = 5,
+    // 类型修饰声明:
+    // 目前没有直接键值
+            N_DECLARATION_SPE = 6,
+    // 声明器:
+    // 目前没有直接键值
+            N_DECLARATOR = 7,
+    // 直接声明:
+    // 目前没有直接键值
+            N_DIRECT_DEC = 8,
+    // 参数列表:
+    // 目前没有直接键值
+            N_PARAM_LIST = 9,
+    // 参数声明
+    // variable参数变量
+            N_PARAM_DECLARATION = 10,
+
 };
 
 enum NodeKey {

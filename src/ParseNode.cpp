@@ -1,5 +1,6 @@
 #include <iostream>
 #include "ParseNode.hpp"
+#include "ParseTree.hpp"
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
@@ -37,12 +38,22 @@ string ParseNode::get_node_type_name(NodeType type) {
             return "identifier";
         case N_CONST:
             return "constant";
-        case N_VARIABLE:
-            return "variable";
+//        case N_VARIABLE:
+//            return "variable";
         case N_UNKNOWN:
             return "unknown";
         case N_TYPE_SPE:
             return "type_specifier";
+        case N_DECLARATION_SPE:
+            return "declaration_specifier";
+        case N_DECLARATOR:
+            return "declarator";
+        case N_DIRECT_DEC:
+            return "direct_declarator";
+        case N_PARAM_LIST:
+            return "parameter_list";
+        case N_PARAM_DECLARATION:
+            return "parameter_declaration";
     }
     return "unknown";
 }
@@ -54,15 +65,6 @@ void ParseNode::set_symbol(const string &symbol) {
         printf("警告: 对节点%zu 的symbol值进行了多次设置\n", node_id);
     }
     keys[K_SYMBOL] = ((size_t) new string(symbol));
-}
-
-string ParseNode::get_symbol() const {
-    const auto &iter = keys.find(K_SYMBOL);
-    if (iter == keys.end()) {
-        printf("警告:节点%zu未定义字段%s\n", node_id, get_key_name(K_SYMBOL).c_str());
-        return "";
-    }
-    return *(string *) iter->second;
 }
 
 string ParseNode::get_node_info() const {
@@ -204,6 +206,11 @@ void ParseNode::delete_all_keys() {
     switch (type) {
         case N_NORMAL:
         case N_UNKNOWN:
+        case N_DECLARATION_SPE:
+        case N_DECLARATOR:
+        case N_DIRECT_DEC:
+        case N_PARAM_LIST:
+        case N_PARAM_DECLARATION:
             break;
         case N_IDENTIFIER: {
             auto iter = keys.find(K_SYMBOL);
@@ -218,20 +225,20 @@ void ParseNode::delete_all_keys() {
         case N_CONST:
             delete_const();
             break;
-        case N_VARIABLE: {
-            auto s = keys.find(K_SYMBOL), t = keys.find(K_VAR_TYPE), a = keys.find(K_VAR_ADDRESS);
-            if (s == keys.end() || s->second == 0 ||
-                t == keys.end() || t->second == 0 ||
-                a == keys.end() || a->second == 0) {
-                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s,的字段定义不完全\n",
-                       node_id, get_node_type_name(type).c_str());
-                break;
-            }
-            delete (ParseType *) t->second;
-            delete (string *) s->second;
-            delete (size_t *) a->second;
-            break;
-        }
+//        case N_VARIABLE: {
+//            auto s = keys.find(K_SYMBOL), t = keys.find(K_VAR_TYPE), a = keys.find(K_VAR_ADDRESS);
+//            if (s == keys.end() || s->second == 0 ||
+//                t == keys.end() || t->second == 0 ||
+//                a == keys.end() || a->second == 0) {
+//                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s,的字段定义不完全\n",
+//                       node_id, get_node_type_name(type).c_str());
+//                break;
+//            }
+//            delete (ParseType *) t->second;
+//            delete (string *) s->second;
+//            delete (size_t *) a->second;
+//            break;
+//        }
         case N_TYPE_SPE: {
             auto t = keys.find(K_TYPE);
             if (t == keys.end() || t->second == 0) {
@@ -243,14 +250,6 @@ void ParseNode::delete_all_keys() {
         }
     }
 
-}
-
-int ParseNode::get_const_type() const {
-    if (type != N_CONST) {
-        return -1;
-    }
-    const auto &iter = keys.find(K_CONST_TYPE);
-    return *(ConstValueType *) iter->second;
 }
 
 string ParseNode::get_const_value_str() const {
@@ -284,32 +283,53 @@ string ParseNode::get_const_value_str() const {
     return "undefined";
 }
 
-void ParseNode::set_variable(const ParseType &type, const string &symbol, size_t address) {
-    update_variable((size_t) new ParseType(type), (size_t) new string(symbol), (size_t) new size_t(address));
-}
+// 以下是冗余代码, 考虑是否删除中
+//void ParseNode::set_variable(const ParseType &type, const string &symbol, size_t address) {
+//    update_variable((size_t) new ParseType(type), (size_t) new string(symbol), (size_t) new size_t(address));
+//}
 
-void ParseNode::update_variable(size_t type_address, size_t symbol_address, size_t var_add_address) {
-    if (type != N_VARIABLE) {
-        printf("ParseNode::update_variable: 警告:试图设置非变量类型%s的节点%zu的变量值\n",
-               get_node_type_name(type).c_str(), node_id);
-        return;
-    }
-    auto t = keys.find(K_VAR_TYPE);
-    if (t != keys.end()) {
-        printf("ParseNode::update_variable: 警告:尝试重定义节点%zu的变量值\n", node_id);
-        auto s = keys.find(K_SYMBOL), a = keys.find(K_VAR_ADDRESS);
-        if (t->second == 0 || s == keys.end() || s->second == 0 || a == keys.end() || a->second == 0) {
-            printf("ParseNode::update_variable: 警告:变量节点%zu的字段不完整,请检查调用或者实现\n", node_id);
-            return;
-        }
-        delete (ParseType *) t->second;
-        delete (string *) s->second;
-        delete (size_t *) a->second;
-    }
-    keys[K_VAR_TYPE] = type_address;
-    keys[K_VAR_ADDRESS] = var_add_address;
-    keys[K_SYMBOL] = symbol_address;
-}
+//void ParseNode::update_variable(size_t type_address, size_t symbol_address, size_t var_add_address) {
+//    if (type != N_VARIABLE) {
+//        printf("ParseNode::update_variable: 警告:试图设置非变量类型%s的节点%zu的变量值\n",
+//               get_node_type_name(type).c_str(), node_id);
+//        return;
+//    }
+//    auto t = keys.find(K_VAR_TYPE);
+//    if (t != keys.end()) {
+//        printf("ParseNode::update_variable: 警告:尝试重定义节点%zu的变量值\n", node_id);
+//        auto s = keys.find(K_SYMBOL), a = keys.find(K_VAR_ADDRESS);
+//        if (t->second == 0 || s == keys.end() || s->second == 0 || a == keys.end() || a->second == 0) {
+//            printf("ParseNode::update_variable: 警告:变量节点%zu的字段不完整,请检查调用或者实现\n", node_id);
+//            return;
+//        }
+//        delete (ParseType *) t->second;
+//        delete (string *) s->second;
+//        delete (size_t *) a->second;
+//    }
+//    keys[K_VAR_TYPE] = type_address;
+//    keys[K_VAR_ADDRESS] = var_add_address;
+//    keys[K_SYMBOL] = symbol_address;
+//}
+
+//ParseType ParseNode::get_variable_type(ParseTree *tree) const {
+//    auto t = keys.find(K_VAR_TYPE);
+//    if (t == keys.end() || t->second == 0) {
+//        printf("ParseNode::get_variable_type(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+//               get_key_name(K_CONST_TYPE).c_str());
+//        return ParseType(T_UNKNOWN);
+//    }
+//    return *(ParseType *) (t->second);
+//}
+
+//size_t ParseNode::get_variable_address(ParseTree *tree) const {
+//    auto a = keys.find(K_VAR_ADDRESS);
+//    if (a == keys.end() || a->second == 0) {
+//        printf("ParseNode::get_variable_address(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+//               get_key_name(K_CONST_TYPE).c_str());
+//        return 0;
+//    }
+//    return *(size_t *) (a->second);
+//}
 
 void ParseNode::set_type_specifier(const ParseType &p_type) {
     if (type != N_TYPE_SPE) {
@@ -330,144 +350,226 @@ void ParseNode::set_type_specifier(const ParseType &p_type) {
     keys[K_TYPE] = (size_t) new ParseType(p_type);
 }
 
-long long ParseNode::get_const_signed_value() const {
-    auto t = keys.find(K_CONST_TYPE);
-    if (t == keys.end() || t->second == 0) {
-        printf("ParseNode::get_const_signed_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_CONST_TYPE).c_str());
-        return 0;
+string ParseNode::get_symbol(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_SYMBOL);
+    if (iter != keys.end()) {
+        return *(string *) iter->second;
     }
-    if (*((ConstValueType *) t->second) != C_SIGNED) {
-        printf("ParseNode::get_const_signed_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
-               get_const_type_name(*((ConstValueType *) t->second)).c_str(),
-               node_id,
-               get_const_type_name(C_SIGNED).c_str());
-        return 0;
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            case N_DIRECT_DEC: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode& child = tree.nodes[each];
+                    if (child.type == N_IDENTIFIER) {
+                        return child.get_symbol();
+                    }
+                }
+                break;
+            }
+            default:
+                printf("ParseNode::get_symbol(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
     }
-    auto v = keys.find((K_CONST_VALUE));
-    if (v == keys.end() || v->second == 0) {
-        printf("ParseNode::get_const_signed_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
-        return 0;
-    }
-    return *(long long *) (v->second);
+    printf("警告:节点%zu未定义字段%s\n", node_id, get_key_name(K_SYMBOL).c_str());
+    return "";
 }
 
-unsigned long long ParseNode::get_const_unsigned_value() const {
-    auto t = keys.find(K_CONST_TYPE);
-    if (t == keys.end() || t->second == 0) {
-        printf("ParseNode::get_const_unsigned_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_CONST_TYPE).c_str());
-        return 0;
+int ParseNode::get_const_type(ParseTree *tree) const {
+    if (type == N_CONST) {
+        const auto &iter = keys.find(K_CONST_TYPE);
+        return *(ConstValueType *) iter->second;
     }
-    if (*((ConstValueType *) t->second) != C_UNSIGNED) {
-        printf("ParseNode::get_const_unsigned_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
-               get_const_type_name(*((ConstValueType *) t->second)).c_str(),
-               node_id,
-               get_const_type_name(C_UNSIGNED).c_str());
-        return 0;
+    if (tree) {
+        switch (type) {
+            default:
+                printf("ParseNode::get_const_type(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
     }
-    auto v = keys.find((K_CONST_VALUE));
-    if (v == keys.end() || v->second == 0) {
-        printf("ParseNode::get_const_unsigned_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
-        return 0;
-    }
-    return *(unsigned long long *) (v->second);
+    return -1;
 }
 
-string ParseNode::get_const_string_value() const {
-    auto t = keys.find(K_CONST_TYPE);
-    if (t == keys.end() || t->second == 0) {
-        printf("ParseNode::get_const_string_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_CONST_TYPE).c_str());
-        return "";
+long long ParseNode::get_const_signed_value(ParseTree *tree) const {
+    if (type == N_CONST) {
+        auto t = keys.find(K_CONST_TYPE);
+        if (t == keys.end() || t->second == 0) {
+            printf("ParseNode::get_const_signed_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+                   get_key_name(K_CONST_TYPE).c_str());
+            return 0;
+        }
+        if (*((ConstValueType *) t->second) != C_SIGNED) {
+            printf("ParseNode::get_const_signed_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
+                   get_const_type_name(*((ConstValueType *) t->second)).c_str(),
+                   node_id,
+                   get_const_type_name(C_SIGNED).c_str());
+            return 0;
+        }
+        auto v = keys.find((K_CONST_VALUE));
+        if (v == keys.end() || v->second == 0) {
+            printf("ParseNode::get_const_signed_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
+            return 0;
+        }
+        return *(long long *) (v->second);
+    } else if (tree) {
+        switch (type) {
+            default:
+                printf("ParseNode::get_const_signed_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
     }
-    if (*((ConstValueType *) t->second) != C_STRING) {
-        printf("ParseNode::get_const_string_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
-               get_const_type_name(*((ConstValueType *) t->second)).c_str(),
-               node_id,
-               get_const_type_name(C_STRING).c_str());
-        return "";
-    }
-    auto v = keys.find((K_CONST_VALUE));
-    if (v == keys.end() || v->second == 0) {
-        printf("ParseNode::get_const_string_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
-        return "";
-    }
-    return *(string *) (v->second);
+    return 0;
 }
 
-long double ParseNode::get_const_float_value() const {
-    auto t = keys.find(K_CONST_TYPE);
-    if (t == keys.end() || t->second == 0) {
-        printf("ParseNode::get_const_float_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_CONST_TYPE).c_str());
-        return 0;
+unsigned long long ParseNode::get_const_unsigned_value(ParseTree *tree) const {
+    if (type == N_CONST) {
+        auto t = keys.find(K_CONST_TYPE);
+        if (t == keys.end() || t->second == 0) {
+            printf("ParseNode::get_const_unsigned_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+                   get_key_name(K_CONST_TYPE).c_str());
+            return 0;
+        }
+        if (*((ConstValueType *) t->second) != C_UNSIGNED) {
+            printf("ParseNode::get_const_unsigned_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
+                   get_const_type_name(*((ConstValueType *) t->second)).c_str(),
+                   node_id,
+                   get_const_type_name(C_UNSIGNED).c_str());
+            return 0;
+        }
+        auto v = keys.find((K_CONST_VALUE));
+        if (v == keys.end() || v->second == 0) {
+            printf("ParseNode::get_const_unsigned_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
+            return 0;
+        }
+        return *(unsigned long long *) (v->second);
+    } else if (tree) {
+        switch (type) {
+            default:
+                printf("ParseNode::get_const_unsigned_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
     }
-    if (*((ConstValueType *) t->second) != C_FLOAT) {
-        printf("ParseNode::get_const_float_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
-               get_const_type_name(*((ConstValueType *) t->second)).c_str(),
-               node_id,
-               get_const_type_name(C_FLOAT).c_str());
-        return 0;
-    }
-    auto v = keys.find((K_CONST_VALUE));
-    if (v == keys.end() || v->second == 0) {
-        printf("ParseNode::get_const_float_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
-        return 0;
-    }
-    return *(long double *) (v->second);
+    return 0;
 }
 
-bool ParseNode::get_const_bool_value() const {
-    auto t = keys.find(K_CONST_TYPE);
-    if (t == keys.end() || t->second == 0) {
-        printf("ParseNode::get_const_bool_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_CONST_TYPE).c_str());
-        return false;
+string ParseNode::get_const_string_value(ParseTree *tree) const {
+    if (type == N_CONST) {
+        auto t = keys.find(K_CONST_TYPE);
+        if (t == keys.end() || t->second == 0) {
+            printf("ParseNode::get_const_string_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+                   get_key_name(K_CONST_TYPE).c_str());
+            return "";
+        }
+        if (*((ConstValueType *) t->second) != C_STRING) {
+            printf("ParseNode::get_const_string_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
+                   get_const_type_name(*((ConstValueType *) t->second)).c_str(),
+                   node_id,
+                   get_const_type_name(C_STRING).c_str());
+            return "";
+        }
+        auto v = keys.find((K_CONST_VALUE));
+        if (v == keys.end() || v->second == 0) {
+            printf("ParseNode::get_const_string_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
+            return "";
+        }
+        return *(string *) (v->second);
+    } else if (tree) {
+        switch (type) {
+            default:
+                printf("ParseNode::get_const_string_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
     }
-    if (*((ConstValueType *) t->second) != C_BOOL) {
-        printf("ParseNode::get_const_bool_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
-               get_const_type_name(*((ConstValueType *) t->second)).c_str(),
-               node_id,
-               get_const_type_name(C_BOOL).c_str());
-        return false;
-    }
-    auto v = keys.find((K_CONST_VALUE));
-    if (v == keys.end() || v->second == 0) {
-        printf("ParseNode::get_const_bool_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
-        return false;
-    }
-    return *(bool *) (v->second);
+    return "";
 }
 
-ParseType ParseNode::get_variable_type() const {
-    auto t = keys.find(K_VAR_TYPE);
-    if (t == keys.end() || t->second == 0) {
-        printf("ParseNode::get_variable_type(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_CONST_TYPE).c_str());
-        return ParseType(T_UNKNOWN);
+long double ParseNode::get_const_float_value(ParseTree *tree) const {
+    if (type == N_CONST) {
+        auto t = keys.find(K_CONST_TYPE);
+        if (t == keys.end() || t->second == 0) {
+            printf("ParseNode::get_const_float_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+                   get_key_name(K_CONST_TYPE).c_str());
+            return 0;
+        }
+        if (*((ConstValueType *) t->second) != C_FLOAT) {
+            printf("ParseNode::get_const_float_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
+                   get_const_type_name(*((ConstValueType *) t->second)).c_str(),
+                   node_id,
+                   get_const_type_name(C_FLOAT).c_str());
+            return 0;
+        }
+        auto v = keys.find((K_CONST_VALUE));
+        if (v == keys.end() || v->second == 0) {
+            printf("ParseNode::get_const_float_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
+            return 0;
+        }
+        return *(long double *) (v->second);
+    } else if (tree) {
+        switch (type) {
+            default:
+                printf("ParseNode::get_const_float_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
     }
-    return *(ParseType *) (t->second);
+    return 0;
 }
 
-size_t ParseNode::get_variable_address() const {
-    auto a = keys.find(K_VAR_ADDRESS);
-    if (a == keys.end() || a->second == 0) {
-        printf("ParseNode::get_variable_address(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_CONST_TYPE).c_str());
-        return 0;
+bool ParseNode::get_const_bool_value(ParseTree *tree) const {
+    if (type == N_CONST) {
+        auto t = keys.find(K_CONST_TYPE);
+        if (t == keys.end() || t->second == 0) {
+            printf("ParseNode::get_const_bool_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+                   get_key_name(K_CONST_TYPE).c_str());
+            return false;
+        }
+        if (*((ConstValueType *) t->second) != C_BOOL) {
+            printf("ParseNode::get_const_bool_value(): 警告: 试图获取类型为%s的节点%zu的%s值\n",
+                   get_const_type_name(*((ConstValueType *) t->second)).c_str(),
+                   node_id,
+                   get_const_type_name(C_BOOL).c_str());
+            return false;
+        }
+        auto v = keys.find((K_CONST_VALUE));
+        if (v == keys.end() || v->second == 0) {
+            printf("ParseNode::get_const_bool_value(): 警告: 试图获取常量节点%zu的字段定义不完整, 请检查调用和实现\n", node_id);
+            return false;
+        }
+        return *(bool *) (v->second);
+    } else if (tree) {
+        switch (type) {
+            default:
+                printf("ParseNode::get_const_bool_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
     }
-    return *(size_t *) (a->second);
+    return false;
 }
 
-ParseType ParseNode::get_type() const {
+ParseType ParseNode::get_type(ParseTree *_tree) const {
     auto t = keys.find(K_TYPE);
-    if (t == keys.end() || t->second == 0) {
-        printf("ParseNode::get_const_signed_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-               get_key_name(K_TYPE).c_str());
-        return ParseType(T_UNKNOWN);
+    if (t != keys.end() && t->second != 0) {
+        return *(ParseType *) (t->second);
     }
-    return *(ParseType *) (t->second);
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            case N_DECLARATION_SPE: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    if (tree.nodes[each].type == N_TYPE_SPE) {
+                        return tree.nodes[each].get_type();
+                    }
+                }
+                break;
+            }
+            default:
+                printf("ParseNode::get_type(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_const_signed_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
+           get_key_name(K_TYPE).c_str());
+    return ParseType(T_UNKNOWN);
 }
 
 #pragma clang diagnostic pop

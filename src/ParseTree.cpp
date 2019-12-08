@@ -82,8 +82,13 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
     switch (nodes[node_id].type) {
         case N_IDENTIFIER:
         case N_CONST:
-        case N_VARIABLE:
+            //case N_VARIABLE:
         case N_TYPE_SPE:
+        case N_DECLARATION_SPE:
+        case N_DECLARATOR:
+        case N_DIRECT_DEC:
+        case N_PARAM_LIST:
+        case N_PARAM_DECLARATION:
             printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
             break;
         case N_NORMAL:
@@ -174,13 +179,13 @@ ParseTree::~ParseTree() {
     }
 }
 
-size_t ParseTree::make_variable_node(const ParseType &type, const string &symbol, size_t address) {
-    size_t new_one = new_node(N_VARIABLE);
-    nodes[new_one].set_variable(type, symbol, address);
-    return new_one;
-}
+//size_t ParseTree::make_variable_node(const ParseType &type, const string &symbol, size_t address) {
+//    size_t new_one = new_node(N_VARIABLE);
+//    nodes[new_one].set_variable(type, symbol, address);
+//    return new_one;
+//}
 
-size_t ParseTree::make_type_specifiers(const ParseType &type) {
+size_t ParseTree::make_type_specifier_node(const ParseType &type) {
     size_t new_one = new_node(N_TYPE_SPE);
     nodes[new_one].set_type_specifier(type);
     return new_one;
@@ -205,5 +210,55 @@ void ParseTree::type_def(const string &type_name, const ParseType &type) {
     size_t type_id = ParseType::get_type_id(type);
     type_dic[type_name] = type_id;
 }
+
+size_t ParseTree::make_declaration_specifier_node() {
+    return new_node(N_DECLARATION_SPE);
+}
+
+size_t ParseTree::make_declarator_node() {
+    return new_node(N_DECLARATOR);
+}
+
+size_t ParseTree::make_direct_declarator_node() {
+    return new_node(N_DIRECT_DEC);
+}
+
+size_t ParseTree::make_parameter_list() {
+    return new_node(N_PARAM_LIST);
+}
+
+ParseVariable::ParseVariable() : type(T_UNKNOWN), symbol(), address((size_t) -1) {}
+
+ParseVariable::ParseVariable(const ParseType &_type, const string &_symbol, size_t _address) :
+        type(_type), symbol(_symbol), address(_address) {}
+
+string ParseVariable::get_info() const {
+    string res = "variable { type:" + type.get_info() +
+                 ", symbol:" + symbol + ", address:";
+    char buff[32];
+    sprintf(buff, "%zu }", address);
+    return res + buff;
+}
+
+ParseType ParseVariable::get_type() const {
+    return type;
+}
+
+string ParseVariable::get_symbol() const {
+    return symbol;
+}
+
+size_t ParseVariable::get_address() const {
+    return address;
+}
+
+void ParseVariable::set_address(size_t _address) {
+    address = _address;
+}
+
+ParseVariable &ParseVariable::operator=(const ParseVariable &other) = default;
+
+ParseVariable::ParseVariable(const ParseVariable &other) = default;
+
 
 #pragma clang diagnostic pop
