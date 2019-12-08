@@ -79,7 +79,11 @@ string ParseType::get_info() const {
             res += buff;
         } else {
             if (lower_type) {
-                sprintf(buff, "(Type-%zu) ", lower_type);
+                if (lower_type <= T_BASE) {
+                    sprintf(buff, "%s", get_base_type_name((BaseType) lower_type).c_str());
+                } else {
+                    sprintf(buff, "Type-%zu ", lower_type);
+                }
                 res += buff;
             }
             if (fields && !(fields->empty())) {

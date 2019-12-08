@@ -74,6 +74,8 @@ enum NodeKey {
             K_VARIABLE = 3,
     // 类型, 用于类型声明中
             K_TYPE = 4,
+    // 是否声明为指针标记
+            K_IS_PTR = 5,
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

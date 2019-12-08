@@ -33,7 +33,7 @@ public:
      *                          如果有, 返回之, 但是节点并没有存树的信息,所以这种情况下需要传一个树的指针,
      *                          以下的get_node_key系列的tree参数都是如此
      */
-    string get_symbol(ParseTree* tree = nullptr) const;
+    string get_symbol(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_CONST_TYPE键对应的值
@@ -43,7 +43,7 @@ public:
      * @param tree
      * @return
      */
-    int get_const_type(ParseTree* tree = nullptr) const;
+    int get_const_type(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_CONST_VALUE键对应的有符号整数值
@@ -51,7 +51,7 @@ public:
      * @param tree
      * @return
      */
-    long long get_const_signed_value(ParseTree* tree = nullptr) const;
+    long long get_const_signed_value(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_CONST_VALUE键对应的无符号整数值
@@ -59,7 +59,7 @@ public:
      * @param tree
      * @return
      */
-    unsigned long long get_const_unsigned_value(ParseTree* tree = nullptr) const;
+    unsigned long long get_const_unsigned_value(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_CONST_VALUE键对应的字符串值
@@ -67,7 +67,7 @@ public:
      * @param tree
      * @return
      */
-    string get_const_string_value(ParseTree* tree = nullptr) const;
+    string get_const_string_value(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_CONST_VALUE键对应的浮点数值
@@ -75,7 +75,7 @@ public:
      * @param tree
      * @return
      */
-    long double get_const_float_value(ParseTree* tree = nullptr) const;
+    long double get_const_float_value(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_CONST_VALUE键对应的布尔值
@@ -83,7 +83,7 @@ public:
      * @param tree
      * @return
      */
-    bool get_const_bool_value(ParseTree* tree = nullptr) const;
+    bool get_const_bool_value(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_VAR_TYPE键对应的类型
@@ -107,7 +107,15 @@ public:
      * @param tree
     * @return
     */
-    ParseType get_type(ParseTree* tree = nullptr) const;
+    ParseType get_type(ParseTree *tree = nullptr) const;
+
+    /**
+    * 获取节点的K_IS_PTR键对应的布尔值
+    * 如果类型不正确, 会报警告, 并返回未知类型
+     * @param tree
+    * @return
+    */
+    bool get_is_pointer(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的类型
@@ -162,19 +170,27 @@ public:
      * @param symbol
      * @param address
      */
-    void set_variable(const ParseType &p_type, const string &symbol, size_t address = (size_t)-1);
+    void set_variable(const ParseType &p_type, const string &symbol, size_t address = (size_t) -1);
 
     /**
      * 设置节点的K_VARIABLE键对应的值
      * @param variable
      */
-    void set_variable(const ParseVariable& variable);
+    void set_variable(const ParseVariable &variable);
 
     /**
+     * 设置节点的K_TYPE键对应的值
      * 设置类型修饰声明
      * @param type
      */
-    void set_type_specifier(const ParseType &p_type);
+    void set_type(const ParseType &p_type);
+
+    /**
+     * 设置节点的K_IS_PTR键对应的值
+     * 设置类型修饰声明
+     * @param is_pointer
+     */
+    void set_is_pointer(bool is_pointer = false);
 
     /**
      * 获取节点信息

@@ -187,7 +187,7 @@ ParseTree::~ParseTree() {
 
 size_t ParseTree::make_type_specifier_node(const ParseType &type) {
     size_t new_one = new_node(N_TYPE_SPE);
-    nodes[new_one].set_type_specifier(type);
+    nodes[new_one].set_type(type);
     return new_one;
 }
 
@@ -215,8 +215,10 @@ size_t ParseTree::make_declaration_specifier_node() {
     return new_node(N_DECLARATION_SPE);
 }
 
-size_t ParseTree::make_declarator_node() {
-    return new_node(N_DECLARATOR);
+size_t ParseTree::make_declarator_node(bool is_pointer) {
+    size_t new_one = new_node(N_DECLARATOR);
+    nodes[new_one].set_is_pointer(is_pointer);
+    return new_one;
 }
 
 size_t ParseTree::make_direct_declarator_node() {
@@ -227,7 +229,7 @@ size_t ParseTree::make_parameter_list() {
     return new_node(N_PARAM_LIST);
 }
 
-size_t ParseTree::make_parameter_declaration(const ParseVariable& variable) {
+size_t ParseTree::make_parameter_declaration(const ParseVariable &variable) {
     size_t new_one = new_node(N_PARAM_DECLARATION);
     nodes[new_one].set_variable(variable);
     return new_one;

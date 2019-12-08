@@ -176,6 +176,8 @@ int main(int argc, char** argv) {
 
   tree.print();
   printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
+  printf("已声明类型:\n");
+  ParseType::print_all_type();
   fclose(file);
   int sz = tree.error_cnt();
   if (sz) {

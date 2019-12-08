@@ -696,7 +696,7 @@ function_specifier
 
 declarator
 	: pointer direct_declarator {
-    $$ = tree.make_declarator_node();
+    $$ = tree.make_declarator_node(true);
     // todo: 这里要将变量的类型更新为指针
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
@@ -807,11 +807,11 @@ parameter_list
 
 parameter_declaration
 	: declaration_specifiers declarator {
-    $$ = tree.make_parameter_declaration(ParseVariable(
-      tree.node($1)->get_type(&tree),
-      tree.node($2)->get_symbol(&tree)
-      )
-    );
+    auto type = tree.node($1)->get_type(&tree);
+    if(tree.node($2)->get_is_pointer()) {
+      type = ParseType::get_pointer(type);
+    }
+    $$ = tree.make_parameter_declaration(ParseVariable(type, tree.node($2)->get_symbol(&tree)));
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }

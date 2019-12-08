@@ -24,6 +24,8 @@ string ParseNode::get_key_name(NodeKey type) {
             return "variable";
         case K_TYPE:
             return "type";
+        case K_IS_PTR:
+            return "is_pointer";
     }
     return "unknown";
 }
@@ -91,6 +93,15 @@ string ParseNode::get_node_info() const {
                 break;
             case K_TYPE:
                 info += "type: " + ((ParseType *) each.second)->get_info() + ", ";
+                break;
+            case K_IS_PTR:
+                info += "is_pointer: ";
+                if (*(bool *) each.second) {
+                    info += "true";
+                } else {
+                    info += "false";
+                }
+                info += ", ";
                 break;
         }
     }
@@ -199,7 +210,6 @@ void ParseNode::delete_all_keys() {
         case N_NORMAL:
         case N_UNKNOWN:
         case N_DECLARATION_SPE:
-        case N_DECLARATOR:
         case N_DIRECT_DEC:
         case N_PARAM_LIST:
             break;
@@ -211,6 +221,16 @@ void ParseNode::delete_all_keys() {
                 break;
             }
             delete (string *) iter->second;
+            break;
+        }
+        case N_DECLARATOR: {
+            auto iter = keys.find(K_IS_PTR);
+            if (iter == keys.end() || iter->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            delete (bool *) iter->second;
             break;
         }
         case N_CONST:
@@ -333,17 +353,17 @@ string ParseNode::get_const_value_str() const {
 //    return *(size_t *) (a->second);
 //}
 
-void ParseNode::set_type_specifier(const ParseType &p_type) {
+void ParseNode::set_type(const ParseType &p_type) {
     if (type != N_TYPE_SPE) {
-        printf("ParseNode::set_type_specifier(const ParseType &p_type): 警告:试图设置非类型修饰声明类型%s的节点%zu的类型值\n",
+        printf("ParseNode::set_type(const ParseType &p_type): 警告:试图设置非类型修饰声明类型%s的节点%zu的类型值\n",
                get_node_type_name(type).c_str(), node_id);
         return;
     }
     auto t = keys.find(K_TYPE);
     if (t != keys.end()) {
-        printf("ParseNode::set_type_specifier(const ParseType &p_type): 警告:尝试重定义节点%zu的类型值\n", node_id);
+        printf("ParseNode::set_type(const ParseType &p_type): 警告:尝试重定义节点%zu的类型值\n", node_id);
         if (t->second) {
-            printf("ParseNode::set_type_specifier(const ParseType &p_type): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
+            printf("ParseNode::set_type(const ParseType &p_type): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
                    node_id);
             return;
         }
@@ -377,6 +397,26 @@ void ParseNode::set_variable(const ParseVariable &variable) {
     set_variable(variable.get_type(), variable.get_symbol(), variable.get_address());
 }
 
+void ParseNode::set_is_pointer(bool is_pointer) {
+    if (type != N_DECLARATOR) {
+        printf("ParseNode::set_variable(const ParseType &p_type): 警告:试图设置非%s类型的节点%zu的%s值\n",
+               get_node_type_name(N_DECLARATOR).c_str(), node_id,
+               get_node_type_name(type).c_str());
+        return;
+    }
+    auto t = keys.find(K_IS_PTR);
+    if (t != keys.end()) {
+        printf("ParseNode::set_variable(const ParseType &p_type): 警告:尝试重定义节点%zu的%s值\n", node_id,
+               get_key_name(K_IS_PTR).c_str());
+        if (t->second) {
+            printf("ParseNode::set_variable(const ParseType &p_type): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
+                   node_id);
+            return;
+        }
+        delete (bool *) t->second;
+    }
+    keys[K_IS_PTR] = (size_t) new bool(is_pointer);
+}
 
 string ParseNode::get_symbol(ParseTree *_tree) const {
     const auto &iter = keys.find(K_SYMBOL);
@@ -607,6 +647,23 @@ ParseType ParseNode::get_type(ParseTree *_tree) const {
     printf("ParseNode::get_const_signed_value(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
            get_key_name(K_TYPE).c_str());
     return ParseType(T_UNKNOWN);
+}
+
+bool ParseNode::get_is_pointer(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_IS_PTR);
+    if (iter != keys.end()) {
+        return *(bool *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_is_pointer(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("警告:节点%zu未定义字段%s\n", node_id, get_key_name(K_IS_PTR).c_str());
+    return false;
 }
 
 #pragma clang diagnostic pop

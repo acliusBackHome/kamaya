@@ -120,7 +120,7 @@ public:
      * 生成一个声明器节点
      * @return
      */
-    size_t make_declarator_node();
+    size_t make_declarator_node(bool is_pointer = false);
 
     /**
      * 生成一个直接声明器节点
@@ -138,7 +138,7 @@ public:
      * 生成一个参数声明节点
      * @return
      */
-    size_t make_parameter_declaration(const ParseVariable& variable);
+    size_t make_parameter_declaration(const ParseVariable &variable);
 
     /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
