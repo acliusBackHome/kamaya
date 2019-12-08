@@ -20,10 +20,8 @@ string ParseNode::get_key_name(NodeKey type) {
             return "constant_type";
         case K_CONST_VALUE:
             return "constant_value";
-        case K_VAR_TYPE:
-            return "variable_type";
-        case K_VAR_ADDRESS:
-            return "variable_address";
+        case K_VARIABLE:
+            return "variable";
         case K_TYPE:
             return "type";
     }
@@ -88,15 +86,9 @@ string ParseNode::get_node_info() const {
             case K_CONST_VALUE:
                 info += "const_value: " + get_const_value_str() + ", ";
                 break;
-            case K_VAR_TYPE:
-                info += "variable_type: " + ((ParseType *) each.second)->get_info() + ", ";
+            case K_VARIABLE:
+                info += "variable: " + ((ParseVariable *) each.second)->get_info();
                 break;
-            case K_VAR_ADDRESS: {
-                char buff[64];
-                sprintf(buff, "variable_address: %zu, ", *(size_t *) each.second);
-                info += buff;
-                break;
-            }
             case K_TYPE:
                 info += "type: " + ((ParseType *) each.second)->get_info() + ", ";
                 break;
@@ -283,7 +275,7 @@ string ParseNode::get_const_value_str() const {
     return "undefined";
 }
 
-// 以下是冗余代码, 考虑是否删除中
+// 以下是过期代码, 考虑是否删除中
 //void ParseNode::set_variable(const ParseType &type, const string &symbol, size_t address) {
 //    update_variable((size_t) new ParseType(type), (size_t) new string(symbol), (size_t) new size_t(address));
 //}
@@ -350,6 +342,32 @@ void ParseNode::set_type_specifier(const ParseType &p_type) {
     keys[K_TYPE] = (size_t) new ParseType(p_type);
 }
 
+void ParseNode::set_variable(const ParseType &p_type, const string &symbol, size_t address) {
+    if (type != N_PARAM_DECLARATION) {
+        printf("ParseNode::set_variable(const ParseType &p_type): 警告:试图设置非%s类型的节点%zu的%s值\n",
+               get_node_type_name(N_PARAM_DECLARATION).c_str(), node_id,
+               get_node_type_name(type).c_str());
+        return;
+    }
+    auto t = keys.find(K_VARIABLE);
+    if (t != keys.end()) {
+        printf("ParseNode::set_variable(const ParseType &p_type): 警告:尝试重定义节点%zu的%s值\n", node_id,
+               get_key_name(K_VARIABLE).c_str());
+        if (t->second) {
+            printf("ParseNode::set_variable(const ParseType &p_type): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
+                   node_id);
+            return;
+        }
+        delete (ParseVariable *) t->second;
+    }
+    keys[K_VARIABLE] = (size_t) new ParseVariable(p_type, symbol, address);
+}
+
+void ParseNode::set_variable(const ParseVariable &variable) {
+    set_variable(variable.get_type(), variable.get_symbol(), variable.get_address());
+}
+
+
 string ParseNode::get_symbol(ParseTree *_tree) const {
     const auto &iter = keys.find(K_SYMBOL);
     if (iter != keys.end()) {
@@ -360,9 +378,18 @@ string ParseNode::get_symbol(ParseTree *_tree) const {
         switch (type) {
             case N_DIRECT_DEC: {
                 for (const auto &each : tree.node_children[node_id]) {
-                    ParseNode& child = tree.nodes[each];
-                    if (child.type == N_IDENTIFIER) {
-                        return child.get_symbol();
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_IDENTIFIER || child.type == N_DIRECT_DEC) {
+                        return child.get_symbol(_tree);
+                    }
+                }
+                break;
+            }
+            case N_DECLARATOR: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_DIRECT_DEC) {
+                        return child.get_symbol(_tree);
                     }
                 }
                 break;

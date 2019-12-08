@@ -70,12 +70,10 @@ enum NodeKey {
             K_CONST_TYPE = 1,
     // 常量值: size_t 根据类型表示不同的指针:
             K_CONST_VALUE = 2,
-    // 变量类型: ParseType
-            K_VAR_TYPE = 3,
-    // 变量地址
-            K_VAR_ADDRESS = 4,
+    // 变量
+            K_VARIABLE = 3,
     // 类型, 用于类型声明中
-            K_TYPE = 5,
+            K_TYPE = 4,
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

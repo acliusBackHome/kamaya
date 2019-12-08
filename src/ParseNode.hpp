@@ -11,6 +11,8 @@
 
 using namespace std;
 
+class ParseVariable;
+
 class ParseNode {
     friend class ParseTree;
 
@@ -114,48 +116,59 @@ public:
     NodeType get_node_type() const;
 
     /**
-     * 设置节点的symbol键对应的值
+     * 设置节点的K_SYMBOL键对应的值
      * @param symbol
      */
     void set_symbol(const string &symbol);
 
     /**
+     * 设置节点的K_CONST_TYPE和K_CONST_VALUE键对应的值
      * 设置常量值: 有符号整数
      * @return
      */
     void set_const(long long value);
 
     /**
+     * 设置节点的K_CONST_TYPE和K_CONST_VALUE键对应的值
      * 设置常量值: 无符号整数
      * @return
      */
     void set_const(unsigned long long value);
 
     /**
+     * 设置节点的K_CONST_TYPE和K_CONST_VALUE键对应的值
      * 设置常量值: 浮点数
      * @return
      */
     void set_const(long double value);
 
     /**
+     * 设置节点的K_CONST_TYPE和K_CONST_VALUE键对应的值
      * 设置常量值: 布尔
      * @return
      */
     void set_const(bool value);
 
     /**
+     * 设置节点的K_CONST_TYPE和K_CONST_VALUE键对应的值
      * 设置常量值: 字符串
      * @return
      */
     void set_const(const string &value);
 
     /**
-     * 设置变量值
+     * 设置节点的K_VARIABLE键对应的值
      * @param type
      * @param symbol
      * @param address
      */
-//    void set_variable(const ParseType &type, const string &symbol, size_t address);
+    void set_variable(const ParseType &p_type, const string &symbol, size_t address = (size_t)-1);
+
+    /**
+     * 设置节点的K_VARIABLE键对应的值
+     * @param variable
+     */
+    void set_variable(const ParseVariable& variable);
 
     /**
      * 设置类型修饰声明

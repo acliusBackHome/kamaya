@@ -427,38 +427,38 @@ declaration
 
 declaration_specifiers
 	: storage_class_specifier {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.new_node("declaration specifiers 1");
     tree.set_parent($1, $$);
   }
 	| storage_class_specifier declaration_specifiers {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.new_node("declaration specifiers 2");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
 	| type_specifier {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.make_declaration_specifier_node();
     tree.set_parent($1, $$);
   }
 	| type_specifier declaration_specifiers {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.new_node("declaration specifiers 4");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
 	| type_qualifier {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.new_node("declaration specifiers 5");
     tree.set_parent($1, $$);
   }
 	| type_qualifier declaration_specifiers {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.new_node("declaration specifiers 6");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
 	| function_specifier {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.new_node("declaration specifiers 7");
     tree.set_parent($1, $$);
   }
 	| function_specifier declaration_specifiers {
-    $$ = tree.new_node("declaration specifiers");
+    $$ = tree.new_node("declaration specifiers 8");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -696,19 +696,20 @@ function_specifier
 
 declarator
 	: pointer direct_declarator {
-    $$ = tree.new_node("declarator");
+    $$ = tree.make_declarator_node();
+    // todo: 这里要将变量的类型更新为指针
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
 	| direct_declarator {
-    $$ = tree.new_node("declarator");
+    $$ = tree.make_declarator_node();
     tree.set_parent($1, $$);
   }
 	;
 
 direct_declarator
 	: id_delaration {
-    $$ = tree.new_node("direct declarator");
+    $$ = tree.make_direct_declarator_node();
     tree.set_parent($1, $$);
   }
 	| LP declarator RP {
@@ -732,7 +733,8 @@ direct_declarator
 	//| direct_declarator ML type_qualifier_list MUL MR
 	//| direct_declarator ML MUL MR
 	| direct_declarator ML MR {
-    $$ = tree.new_node("array declaration");
+    $$ = tree.make_direct_declarator_node();
+    // todo: 这里要将$1的变量类型更新为数组, 但是大小未知
     tree.set_parent($1, $$);
   }
 	| direct_declarator LP parameter_type_list RP {
@@ -805,12 +807,16 @@ parameter_list
 
 parameter_declaration
 	: declaration_specifiers declarator {
-    $$ = tree.new_node("parameter declaration");
+    $$ = tree.make_parameter_declaration(ParseVariable(
+      tree.node($1)->get_type(&tree),
+      tree.node($2)->get_symbol(&tree)
+      )
+    );
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
 	| declaration_specifiers abstract_declarator {
-    $$ = tree.new_node("parameter declaration");
+    $$ = tree.new_node("parameter declaration 2"); 
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }

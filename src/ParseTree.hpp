@@ -21,6 +21,7 @@ using namespace std;
 
 class ParseTree {
     friend class ParseNode;
+
 public:
     /**
      * 构造函数, 树初始时必须有一个根, 根编号0
@@ -132,6 +133,12 @@ public:
      * @return
      */
     size_t make_parameter_list();
+
+    /**
+     * 生成一个参数声明节点
+     * @return
+     */
+    size_t make_parameter_declaration(const ParseVariable& variable);
 
     /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射

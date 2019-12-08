@@ -227,13 +227,19 @@ size_t ParseTree::make_parameter_list() {
     return new_node(N_PARAM_LIST);
 }
 
+size_t ParseTree::make_parameter_declaration(const ParseVariable& variable) {
+    size_t new_one = new_node(N_PARAM_DECLARATION);
+    nodes[new_one].set_variable(variable);
+    return new_one;
+}
+
 ParseVariable::ParseVariable() : type(T_UNKNOWN), symbol(), address((size_t) -1) {}
 
 ParseVariable::ParseVariable(const ParseType &_type, const string &_symbol, size_t _address) :
         type(_type), symbol(_symbol), address(_address) {}
 
 string ParseVariable::get_info() const {
-    string res = "variable { type:" + type.get_info() +
+    string res = "ParseVariable { type:" + type.get_info() +
                  ", symbol:" + symbol + ", address:";
     char buff[32];
     sprintf(buff, "%zu }", address);
