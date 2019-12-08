@@ -507,28 +507,28 @@ storage_class_specifier
 // 类型声明
 type_specifier
   : VOID {
-    $$ = tree.make_type_specifiers(ParseType(T_VOID));
+    $$ = tree.make_type_specifier_node(ParseType(T_VOID));
   }
   | CHAR {
-    $$ = tree.make_type_specifiers(ParseType(T_CHAR));
+    $$ = tree.make_type_specifier_node(ParseType(T_CHAR));
   }
   | SHORT {
-    $$ = tree.make_type_specifiers(ParseType(T_SHORT));
+    $$ = tree.make_type_specifier_node(ParseType(T_SHORT));
   }
   | INT {
-    $$ = tree.make_type_specifiers(ParseType(T_INT));
+    $$ = tree.make_type_specifier_node(ParseType(T_INT));
   }
   | LONG {
-    $$ = tree.make_type_specifiers(ParseType(T_LONG));
+    $$ = tree.make_type_specifier_node(ParseType(T_LONG));
   }
   | FLOAT {
-    $$ = tree.make_type_specifiers(ParseType(T_FLOAT));
+    $$ = tree.make_type_specifier_node(ParseType(T_FLOAT));
   }
   | DOUBLE {
-    $$ = tree.make_type_specifiers(ParseType(T_DOUBLE));
+    $$ = tree.make_type_specifier_node(ParseType(T_DOUBLE));
   }
   | BOOL {
-    $$ = tree.make_type_specifiers(ParseType(T_BOOL));
+    $$ = tree.make_type_specifier_node(ParseType(T_BOOL));
   }
    | enum_specifier {
      $$ = $1;
