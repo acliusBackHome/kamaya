@@ -736,7 +736,7 @@ direct_declarator
     tree.set_parent($1, $$);
   }
 	| direct_declarator LP parameter_type_list RP {
-    $$ = tree.new_node("declaration with parameters");
+    $$ = tree.new_node("direct declarator with parameters");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
