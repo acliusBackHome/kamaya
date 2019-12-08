@@ -102,6 +102,29 @@ public:
     size_t make_variable_node(const ParseType &type, const string &symbol, size_t address);
 
     /**
+     * 生成一个类型声明节点
+     * @param type 这个节点所声明的类型
+     * @return
+     */
+    size_t make_type_specifiers(const ParseType &type);
+
+
+    /**
+     * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
+     * @param type_name
+     * @param type
+     */
+    void type_def(const string &type_name, const ParseType &type);
+
+    /**
+     * 通过类型名获取对应的类型, 如果不存在,则返回
+     * 无效类型
+     * @param str
+     * @return
+     */
+    ParseType get_type(const string &type_name);
+
+    /**
      *  设置节点的父节点
      * @param node_id 被设置的节点id
      * @param parent 父节点id
@@ -145,7 +168,11 @@ public:
      */
     void last_combine();
 
-    //对节点操作的接口
+    /**
+     * 对节点操作的接口, 如果节点不存在则返回nullptr
+     * @param node_id
+     * @return
+     */
     ParseNode *node(size_t node_id);
 
     ~ParseTree();
@@ -158,6 +185,8 @@ private:
     // 每个节点的孩子
     vector<vector<size_t> > node_children;
     set<size_t> last_nodes; // 剩下的节点
+    //类型字典: 从自定义id映射到ParseType
+    map<string, size_t> type_dic;
 
     void print_node(size_t node_id, vector<size_t> &has_next_children,
                     size_t depth, bool last_child, bool *vis) const;

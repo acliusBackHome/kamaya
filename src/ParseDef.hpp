@@ -42,6 +42,9 @@ enum NodeType {
     // var_address: 变量地址
     // var_type: 变量类型
             N_VARIABLE = 4,
+    // 类型声明:
+    // type: 声明的类型
+            N_TYPE_SPE = 5,
 };
 
 enum NodeKey {
@@ -55,6 +58,8 @@ enum NodeKey {
             K_VAR_TYPE = 3,
     // 变量地址
             K_VAR_ADDRESS = 4,
+    // 类型, 用于类型声明中
+            K_TYPE = 5,
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

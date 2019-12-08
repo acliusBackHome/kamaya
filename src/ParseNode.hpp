@@ -82,6 +82,12 @@ public:
     void set_variable(const ParseType &type, const string &symbol, size_t address);
 
     /**
+     * 设置类型修饰声明
+     * @param type
+     */
+    void set_type_specifier(const ParseType &p_type);
+
+    /**
      * 获取节点信息
      * @return
      */

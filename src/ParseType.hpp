@@ -10,8 +10,12 @@
 
 using namespace std;
 
+class ParseTree;
+
 // 用于表示运行时类型的类
 class ParseType {
+    friend class ParseTree;
+
 public:
     /**
      * 通过基本类型构造Type

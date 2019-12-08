@@ -23,6 +23,8 @@ string ParseNode::get_key_name(NodeKey type) {
             return "variable_type";
         case K_VAR_ADDRESS:
             return "variable_address";
+        case K_TYPE:
+            return "type";
     }
     return "unknown";
 }
@@ -38,7 +40,9 @@ string ParseNode::get_node_type_name(NodeType type) {
         case N_VARIABLE:
             return "variable";
         case N_UNKNOWN:
-            break;
+            return "unknown";
+        case N_TYPE_SPE:
+            return "type_specifier";
     }
     return "unknown";
 }
@@ -74,7 +78,7 @@ string ParseNode::get_node_info() const {
         }
         switch ((NodeKey) each.first) {
             case K_SYMBOL:
-                info += "symbol: " +  *((string *) each.second) + ", ";
+                info += "symbol: " + *((string *) each.second) + ", ";
                 break;
             case K_CONST_TYPE:
                 info += "const_type: " + get_const_type_name(*(ConstValueType *) each.second) + ", ";
@@ -91,7 +95,9 @@ string ParseNode::get_node_info() const {
                 info += buff;
                 break;
             }
-
+            case K_TYPE:
+                info += "type: " + ((ParseType *) each.second)->get_info() + ", ";
+                break;
         }
     }
     return info + "}";
@@ -226,6 +232,15 @@ void ParseNode::delete_all_keys() {
             delete (size_t *) a->second;
             break;
         }
+        case N_TYPE_SPE: {
+            auto t = keys.find(K_TYPE);
+            if (t == keys.end() || t->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s,的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            delete (ParseType *) t->second;
+        }
     }
 
 }
@@ -293,7 +308,26 @@ void ParseNode::update_variable(size_t type_address, size_t symbol_address, size
     }
     keys[K_VAR_TYPE] = type_address;
     keys[K_VAR_ADDRESS] = var_add_address;
-    keys[K_SYMBOL] =  symbol_address;
+    keys[K_SYMBOL] = symbol_address;
+}
+
+void ParseNode::set_type_specifier(const ParseType &p_type) {
+    if (type != N_TYPE_SPE) {
+        printf("ParseNode::set_type_specifier(const ParseType &p_type): 警告:试图设置非类型修饰声明类型%s的节点%zu的类型值\n",
+               get_node_type_name(type).c_str(), node_id);
+        return;
+    }
+    auto t = keys.find(K_TYPE);
+    if (t != keys.end()) {
+        printf("ParseNode::set_type_specifier(const ParseType &p_type): 警告:尝试重定义节点%zu的类型值\n", node_id);
+        if (t->second) {
+            printf("ParseNode::set_type_specifier(const ParseType &p_type): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
+                   node_id);
+            return;
+        }
+        delete (ParseType *) t->second;
+    }
+    keys[K_TYPE] = (size_t) new ParseType(p_type);
 }
 
 #pragma clang diagnostic pop

@@ -83,6 +83,7 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
         case N_IDENTIFIER:
         case N_CONST:
         case N_VARIABLE:
+        case N_TYPE_SPE:
             printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
             break;
         case N_NORMAL:
@@ -177,6 +178,32 @@ size_t ParseTree::make_variable_node(const ParseType &type, const string &symbol
     size_t new_one = new_node(N_VARIABLE);
     nodes[new_one].set_variable(type, symbol, address);
     return new_one;
+}
+
+size_t ParseTree::make_type_specifiers(const ParseType &type) {
+    size_t new_one = new_node(N_TYPE_SPE);
+    nodes[new_one].set_type_specifier(type);
+    return new_one;
+}
+
+ParseType ParseTree::get_type(const string &type_name) {
+    auto iter = type_dic.find(type_name);
+    if (iter == type_dic.end()) {
+        return ParseType(T_UNKNOWN);
+    }
+    return ParseType::get_type(iter->second);
+}
+
+void ParseTree::type_def(const string &type_name, const ParseType &type) {
+    auto iter = type_dic.find(type_name);
+    if (iter != type_dic.end()) {
+        printf("ParseTree::type_def(const string &type_name, const ParseType &type): "
+               "警告: 试图给已声明的类型名字%s赋予新的类型%s, 无视该操作\n", type_name.c_str(),
+               type.get_info().c_str());
+        return;
+    }
+    size_t type_id = ParseType::get_type_id(type);
+    type_dic[type_name] = type_id;
 }
 
 #pragma clang diagnostic pop
