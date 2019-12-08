@@ -1,3 +1,4 @@
+#include <iostream>
 #include "ParseNode.hpp"
 
 #pragma clang diagnostic push
@@ -18,6 +19,10 @@ string ParseNode::get_key_name(NodeKey type) {
             return "constant_type";
         case K_CONST_VALUE:
             return "constant_value";
+        case K_VAR_TYPE:
+            return "variable_type";
+        case K_VAR_ADDRESS:
+            return "variable_address";
     }
     return "unknown";
 }
@@ -30,6 +35,8 @@ string ParseNode::get_node_type_name(NodeType type) {
             return "identifier";
         case N_CONST:
             return "constant";
+        case N_VARIABLE:
+            return "variable";
         case N_UNKNOWN:
             break;
     }
@@ -58,22 +65,33 @@ string ParseNode::get_node_info() const {
     if (type == N_NORMAL) {
         return "";
     }
-    string info = get_node_type_name(type) + " {";
-    char buff[256];
+    string info = get_node_type_name(type) + " { ";
     for (const auto each: keys) {
+        if (!(each.second)) {
+            printf("ParseNode::get_node_info(): 警告: 节点%zu的类型%s应有字段%s没有定义\n",
+                   node_id, get_node_type_name(type).c_str(), get_key_name((NodeKey) each.first).c_str());
+            continue;
+        }
         switch ((NodeKey) each.first) {
             case K_SYMBOL:
-                sprintf(buff, " symbol: %s,", ((string *) each.second)->c_str());
-                info += buff;
+                info += "symbol: " +  *((string *) each.second) + ", ";
                 break;
             case K_CONST_TYPE:
-                sprintf(buff, " const_type : %s,", get_const_type_name((ConstValueType) get_const_type()).c_str());
-                info += buff;
+                info += "const_type: " + get_const_type_name(*(ConstValueType *) each.second) + ", ";
                 break;
             case K_CONST_VALUE:
-                sprintf(buff, " const_value : %s,", get_const_value_str().c_str());
+                info += "const_value: " + get_const_value_str() + ", ";
+                break;
+            case K_VAR_TYPE:
+                info += "variable_type: " + ((ParseType *) each.second)->get_info() + ", ";
+                break;
+            case K_VAR_ADDRESS: {
+                char buff[64];
+                sprintf(buff, "variable_address: %zu, ", *(size_t *) each.second);
                 info += buff;
                 break;
+            }
+
         }
     }
     return info + "}";
@@ -88,7 +106,7 @@ NodeType ParseNode::get_type() const {
     return type;
 }
 
-void ParseNode::update_const() {
+void ParseNode::update_const(size_t const_type_address, size_t const_value_address) {
     if (type != N_CONST) {
         printf("ParseNode::update_const: 警告:试图设置非常量类型%s的节点%zu的常量值\n",
                get_node_type_name(type).c_str(), node_id);
@@ -96,39 +114,31 @@ void ParseNode::update_const() {
     }
     auto t = keys.find(K_CONST_TYPE);
     if (t != keys.end()) {
-        printf("ParseNode::update_const: 警告:尝试重定义节点%zu的常量值", node_id);
+        printf("ParseNode::update_const: 警告:尝试重定义节点%zu的常量值\n", node_id);
         delete_const();
     }
+    keys[K_CONST_TYPE] = const_type_address;
+    keys[K_CONST_VALUE] = const_value_address;
 }
 
 void ParseNode::set_const(long long value) {
-    update_const();
-    keys[K_CONST_TYPE] = (size_t) new ConstValueType(C_SIGNED);
-    keys[K_CONST_VALUE] = (size_t) new long long(value);
+    update_const((size_t) new ConstValueType(C_SIGNED), (size_t) new long long(value));
 }
 
 void ParseNode::set_const(unsigned long long value) {
-    update_const();
-    keys[K_CONST_TYPE] = (size_t) new ConstValueType(C_UNSIGNED);
-    keys[K_CONST_VALUE] = (size_t) new unsigned long long(value);
+    update_const((size_t) new ConstValueType(C_UNSIGNED), (size_t) new unsigned long long(value));
 }
 
 void ParseNode::set_const(const string &value) {
-    update_const();
-    keys[K_CONST_TYPE] = (size_t) new ConstValueType(C_STRING);
-    keys[K_CONST_VALUE] = (size_t) new string(value);
+    update_const((size_t) new ConstValueType(C_STRING), (size_t) new string(value));
 }
 
 void ParseNode::set_const(bool value) {
-    update_const();
-    keys[K_CONST_TYPE] = (size_t) new ConstValueType(C_BOOL);
-    keys[K_CONST_VALUE] = (size_t) new bool(value);
+    update_const((size_t) new ConstValueType(C_BOOL), (size_t) new bool(value));
 }
 
 void ParseNode::set_const(long double value) {
-    update_const();
-    keys[K_CONST_TYPE] = (size_t) new ConstValueType(C_FLOAT);
-    keys[K_CONST_VALUE] = (size_t) new long double(value);
+    update_const((size_t) new ConstValueType(C_BOOL), (size_t) new long double(value));
 }
 
 string ParseNode::get_const_type_name(ConstValueType _type) {
@@ -180,7 +190,6 @@ void ParseNode::delete_const() {
             break;
     }
     delete (ConstValueType *) t->second;
-    t->second = 0;
     keys.erase(t);
     keys.erase(v);
 }
@@ -191,12 +200,30 @@ void ParseNode::delete_all_keys() {
         case N_UNKNOWN:
             break;
         case N_IDENTIFIER: {
-            const auto &iter = keys.find(K_SYMBOL);
+            auto iter = keys.find(K_SYMBOL);
+            if (iter == keys.end() || iter->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s,的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
             delete (string *) iter->second;
             break;
         }
-        case N_CONST: {
+        case N_CONST:
             delete_const();
+            break;
+        case N_VARIABLE: {
+            auto s = keys.find(K_SYMBOL), t = keys.find(K_VAR_TYPE), a = keys.find(K_VAR_ADDRESS);
+            if (s == keys.end() || s->second == 0 ||
+                t == keys.end() || t->second == 0 ||
+                a == keys.end() || a->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s,的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            delete (ParseType *) t->second;
+            delete (string *) s->second;
+            delete (size_t *) a->second;
             break;
         }
     }
@@ -217,7 +244,7 @@ string ParseNode::get_const_value_str() const {
         return "unknown";
     }
     auto iter = keys.find(K_CONST_VALUE);
-    if (iter == keys.end()) {
+    if (iter == keys.end() || iter->second == 0) {
         printf("ParseNode::get_const_value_str(): 警告, 节点%zu类型为常量但是没有设置值\n", node_id);
         return "warning";
     }
@@ -240,6 +267,33 @@ string ParseNode::get_const_value_str() const {
             break;
     }
     return "undefined";
+}
+
+void ParseNode::set_variable(const ParseType &type, const string &symbol, size_t address) {
+    update_variable((size_t) new ParseType(type), (size_t) new string(symbol), (size_t) new size_t(address));
+}
+
+void ParseNode::update_variable(size_t type_address, size_t symbol_address, size_t var_add_address) {
+    if (type != N_VARIABLE) {
+        printf("ParseNode::update_variable: 警告:试图设置非变量类型%s的节点%zu的变量值\n",
+               get_node_type_name(type).c_str(), node_id);
+        return;
+    }
+    auto t = keys.find(K_VAR_TYPE);
+    if (t != keys.end()) {
+        printf("ParseNode::update_variable: 警告:尝试重定义节点%zu的变量值\n", node_id);
+        auto s = keys.find(K_SYMBOL), a = keys.find(K_VAR_ADDRESS);
+        if (t->second == 0 || s == keys.end() || s->second == 0 || a == keys.end() || a->second == 0) {
+            printf("ParseNode::update_variable: 警告:变量节点%zu的字段不完整,请检查调用或者实现\n", node_id);
+            return;
+        }
+        delete (ParseType *) t->second;
+        delete (string *) s->second;
+        delete (size_t *) a->second;
+    }
+    keys[K_VAR_TYPE] = type_address;
+    keys[K_VAR_ADDRESS] = var_add_address;
+    keys[K_SYMBOL] =  symbol_address;
 }
 
 #pragma clang diagnostic pop

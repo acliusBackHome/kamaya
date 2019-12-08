@@ -3,7 +3,9 @@
 #pragma ide diagnostic ignored "OCUnusedStructInspection"
 #ifndef NKU_PRACTICE_PARSE_NODE_HPP
 #define NKU_PRACTICE_PARSE_NODE_HPP
+
 #include "ParseDef.hpp"
+#include "ParseType.hpp"
 #include <string>
 #include <map>
 
@@ -72,6 +74,14 @@ public:
     void set_const(const string &value);
 
     /**
+     * 设置变量值
+     * @param type
+     * @param symbol
+     * @param address
+     */
+    void set_variable(const ParseType &type, const string &symbol, size_t address);
+
+    /**
      * 获取节点信息
      * @return
      */
@@ -101,15 +111,26 @@ public:
 private:
 
     /**
-     * 当常量值更新时需要执行的函数:
-     * 负责检查键值是否存在,如果存在需要删除之
+     * 当常量值更新时需要执行的函数:负责检查键值是否存在,
+     * 如果存在需要删除之,再更新其值
+     * @param const_type_address
+     * @param const_value_address
      */
-    void update_const();
+    void update_const(size_t const_type_address, size_t const_value_address);
 
     /**
      *  删除常量所涉及的字段
      */
     void delete_const();
+
+    /**
+     * 当变量更新时需要执行的函数:
+     * 负责检查键值是否存在,如果存在需要删除之
+     * @param type_address 指向变量类型的地址
+     * @param symbol_address 指向变量符号的地址
+     * @param var_add_address 指向变量地址(size_t)的地址
+     */
+    void update_variable(size_t type_address, size_t symbol_address, size_t var_add_address);
 
     /**
      * 获取该节点的常量类型,

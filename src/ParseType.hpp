@@ -52,6 +52,21 @@ public:
     ParseType &operator=(const ParseType &other);
 
     /**
+     * 操作符< 用于map的Type键
+     * @param other
+     * @return
+     */
+    bool operator<(const ParseType &other) const;
+
+    /**
+     * 获取本类型的id
+     * @return
+     */
+    size_t get_id() const;
+
+    ~ParseType();
+
+    /**
      * 获取某个类型的多级指针, 如果type也是个指针,那么就返回一个原type的
      * 指针等级加上ptr_level的Type
      * @param type
@@ -83,19 +98,8 @@ public:
      * @return 如果构造不成功,返回一个type_id为T_UNKNOWN的Type
      */
     static ParseType get_struct(const vector<pair<string, ParseType>> &otherTypes,
-                                const vector<pair<string, size_t>> &self_ptr = vector<pair<string, size_t
-
-                                > >());
-
-
-    /**
-     * 操作符< 用于map的Type键
-     * @param other
-     * @return
-     */
-    bool operator<(const ParseType &other) const;
-
-    ~ParseType();
+                                const vector<pair<string, size_t>> &self_ptr =
+                                vector<pair<string, size_t> >());
 
     /**
      * 输出所有类型记录

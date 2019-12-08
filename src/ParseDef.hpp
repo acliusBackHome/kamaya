@@ -13,7 +13,7 @@ enum BaseType {
     T_CHAR = 7,
     T_ENUM = 8,
     T_VOID = 9,
-            T_BASE = 9 //当type_id小于等于这个值时,说明是基本类型
+    T_BASE = 9 //当type_id小于等于这个值时,说明是基本类型
 };
 
 // 常量类型, 编译期用来表示用户输入常量的
@@ -27,9 +27,9 @@ enum ConstValueType {
 };
 
 enum NodeType {
-    // 平凡节点, 什么都没有
+    // 平凡节点, 什么都没有, 但是可以负责向下传递修改节点信号
             N_NORMAL = 0,
-    // 异常节点, 什么都没有
+    // 异常节点, 什么都没有, 一般树中不应该存在异常节点, 一旦存在则说明有异常
             N_UNKNOWN = 1,
     // 标识符:
     //symbol: 符号
@@ -39,7 +39,9 @@ enum NodeType {
             N_CONST = 3,
     // 变量节点:
     // symbol: 变量名
-    // value: 变量值
+    // var_address: 变量地址
+    // var_type: 变量类型
+            N_VARIABLE = 4,
 };
 
 enum NodeKey {
@@ -49,6 +51,10 @@ enum NodeKey {
             K_CONST_TYPE = 1,
     // 常量值: size_t 根据类型表示不同的指针:
             K_CONST_VALUE = 2,
+    // 变量类型: ParseType
+            K_VAR_TYPE = 3,
+    // 变量地址
+            K_VAR_ADDRESS = 4,
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

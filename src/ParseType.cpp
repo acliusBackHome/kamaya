@@ -51,18 +51,18 @@ ParseType::ParseType(BaseType b_type) {
 
 string ParseType::get_info() const {
     size_t this_id = get_type_id(*this);
-    if(this_id < id2info.size()) {
+    if (this_id < id2info.size()) {
         return id2info[this_id];
     }
-    while(this_id >= id2info.size()) {
-        if(this_id == id2info.size()) {
+    while (this_id >= id2info.size()) {
+        if (this_id == id2info.size()) {
             id2info.emplace_back("");
             break;
         }
         id2info.emplace_back(get_type(id2info.size()).get_info());
     }
     char buff[32];
-    sprintf(buff, "Type-%zu ", get_type_id(*this));
+    sprintf(buff, "Type-%zu {", get_type_id(*this));
     string res(buff);
     if (this_id <= T_BASE) {
         res += get_base_type_name(base_type);
@@ -83,7 +83,6 @@ string ParseType::get_info() const {
                 res += buff;
             }
             if (fields && !(fields->empty())) {
-                res += "{";
                 for (const auto &each: *fields) {
                     res += each.first;
                     if (each.second <= T_BASE) {
@@ -93,13 +92,13 @@ string ParseType::get_info() const {
                     }
                     res += buff;
                 }
-                res += "}";
             }
             for (size_t i = 0; i < pointer_level; ++i) {
                 res += "*";
             }
         }
     }
+    res += "}";
     id2info[this_id] = res;
     return res;
 }
@@ -366,10 +365,10 @@ void ParseType::print_all_type() {
     for (size_t i = 0; i < id2type.size(); ++i) {
         printf("%zu: %s\n", i, id2type[i].get_info().c_str());
     }
-    printf("type2id\n");
-    for (const auto &each: type2id) {
-        printf("%s => %zu\n", each.first.get_info().c_str(), each.second);
-    }
+//    printf("type2id\n");
+//    for (const auto &each: type2id) {
+//        printf("%s => %zu\n", each.first.get_info().c_str(), each.second);
+//    }
 }
 
 ParseType ParseType::field(const string &key) const {
@@ -381,6 +380,13 @@ ParseType ParseType::field(const string &key) const {
         return id2type[iter->second];
     }
     return ParseType();
+}
+
+size_t ParseType::get_id() const {
+    if (type_id == (size_t) -1) {
+        return ((ParseType *) this)->type_id = get_type_id(*this);
+    }
+    return type_id;
 }
 
 #pragma clang diagnostic pop

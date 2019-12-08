@@ -82,6 +82,7 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
     switch (nodes[node_id].type) {
         case N_IDENTIFIER:
         case N_CONST:
+        case N_VARIABLE:
             printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
             break;
         case N_NORMAL:
@@ -170,6 +171,12 @@ ParseTree::~ParseTree() {
     for (auto &each : nodes) {
         each.delete_all_keys();
     }
+}
+
+size_t ParseTree::make_variable_node(const ParseType &type, const string &symbol, size_t address) {
+    size_t new_one = new_node(N_VARIABLE);
+    nodes[new_one].set_variable(type, symbol, address);
+    return new_one;
 }
 
 #pragma clang diagnostic pop

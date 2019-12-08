@@ -93,6 +93,15 @@ public:
     size_t make_identifier_node(const string &symbol);
 
     /**
+     * 生成一个变量节点
+     * @param type 变量类型
+     * @param symbol 变量符号
+     * @param address 变量地址
+     * @return
+     */
+    size_t make_variable_node(const ParseType &type, const string &symbol, size_t address);
+
+    /**
      *  设置节点的父节点
      * @param node_id 被设置的节点id
      * @param parent 父节点id
