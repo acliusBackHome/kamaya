@@ -26,22 +26,87 @@ public:
     ParseNode(const ParseNode &other);
 
     /**
+     * 获取节点的K_SYMBOL键对应的值
+     * @param symbol
+     */
+    string get_symbol() const;
+
+    /**
+     * 获取节点的K_CONST_TYPE键对应的值
+     * 获取该节点的常量类型,
+     * 如果不是常量类型节点,则返回-1
+     * 否则返回ConstValueType
+     * @return
+     */
+    int get_const_type() const;
+
+    /**
+     * 获取节点的K_CONST_VALUE键对应的有符号整数值
+     * 如果类型不正确, 会报警告, 并返回默认值
+     * @return
+     */
+    long long get_const_signed_value() const;
+
+    /**
+     * 获取节点的K_CONST_VALUE键对应的无符号整数值
+     * 如果类型不正确, 会报警告, 并返回默认值
+     * @return
+     */
+    unsigned long long get_const_unsigned_value() const;
+
+    /**
+     * 获取节点的K_CONST_VALUE键对应的字符串值
+     * 如果类型不正确, 会报警告, 并返回默认值
+     * @return
+     */
+    string get_const_string_value() const;
+
+    /**
+     * 获取节点的K_CONST_VALUE键对应的浮点数值
+     * 如果类型不正确, 会报警告, 并返回默认值
+     * @return
+     */
+    long double get_const_float_value() const;
+
+    /**
+     * 获取节点的K_CONST_VALUE键对应的布尔值
+     * 如果类型不正确, 会报警告, 并返回默认值
+     * @return
+     */
+    bool get_const_bool_value() const;
+
+    /**
+     * 获取节点的K_VAR_TYPE键对应的类型
+     * 如果类型不正确, 会报警告, 并返回未知类型
+     * @return
+     */
+    ParseType get_variable_type() const;
+
+    /**
+     * 获取节点的K_VAR_ADDRESS键对应的类型
+     * 如果类型不正确, 会报警告, 并返回0
+     * @return
+     */
+    size_t get_variable_address() const;
+
+    /**
+    * 获取节点的K_TYPE键对应的类型
+    * 如果类型不正确, 会报警告, 并返回未知类型
+    * @return
+    */
+    ParseType get_type() const;
+
+    /**
      * 获取节点的类型
      * @return
      */
-    NodeType get_type() const;
+    NodeType get_node_type() const;
 
     /**
      * 设置节点的symbol键对应的值
      * @param symbol
      */
     void set_symbol(const string &symbol);
-
-    /**
-     * 获取节点的symbol键对应的值
-     * @param symbol
-     */
-    string get_symbol() const;
 
     /**
      * 设置常量值: 有符号整数
@@ -137,14 +202,6 @@ private:
      * @param var_add_address 指向变量地址(size_t)的地址
      */
     void update_variable(size_t type_address, size_t symbol_address, size_t var_add_address);
-
-    /**
-     * 获取该节点的常量类型,
-     * 如果不是常量类型节点,则返回-1
-     * 否则返回ConstValueType
-     * @return
-     */
-    int get_const_type() const;
 
     /**
      * 输出时用, 获取表示常量的值的字符串

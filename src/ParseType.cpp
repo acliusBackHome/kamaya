@@ -316,7 +316,7 @@ ParseType ParseType::get_type(size_t type_id) {
         init();
     }
     if (type_id >= id2type.size()) {
-        printf("ParseType &ParseType::get_type(size_t type_id): 警告: 试图获取不存在的类型, id:%zu\n", type_id);
+        printf("ParseType &ParseType::get_node_type(size_t type_id): 警告: 试图获取不存在的类型, id:%zu\n", type_id);
         return ParseType(T_UNKNOWN);
     }
     return id2type[type_id];
