@@ -202,12 +202,11 @@ void ParseNode::delete_all_keys() {
         case N_DECLARATOR:
         case N_DIRECT_DEC:
         case N_PARAM_LIST:
-        case N_PARAM_DECLARATION:
             break;
         case N_IDENTIFIER: {
             auto iter = keys.find(K_SYMBOL);
             if (iter == keys.end() || iter->second == 0) {
-                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s,的字段定义不完全\n",
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
                        node_id, get_node_type_name(type).c_str());
                 break;
             }
@@ -239,6 +238,17 @@ void ParseNode::delete_all_keys() {
                 break;
             }
             delete (ParseType *) t->second;
+            break;
+        }
+        case N_PARAM_DECLARATION: {
+            auto v = keys.find(K_VARIABLE);
+            if (v == keys.end() || v->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            delete (ParseVariable *) v->second;
+            break;
         }
     }
 
