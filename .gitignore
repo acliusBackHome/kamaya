@@ -1,6 +1,5 @@
 test/*.out
 trash/*
-src/main.cpp
 src/CMakeLists.txt
 src/cmake-build-debug
 src/.idea
