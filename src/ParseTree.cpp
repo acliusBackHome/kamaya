@@ -123,7 +123,7 @@ bool ParseTree::check_node(size_t node_id) const {
     return true;
 }
 
-ParseTree::Node *ParseTree::node(size_t node_id) {
+ParseNode *ParseTree::node(size_t node_id) {
     if (check_node(node_id)) {
         return &nodes[node_id];
     }
@@ -171,6 +171,5 @@ ParseTree::~ParseTree() {
         each.delete_all_keys();
     }
 }
-
 
 #pragma clang diagnostic pop

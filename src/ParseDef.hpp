@@ -2,26 +2,21 @@
 #define NKU_PRACTICE_PARSE_DEF_H
 
 // 基本类型的枚举
-enum ValueType {
-    // 变量:编译时只知道其值的类型信息和地址,不知道值
-
-    V_SHORT = 0,
-    V_INT = 1,
-    V_LONG = 2,
-    V_FLOAT = 3,
-    V_DOUBLE = 4,
-    V_BOOL = 5,
-    V_CHAR = 6,
-    V_ENUM = 7,
-    V_STRUCT = 8,
-    V_UNION = 9,
-    V_VOID = 10,
-    V_POINTER = 11,
-    // 如果值类型为一个常量, 则在编译时就知道该值的所有信息,所以与变量稍有不同
-            V_UNDEFINED
+enum BaseType {
+    T_UNKNOWN = 0,
+    T_SHORT = 1,
+    T_INT = 2,
+    T_LONG = 3,
+    T_FLOAT = 4,
+    T_DOUBLE = 5,
+    T_BOOL = 6,
+    T_CHAR = 7,
+    T_ENUM = 8,
+    T_VOID = 9,
+            T_BASE = 9 //当type_id小于等于这个值时,说明是基本类型
 };
 
-// 常量类型
+// 常量类型, 编译期用来表示用户输入常量的
 enum ConstValueType {
     C_STRING = 0,// 字符串常量其表示的指针是指向一个const char*
     C_SIGNED = 1,    // 有符号整形常量 long long *
