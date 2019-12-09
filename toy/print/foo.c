@@ -39,6 +39,11 @@ int PRINT(char *fmt, ...) {
 
 void SYS_PRINT(char *string, int len) {
   /* 内联汇编的 INTEL 语法 */
+  /* 第一个参数位于 ebp+4*1 */
+  /* 第二个参数位于 ebp+4*2 */
+  /*            eax ebx           ecx           edx
+   * sys_write  4   unsigned int  const char *  size_t
+   */
   __asm__(
     ".intel_syntax noprefix\n\
        push eax\n\
