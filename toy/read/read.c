@@ -7,7 +7,7 @@ int SYS_READ(char *buf, int len);
 
 int READ() {
   char buf[BUFLEN], *p = buf, *p_end;
-  int len = SYS_READ(buf, BUFLEN - 1), value = 0, negative = 0;
+  int len = SYS_READ(buf, BUFLEN-1), value = 0, negative = 0;
   p_end = buf + len + 1;
   while (p != p_end) {
     if (*p == ' ' || *p == '\t') { // 跳过输入行开头的空白字符
@@ -52,7 +52,6 @@ int SYS_READ(char *buf, int len) {
    */
   __asm__(
     ".intel_syntax noprefix\n\
-       push eax\n\
        push ebx\n\
        push ecx\n\
        push edx\n\
