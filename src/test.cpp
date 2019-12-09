@@ -63,7 +63,7 @@ void test_make_node() {
     tree.set_parent(node, node_1);
     tree.set_parent(node_1, 0);
     printf("2:%s\n", tree.node(node_1)->get_symbol(&tree).c_str());
-    node_1 = tree.make_parameter_list();
+    node_1 = tree.make_parameter_list_node();
     tree.set_parent(node_1, 0);
     node_1 = tree.make_parameter_declaration(ParseVariable(ParseType(T_INT), "ass"));
     tree.set_parent(node_1, 0);

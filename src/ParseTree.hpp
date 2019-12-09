@@ -132,7 +132,7 @@ public:
      * 生成一个参数列表节点
      * @return
      */
-    size_t make_parameter_list();
+    size_t make_parameter_list_node();
 
     /**
      * 生成一个参数声明节点

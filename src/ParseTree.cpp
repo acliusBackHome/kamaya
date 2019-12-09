@@ -225,7 +225,7 @@ size_t ParseTree::make_direct_declarator_node() {
     return new_node(N_DIRECT_DEC);
 }
 
-size_t ParseTree::make_parameter_list() {
+size_t ParseTree::make_parameter_list_node() {
     return new_node(N_PARAM_LIST);
 }
 

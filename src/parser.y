@@ -738,7 +738,7 @@ direct_declarator
     tree.set_parent($1, $$);
   }
 	| direct_declarator LP parameter_type_list RP {
-    $$ = tree.new_node("direct declarator with parameters");
+    $$ = tree.make_direct_declarator_node();
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -796,7 +796,7 @@ parameter_type_list
 
 parameter_list
 	: parameter_declaration {
-    $$ = tree.new_node("parameter list");
+    $$ = tree.make_parameter_list_node();
     tree.set_parent($1, $$);
   }
 	| parameter_list COMMA parameter_declaration {
