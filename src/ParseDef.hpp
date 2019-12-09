@@ -60,6 +60,9 @@ enum NodeType {
     // 参数声明
     // variable参数变量
             N_PARAM_DECLARATION = 10,
+    //函数声明
+    //function参数记录
+            N_FUNCTION_DEFINITION = 11,
 
 };
 
@@ -76,6 +79,8 @@ enum NodeKey {
             K_TYPE = 4,
     // 是否声明为指针标记
             K_IS_PTR = 5,
+    // 函数记录
+            K_FUNCTION = 6,
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

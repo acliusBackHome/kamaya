@@ -18,6 +18,7 @@
 
 using namespace std;
 
+class ParseVariable;
 
 class ParseTree {
     friend class ParseNode;
@@ -139,6 +140,20 @@ public:
      * @return
      */
     size_t make_parameter_declaration(const ParseVariable &variable);
+
+    /**
+     * 生成一个函数声明节点
+     * @param ret_type 返回值
+     * @param symbol 函数名称
+     * @param args 参数列表
+     * @param address 初始地址
+     * @return
+     */
+    size_t make_function_definition_node(
+            const ParseType &ret_type,
+            const string &symbol,
+            const vector<ParseVariable> &args,
+            size_t address = (size_t) -1);
 
     /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
@@ -289,6 +304,66 @@ public:
 private:
     ParseType type;
     string symbol;
+    size_t address;
+};
+
+/**
+ * 用于表示函数记录
+ */
+class ParseFunction {
+public:
+    ParseFunction();
+
+    ParseFunction(
+            const ParseType &_ret_type, const string &_symbol, const vector<ParseVariable> &_args,
+            size_t _address = (size_t) -1);
+
+    ParseFunction(const ParseFunction &other) = default;
+
+    /**
+     * 获得返回值类型
+     * @return
+     */
+    ParseType get_ret_type() const;
+
+    /**
+     * 获得参数列表
+     * @return
+     */
+    const vector<ParseVariable> &get_args() const;
+
+    /**
+     * 获得函数的符号
+     * @return
+     */
+    string get_symbol() const;
+
+    /**
+     * 获得函数的地址,如果没有赋值,则返回
+     * (size_t) -1
+     * @return
+     */
+    size_t get_address() const;
+
+    /**
+     * 在构造后再赋予地址
+     * @param _address
+     */
+    void set_address(size_t _address);
+
+    /**
+     * 获得函数的信息
+     * @return
+     */
+    string get_info() const;
+
+
+    ParseFunction &operator=(const ParseFunction &other) = default;
+
+private:
+    ParseType ret_type;
+    string symbol;
+    vector<ParseVariable> args;
     size_t address;
 };
 

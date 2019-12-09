@@ -13,6 +13,8 @@ using namespace std;
 
 class ParseVariable;
 
+class ParseFunction;
+
 class ParseNode {
     friend class ParseTree;
 
@@ -86,6 +88,14 @@ public:
     bool get_const_bool_value(ParseTree *tree = nullptr) const;
 
     /**
+     * 获取节点的K_VARIABLE键对应的变量
+     * 如果类型不正确, 会报警告, 并返回默认值
+     * @param tree
+     * @return
+     */
+    ParseVariable get_variable(ParseTree *tree = nullptr) const;
+
+    /**
      * 获取节点的K_VAR_TYPE键对应的类型
      * 如果类型不正确, 会报警告, 并返回未知类型
      * @param tree
@@ -116,6 +126,23 @@ public:
     * @return
     */
     bool get_is_pointer(ParseTree *tree = nullptr) const;
+
+    /**
+    * 获取节点的K_FUNCTION键对应的函数记录
+    * 如果类型不正确, 会报警告, 并返回默认
+     * @param tree
+    * @return
+    */
+    ParseFunction get_function(ParseTree *tree = nullptr) const;
+
+    /**
+     * 获取节点的参数列表, 用于函数获取其参数列表时,
+    * 目前只有N_PARAM_LIST类型的节点有效
+     * 因为此函数必定会往下搜索节点, 所以所需参数是常量引用
+     * @param tree
+     * @return
+     */
+    vector<ParseVariable> get_parameters_list(const ParseTree &tree) const;
 
     /**
      * 获取节点的类型
@@ -193,6 +220,13 @@ public:
     void set_is_pointer(bool is_pointer = false);
 
     /**
+     * 设置节点的K_FUNCTION键对应的值
+     * 设置函数记录
+     * @param function
+     */
+    void set_function(const ParseFunction &function);
+
+    /**
      * 获取节点信息
      * @return
      */
@@ -257,6 +291,17 @@ private:
      * @return
      */
     void delete_all_keys();
+
+    /**
+     * 更新节点键值之前动作:
+     * 判断节点的类型是否能更新该键值, 并自动释放即将被覆盖的对象,
+     * @tparam OpType 传入delete的类参数
+     * @param msg 警告信息前缀
+     * @param key_type 更新的键值
+     * @param ... NodeType 能够进行此操作的节点类型 最后一个要写-1
+     */
+    template<class OpType>
+    void before_update_key(const string &msg, NodeKey key_type, ...);
 };
 
 #endif //NKU_PRACTICE_PARSE_NODE_HPP

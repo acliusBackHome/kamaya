@@ -89,6 +89,7 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
         case N_DIRECT_DEC:
         case N_PARAM_LIST:
         case N_PARAM_DECLARATION:
+        case N_FUNCTION_DEFINITION:
             printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
             break;
         case N_NORMAL:
@@ -235,6 +236,17 @@ size_t ParseTree::make_parameter_declaration(const ParseVariable &variable) {
     return new_one;
 }
 
+size_t ParseTree::make_function_definition_node(
+        const ParseType &ret_type, const string &symbol,
+        const vector<ParseVariable> &args,
+        size_t address) {
+    size_t new_one = new_node(N_FUNCTION_DEFINITION);
+    nodes[new_one].set_function(ParseFunction(
+            ret_type, symbol, args, address
+    ));
+    return new_one;
+}
+
 ParseVariable::ParseVariable() : type(T_UNKNOWN), symbol(), address((size_t) -1) {}
 
 ParseVariable::ParseVariable(const ParseType &_type, const string &_symbol, size_t _address) :
@@ -268,5 +280,41 @@ ParseVariable &ParseVariable::operator=(const ParseVariable &other) = default;
 
 ParseVariable::ParseVariable(const ParseVariable &other) = default;
 
+ParseType ParseFunction::get_ret_type() const {
+    return ret_type;
+}
+
+ParseFunction::ParseFunction(const ParseType &_ret_type, const string &_symbol, const vector<ParseVariable> &_args,
+                             size_t _address) : ret_type(_ret_type), symbol(_symbol), args(_args), address(_address) {}
+
+const vector<ParseVariable> &ParseFunction::get_args() const {
+    return args;
+}
+
+string ParseFunction::get_symbol() const {
+    return symbol;
+}
+
+size_t ParseFunction::get_address() const {
+    return address;
+}
+
+void ParseFunction::set_address(size_t _address) {
+    address = _address;
+}
+
+string ParseFunction::get_info() const {
+    string res = "ParseFunction { return_type:" + ret_type.get_info() +
+                 ", symbol:" + symbol + ", args[";
+    for (const auto &each : args) {
+        res += each.get_info() + ", ";
+    }
+    res += "], address:";
+    char buff[32];
+    sprintf(buff, "%zu }", address);
+    return res + buff;
+}
+
+ParseFunction::ParseFunction() : ret_type(T_UNKNOWN), symbol("undefined"), args(), address((size_t) -1) {}
 
 #pragma clang diagnostic pop

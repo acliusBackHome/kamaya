@@ -3,3 +3,4 @@ trash/*
 src/CMakeLists.txt
 src/cmake-build-debug
 src/.idea
+.vscode

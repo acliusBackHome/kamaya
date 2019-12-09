@@ -748,7 +748,7 @@ direct_declarator
     tree.set_parent($3, $$);
   }
 	| direct_declarator LP RP {
-    $$ = tree.new_node("declaration with empty parentheses");
+    $$ = tree.make_direct_declarator_node();
     tree.set_parent($1, $$);
   }
 	;
@@ -1147,14 +1147,18 @@ external_declaration
 
 function_definition
 	: declaration_specifiers declarator declaration_list compound_statement {
-    $$ = tree.new_node("function definition");
+    $$ = tree.new_node("function definition 1");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
   }
 	| declaration_specifiers declarator compound_statement {
-    $$ = tree.new_node("function definition");
+    $$ = tree.make_function_definition_node(
+      tree.node($1)->get_type(&tree),
+      tree.node($2)->get_symbol(&tree),
+      tree.node($2)->get_parameters_list(tree)
+    );
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);
