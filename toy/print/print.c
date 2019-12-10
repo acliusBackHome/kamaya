@@ -1,4 +1,4 @@
-#include "foo.h"
+#include "print.h"
 
 void SYS_PRINT(char *string, int len);
 

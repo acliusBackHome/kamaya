@@ -3,4 +3,5 @@
     call READ
     mov [esp], eax
 %endmacro
+
 extern READ
