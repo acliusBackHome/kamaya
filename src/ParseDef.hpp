@@ -47,7 +47,8 @@ enum NodeType {
     // 目前没有直接键值
             N_DECLARATOR = 6,
     // 直接声明:
-    // 目前没有直接键值
+    // is_array: 是否声明成数组标记
+    // expression: 表达式, 表示数组大小的表达式
             N_DIRECT_DEC = 7,
     // 参数列表:
     // 目前没有直接键值
@@ -78,18 +79,20 @@ enum NodeKey {
             K_SYMBOL = 0,
     // 常量类型, ConstValueType*
             K_CONST_TYPE = 1,
-    // 常量值: size_t 根据类型表示不同的指针:
+    // 常量值: size_t* 根据类型表示不同的指针:
             K_CONST_VALUE = 2,
-    // 变量
+    // 变量, ParseVariable*
             K_VARIABLE = 3,
-    // 类型, 用于类型声明中
+    // 类型, 用于类型声明中, ParseType*
             K_TYPE = 4,
-    // 是否声明为指针标记
+    // 是否声明为指针标记, bool*
             K_IS_PTR = 5,
-    // 函数记录
+    // 函数记录, ParseFunction*
             K_FUNCTION = 6,
-    // 表达式记录
+    // 表达式记录, ParseExpression*
             K_EXPRESSION = 7,
+    // 是否被声明成数组布尔值, ParseExpression*
+            K_IS_ARRAY = 8,
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

@@ -125,9 +125,11 @@ public:
 
     /**
      * 生成一个直接声明器节点
+     * @param is_array 是否声明为数组
+     * @param expression 数组大小表达式
      * @return
      */
-    size_t make_direct_declarator_node();
+    size_t make_direct_declarator_node(bool is_array = false, const ParseExpression *expression = nullptr);
 
     /**
      * 生成一个参数列表节点

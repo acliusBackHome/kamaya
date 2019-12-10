@@ -130,6 +130,13 @@ public:
     vector<ParseVariable> get_parameters_list(const ParseTree &tree) const;
 
     /**
+     * 获取节点的K_IS_ARRAY值
+     * @param tree
+     * @return
+     */
+    bool get_is_array(ParseTree *tree = nullptr) const;
+
+    /**
      * 获取节点的类型
      * @return
      */
@@ -217,6 +224,20 @@ public:
      * @param expression
      */
     void set_expression(const ParseExpression &expression);
+
+    /**
+     * 设置节点的K_IS_ARRAY键对应的值
+     * 设置是否声明为数组
+     * @param is_array
+     */
+    void set_is_array(bool is_array);
+
+    /**
+     * 没有警告地更新K_IS_ARRAY键值
+     * 更新是否声明为数组
+     * @param is_array
+     */
+    void update_is_array(bool is_array);
 
     /**
      * 获取节点信息

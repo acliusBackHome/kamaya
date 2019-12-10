@@ -218,8 +218,17 @@ size_t ParseTree::make_declarator_node(bool is_pointer) {
     return new_one;
 }
 
-size_t ParseTree::make_direct_declarator_node() {
-    return new_node(N_DIRECT_DEC);
+size_t ParseTree::make_direct_declarator_node(bool is_array, const ParseExpression *expression) {
+    size_t new_one = new_node(N_DIRECT_DEC);
+    nodes[new_one].set_is_array(is_array);
+    if(is_array) {
+        if(expression) {
+            nodes[new_one].set_expression(*expression);
+        } else {
+            nodes[new_one].set_expression(ParseExpression());
+        }
+    }
+    return new_one;
 }
 
 size_t ParseTree::make_parameter_list_node() {

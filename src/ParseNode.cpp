@@ -31,6 +31,8 @@ string ParseNode::get_key_name(NodeKey type) {
             return "function";
         case K_EXPRESSION:
             return "expression";
+        case K_IS_ARRAY:
+            return "is_array";
     }
     return "unknown";
 }
@@ -110,6 +112,15 @@ string ParseNode::get_node_info() const {
                 break;
             case K_EXPRESSION:
                 info += "expression: to be continued, ";
+                break;
+            case K_IS_ARRAY:
+                info += "is_array: ";
+                if (*(bool *) each.second) {
+                    info += "true";
+                } else {
+                    info += "false";
+                }
+                info += ", ";
                 break;
         }
     }
@@ -198,7 +209,6 @@ void ParseNode::delete_all_keys() {
         case N_NORMAL:
         case N_UNKNOWN:
         case N_DECLARATION_SPE:
-        case N_DIRECT_DEC:
         case N_PARAM_LIST:
         case N_INIT_DECLARATOR_LIST:
         case N_INITIALIZER:
@@ -260,7 +270,7 @@ void ParseNode::delete_all_keys() {
             auto v = keys.find(K_VARIABLE);
             auto e = keys.find(K_EXPRESSION);
             if (v == keys.end() || v->second == 0 ||
-                    e == keys.end() || e->second == 0) {
+                e == keys.end() || e->second == 0) {
                 printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
                        node_id, get_node_type_name(type).c_str());
                 break;
@@ -268,6 +278,25 @@ void ParseNode::delete_all_keys() {
             delete (ParseVariable *) v->second;
             delete (ParseExpression *) e->second;
             break;
+        }
+        case N_DIRECT_DEC: {
+            auto b = keys.find(K_IS_ARRAY);
+            if (b == keys.end() || b->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            auto is_array = *(bool *) (b->second);
+            if (is_array) {
+                auto e = keys.find(K_EXPRESSION);
+                if (e == keys.end() || e->second == 0) {
+                    printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
+                           node_id, get_node_type_name(type).c_str());
+                    break;
+                }
+                delete (ParseExpression *) (e->second);
+            }
+            delete (bool *) (b->second);
         }
     }
 
@@ -403,9 +432,27 @@ void ParseNode::set_function(const ParseFunction &function) {
 void ParseNode::set_expression(const ParseExpression &expression) {
     before_update_key<ParseExpression>(
             "ParseNode::set_expression(const ParseFunction &expression)",
-            K_EXPRESSION, N_INIT_DECLARATOR, -1
+            K_EXPRESSION, N_INIT_DECLARATOR, N_DIRECT_DEC, -1
     );
     keys[K_EXPRESSION] = (size_t) new ParseExpression(expression);
+}
+
+void ParseNode::set_is_array(bool is_array) {
+    before_update_key<bool>(
+            "ParseNode::set_is_array(bool is_array)",
+            K_IS_ARRAY, N_DIRECT_DEC, -1
+    );
+    keys[K_IS_ARRAY] = (size_t) new bool(is_array);
+}
+
+void ParseNode::update_is_array(bool is_array) {
+    auto i = keys.find(K_IS_ARRAY);
+    if (i == keys.end() || i->second == 0) {
+        printf("ParseNode::update_is_array(bool is_array): 警告: 试图更新未定义的%s键值\n",
+               get_key_name(K_IS_ARRAY).c_str());
+        return;
+    }
+    *((bool *) (i->second)) = is_array;
 }
 
 string ParseNode::get_symbol(ParseTree *_tree) const {
@@ -435,7 +482,7 @@ string ParseNode::get_symbol(ParseTree *_tree) const {
                 break;
             }
             default:
-                
+
                 break;
         }
     }
@@ -782,6 +829,32 @@ vector<ParseVariable> ParseNode::get_parameters_list(const ParseTree &tree) cons
     }
     printf("ParseNode::get_parameters_list(const ParseTree &tree): 警告: 节点%zu不支持此操作\n", node_id);
     return vector<ParseVariable>();
+}
+
+bool ParseNode::get_is_array(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_IS_ARRAY);
+    if (iter != keys.end()) {
+        return *(bool *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            case N_DECLARATOR: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    const ParseNode &node = tree.nodes[each];
+                    if (node.type == N_DIRECT_DEC) {
+                        return node.get_is_array(_tree);
+                    }
+                }
+                break;
+            }
+            default:
+                printf("ParseNode::get_is_array(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_is_array(ParseTree *tree): 警告:节点%zu未定义字段%s\n", node_id, get_key_name(K_IS_ARRAY).c_str());
+    return false;
 }
 
 #pragma clang diagnostic pop

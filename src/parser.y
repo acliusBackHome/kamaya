@@ -731,6 +731,7 @@ direct_declarator
     tree.set_parent($3, $$);
   }
 	| direct_declarator ML assignment_expression MR {
+    // todo: 这里要将$1的变量类型更新为数组, 但是大小为$3的表达式
     $$ = $1;
     tree.set_parent($3, $$);
   }
@@ -739,9 +740,9 @@ direct_declarator
 	//| direct_declarator ML type_qualifier_list MUL MR
 	//| direct_declarator ML MUL MR
 	| direct_declarator ML MR {
-    $$ = tree.make_direct_declarator_node();
-    // todo: 这里要将$1的变量类型更新为数组, 但是大小未知
-    tree.set_parent($1, $$);
+    tree.node($1)->update_is_array(true);
+    tree.node($1)->set_expression(ParseExpression());
+    $$ = $1;
   }
 	| direct_declarator LP parameter_type_list RP {
     $$ = tree.make_direct_declarator_node();
@@ -816,6 +817,10 @@ parameter_declaration
     auto type = tree.node($1)->get_type(&tree);
     if(tree.node($2)->get_is_pointer()) {
       type = ParseType::get_pointer(type);
+    }
+    if(tree.node($2)->get_is_array(&tree)) {
+      type = ParseType::get_array(type, (size_t)-1);
+      // todo:获取$2的表达式并提取出常量值填入get_array的第二个参数, 如果不能提取出常量值则置-1继续分析,并抛出error
     }
     $$ = tree.make_parameter_declaration(ParseVariable(type, tree.node($2)->get_symbol(&tree)));
     tree.set_parent($1, $$);
