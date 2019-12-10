@@ -64,5 +64,5 @@ int SYS_READ(char *buf, int len) {
        pop ecx\n\
        pop ebx\n\
     .att_syntax"
-  ); // 读入的数量存储在 eax（未弹出），值（char bytes）存储在
+  ); // 读入的数量存储在 eax（未弹出），值（char bytes）存储在 buf
 }

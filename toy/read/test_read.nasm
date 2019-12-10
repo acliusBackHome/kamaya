@@ -1,8 +1,8 @@
 global _start
 section .text
 _start:
-  read
-  push eax
+  read ; 呼叫宏
+  push eax ; 存储结果
   mov eax, 4
   mov ebx, 1
   mov ecx, msg
@@ -13,5 +13,5 @@ _start:
   mov eax, 1
   int 0x80
 section .data
-  msg: db 'run echo $? to watch result', 10
+  msg: db 'run echo $? to watch result', 10, 0
   len: equ $-msg
