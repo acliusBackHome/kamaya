@@ -96,22 +96,6 @@ public:
     ParseVariable get_variable(ParseTree *tree = nullptr) const;
 
     /**
-     * 获取节点的K_VAR_TYPE键对应的类型
-     * 如果类型不正确, 会报警告, 并返回未知类型
-     * @param tree
-     * @return
-     */
-//    ParseType get_variable_type(ParseTree* tree = nullptr) const;
-
-    /**
-     * 获取节点的K_VAR_ADDRESS键对应的类型
-     * 如果类型不正确, 会报警告, 并返回0
-     * @param tree
-     * @return
-     */
-//    size_t get_variable_address(ParseTree* tree = nullptr) const;
-
-    /**
     * 获取节点的K_TYPE键对应的类型
     * 如果类型不正确, 会报警告, 并返回未知类型
      * @param tree

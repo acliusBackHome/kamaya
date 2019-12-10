@@ -37,32 +37,27 @@ enum NodeType {
     // 常量节点:
     //value: 常量值
             N_CONST = 3,
-    // 变量节点:
-    // symbol: 变量名
-    // var_address: 变量地址
-    // var_type: 变量类型
-    //        N_VARIABLE = 4,
     // 类型声明:
     // type: 声明的类型
-            N_TYPE_SPE = 5,
+            N_TYPE_SPE = 4,
     // 类型修饰声明:
     // 目前没有直接键值
-            N_DECLARATION_SPE = 6,
+            N_DECLARATION_SPE = 5,
     // 声明器:
     // 目前没有直接键值
-            N_DECLARATOR = 7,
+            N_DECLARATOR = 6,
     // 直接声明:
     // 目前没有直接键值
-            N_DIRECT_DEC = 8,
+            N_DIRECT_DEC = 7,
     // 参数列表:
     // 目前没有直接键值
-            N_PARAM_LIST = 9,
+            N_PARAM_LIST = 8,
     // 参数声明
     // variable参数变量
-            N_PARAM_DECLARATION = 10,
+            N_PARAM_DECLARATION = 9,
     //函数声明
     //function参数记录
-            N_FUNCTION_DEFINITION = 11,
+            N_FUNCTION_DEFINITION = 10,
 
 };
 

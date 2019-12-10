@@ -82,7 +82,6 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
     switch (nodes[node_id].type) {
         case N_IDENTIFIER:
         case N_CONST:
-            //case N_VARIABLE:
         case N_TYPE_SPE:
         case N_DECLARATION_SPE:
         case N_DECLARATOR:
@@ -179,12 +178,6 @@ ParseTree::~ParseTree() {
         each.delete_all_keys();
     }
 }
-
-//size_t ParseTree::make_variable_node(const ParseType &type, const string &symbol, size_t address) {
-//    size_t new_one = new_node(N_VARIABLE);
-//    nodes[new_one].set_variable(type, symbol, address);
-//    return new_one;
-//}
 
 size_t ParseTree::make_type_specifier_node(const ParseType &type) {
     size_t new_one = new_node(N_TYPE_SPE);

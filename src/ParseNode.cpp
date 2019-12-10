@@ -41,8 +41,6 @@ string ParseNode::get_node_type_name(NodeType type) {
             return "identifier";
         case N_CONST:
             return "constant";
-//        case N_VARIABLE:
-//            return "variable";
         case N_UNKNOWN:
             return "unknown";
         case N_TYPE_SPE:
@@ -215,20 +213,6 @@ void ParseNode::delete_all_keys() {
         case N_CONST:
             delete_const();
             break;
-//        case N_VARIABLE: {
-//            auto s = keys.find(K_SYMBOL), t = keys.find(K_VAR_TYPE), a = keys.find(K_VAR_ADDRESS);
-//            if (s == keys.end() || s->second == 0 ||
-//                t == keys.end() || t->second == 0 ||
-//                a == keys.end() || a->second == 0) {
-//                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s,的字段定义不完全\n",
-//                       node_id, get_node_type_name(type).c_str());
-//                break;
-//            }
-//            delete (ParseType *) t->second;
-//            delete (string *) s->second;
-//            delete (size_t *) a->second;
-//            break;
-//        }
         case N_TYPE_SPE: {
             auto t = keys.find(K_TYPE);
             if (t == keys.end() || t->second == 0) {
@@ -294,54 +278,6 @@ string ParseNode::get_const_value_str() const {
     return "undefined";
 }
 
-// 以下是过期代码, 考虑是否删除中
-//void ParseNode::set_variable(const ParseType &type, const string &symbol, size_t address) {
-//    update_variable((size_t) new ParseType(type), (size_t) new string(symbol), (size_t) new size_t(address));
-//}
-
-//void ParseNode::update_variable(size_t type_address, size_t symbol_address, size_t var_add_address) {
-//    if (type != N_VARIABLE) {
-//        printf("ParseNode::update_variable: 警告:试图设置非变量类型%s的节点%zu的变量值\n",
-//               get_node_type_name(type).c_str(), node_id);
-//        return;
-//    }
-//    auto t = keys.find(K_VAR_TYPE);
-//    if (t != keys.end()) {
-//        printf("ParseNode::update_variable: 警告:尝试重定义节点%zu的变量值\n", node_id);
-//        auto s = keys.find(K_SYMBOL), a = keys.find(K_VAR_ADDRESS);
-//        if (t->second == 0 || s == keys.end() || s->second == 0 || a == keys.end() || a->second == 0) {
-//            printf("ParseNode::update_variable: 警告:变量节点%zu的字段不完整,请检查调用或者实现\n", node_id);
-//            return;
-//        }
-//        delete (ParseType *) t->second;
-//        delete (string *) s->second;
-//        delete (size_t *) a->second;
-//    }
-//    keys[K_VAR_TYPE] = type_address;
-//    keys[K_VAR_ADDRESS] = var_add_address;
-//    keys[K_SYMBOL] = symbol_address;
-//}
-
-//ParseType ParseNode::get_variable_type(ParseTree *tree) const {
-//    auto t = keys.find(K_VAR_TYPE);
-//    if (t == keys.end() || t->second == 0) {
-//        printf("ParseNode::get_variable_type(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-//               get_key_name(K_CONST_TYPE).c_str());
-//        return ParseType(T_UNKNOWN);
-//    }
-//    return *(ParseType *) (t->second);
-//}
-
-//size_t ParseNode::get_variable_address(ParseTree *tree) const {
-//    auto a = keys.find(K_VAR_ADDRESS);
-//    if (a == keys.end() || a->second == 0) {
-//        printf("ParseNode::get_variable_address(): 警告: 试图获取节点%zu未定义的%s值\n", node_id,
-//               get_key_name(K_CONST_TYPE).c_str());
-//        return 0;
-//    }
-//    return *(size_t *) (a->second);
-//}
-
 template<class OpType>
 void ParseNode::before_update_key(const string &msg, NodeKey key_type, ...) {
     // 读取可变长参数
@@ -381,11 +317,8 @@ void ParseNode::before_update_key(const string &msg, NodeKey key_type, ...) {
 }
 
 void ParseNode::set_symbol(const string &symbol) {
-    auto iter = keys.find(K_SYMBOL);
-    if (iter != keys.end()) {
-        delete (string *) iter->second;
-        printf("警告: 对节点%zu 的symbol值进行了多次设置\n", node_id);
-    }
+    before_update_key<string>("ParseNode::set_symbol(const string &symbol)",
+                              K_SYMBOL, N_IDENTIFIER, -1);
     keys[K_SYMBOL] = ((size_t) new string(symbol));
 }
 
@@ -410,42 +343,16 @@ void ParseNode::set_const(long double value) {
 }
 
 void ParseNode::set_type(const ParseType &p_type) {
-    if (type != N_TYPE_SPE) {
-        printf("ParseNode::set_type(const ParseType &p_type): 警告:试图设置非类型修饰声明类型%s的节点%zu的类型值\n",
-               get_node_type_name(type).c_str(), node_id);
-        return;
-    }
-    auto t = keys.find(K_TYPE);
-    if (t != keys.end()) {
-        printf("ParseNode::set_type(const ParseType &p_type): 警告:尝试重定义节点%zu的类型值\n", node_id);
-        if (t->second) {
-            printf("ParseNode::set_type(const ParseType &p_type): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
-                   node_id);
-            return;
-        }
-        delete (ParseType *) t->second;
-    }
+    before_update_key<ParseType>("ParseNode::set_type(const ParseType &p_type)",
+                                 K_TYPE, N_TYPE_SPE, -1);
     keys[K_TYPE] = (size_t) new ParseType(p_type);
 }
 
 void ParseNode::set_variable(const ParseType &p_type, const string &symbol, size_t address) {
-    if (type != N_PARAM_DECLARATION) {
-        printf("ParseNode::set_variable(const ParseType &p_type): 警告:试图设置非%s类型的节点%zu的%s值\n",
-               get_node_type_name(N_PARAM_DECLARATION).c_str(), node_id,
-               get_key_name(K_VARIABLE).c_str());
-        return;
-    }
-    auto t = keys.find(K_VARIABLE);
-    if (t != keys.end()) {
-        printf("ParseNode::set_variable(const ParseType &p_type): 警告:尝试重定义节点%zu的%s值\n", node_id,
-               get_key_name(K_VARIABLE).c_str());
-        if (t->second) {
-            printf("ParseNode::set_variable(const ParseType &p_type): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
-                   node_id);
-            return;
-        }
-        delete (ParseVariable *) t->second;
-    }
+    before_update_key<ParseVariable>(
+            "ParseNode::set_variable(const ParseType &p_type, const string &symbol, size_t address)",
+            K_VARIABLE, N_PARAM_DECLARATION, -1
+    );
     keys[K_VARIABLE] = (size_t) new ParseVariable(p_type, symbol, address);
 }
 
@@ -454,23 +361,8 @@ void ParseNode::set_variable(const ParseVariable &variable) {
 }
 
 void ParseNode::set_is_pointer(bool is_pointer) {
-    if (type != N_DECLARATOR) {
-        printf("ParseNode::set_is_pointer(bool is_pointer): 警告:试图设置非%s类型的节点%zu的%s值\n",
-               get_node_type_name(N_DECLARATOR).c_str(), node_id,
-               get_key_name(K_IS_PTR).c_str());
-        return;
-    }
-    auto t = keys.find(K_IS_PTR);
-    if (t != keys.end()) {
-        printf("ParseNode::set_is_pointer(bool is_pointer): 警告:尝试重定义节点%zu的%s值\n", node_id,
-               get_key_name(K_IS_PTR).c_str());
-        if (t->second) {
-            printf("ParseNode::set_is_pointer(bool is_pointer): 警告:变量节点%zu的字段不完整,请检查调用或者实现\n",
-                   node_id);
-            return;
-        }
-        delete (bool *) t->second;
-    }
+    before_update_key<bool>("ParseNode::set_is_pointer(bool is_pointer)",
+                            K_IS_PTR, N_DECLARATOR, -1);
     keys[K_IS_PTR] = (size_t) new bool(is_pointer);
 }
 
@@ -780,7 +672,7 @@ vector<ParseVariable> ParseNode::get_parameters_list(const ParseTree &tree) cons
                     return node.get_parameters_list(tree);
                 }
             }
-            return vector<ParseVariable> ();
+            return vector<ParseVariable>();
         }
         case N_DECLARATOR: {
             for (const auto &each : tree.node_children[node_id]) {
@@ -795,7 +687,7 @@ vector<ParseVariable> ParseNode::get_parameters_list(const ParseTree &tree) cons
             break;
     }
     printf("ParseNode::get_parameters_list(const ParseTree &tree): 警告: 节点%zu不支持此操作\n", node_id);
-    return vector<ParseVariable> ();
+    return vector<ParseVariable>();
 }
 
 #pragma clang diagnostic pop
