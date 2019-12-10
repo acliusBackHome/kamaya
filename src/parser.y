@@ -415,11 +415,11 @@ constant_expression
 
 declaration
 	: declaration_specifiers SEMICOLON {
-    $$ = tree.new_node("declaration");
+    $$ = tree.new_node("declaration 1");
     tree.set_parent($1, $$);
   }
 	| declaration_specifiers init_declarator_list SEMICOLON {
-    $$ = tree.new_node("declaration");
+    $$ = tree.new_node("declaration 2");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -480,7 +480,13 @@ init_declarator
     $$ = $1;
   }
 	| declarator ASSIGN initializer {
-    $$ = tree.new_node("assignment declarator");
+    $$ = tree.make_init_declarator_node(
+      ParseVariable(
+        ParseType(T_UNKNOWN),
+        tree.node($1)->get_symbol(&tree)
+      ),
+      ParseExpression()
+    );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -908,15 +914,15 @@ direct_abstract_declarator
 
 initializer
 	: assignment_expression {
-    $$ = tree.new_node("initializer");
+    $$ = tree.make_initializer_node();
     tree.set_parent($1, $$);
   }
 	| LB initializer_list RB {
-    $$ = tree.new_node("initializer");
+    $$ = tree.new_node("initializer 2");
     tree.set_parent($1, $$);
   }
 	| LB initializer_list COMMA RB {
-    $$ = tree.new_node("initializer");
+    $$ = tree.new_node("initializer 3");
     tree.set_parent($1, $$);
   }
 	;

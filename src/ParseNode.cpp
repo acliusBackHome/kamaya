@@ -29,6 +29,8 @@ string ParseNode::get_key_name(NodeKey type) {
             return "is_pointer";
         case K_FUNCTION:
             return "function";
+        case K_EXPRESSION:
+            return "expression";
     }
     return "unknown";
 }
@@ -57,6 +59,12 @@ string ParseNode::get_node_type_name(NodeType type) {
             return "parameter_declaration";
         case N_FUNCTION_DEFINITION:
             return "function_definition";
+        case N_INIT_DECLARATOR:
+            return "initialize_declarator";
+        case N_INIT_DECLARATOR_LIST:
+            return "initialize_declarator_list";
+        case N_INITIALIZER:
+            return "initializer";
     }
     return "unknown";
 }
@@ -83,7 +91,7 @@ string ParseNode::get_node_info() const {
                 info += "const_value: " + get_const_value_str() + ", ";
                 break;
             case K_VARIABLE:
-                info += "variable: " + ((ParseVariable *) each.second)->get_info();
+                info += "variable: " + ((ParseVariable *) each.second)->get_info() + ", ";
                 break;
             case K_TYPE:
                 info += "type: " + ((ParseType *) each.second)->get_info() + ", ";
@@ -99,6 +107,9 @@ string ParseNode::get_node_info() const {
                     info += "false";
                 }
                 info += ", ";
+                break;
+            case K_EXPRESSION:
+                info += "expression: to be continued, ";
                 break;
         }
     }
@@ -189,6 +200,8 @@ void ParseNode::delete_all_keys() {
         case N_DECLARATION_SPE:
         case N_DIRECT_DEC:
         case N_PARAM_LIST:
+        case N_INIT_DECLARATOR_LIST:
+        case N_INITIALIZER:
             break;
         case N_IDENTIFIER: {
             auto iter = keys.find(K_SYMBOL);
@@ -241,6 +254,19 @@ void ParseNode::delete_all_keys() {
                 break;
             }
             delete (ParseVariable *) v->second;
+            break;
+        }
+        case N_INIT_DECLARATOR: {
+            auto v = keys.find(K_VARIABLE);
+            auto e = keys.find(K_EXPRESSION);
+            if (v == keys.end() || v->second == 0 ||
+                    e == keys.end() || e->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            delete (ParseVariable *) v->second;
+            delete (ParseExpression *) e->second;
             break;
         }
     }
@@ -351,7 +377,7 @@ void ParseNode::set_type(const ParseType &p_type) {
 void ParseNode::set_variable(const ParseType &p_type, const string &symbol, size_t address) {
     before_update_key<ParseVariable>(
             "ParseNode::set_variable(const ParseType &p_type, const string &symbol, size_t address)",
-            K_VARIABLE, N_PARAM_DECLARATION, -1
+            K_VARIABLE, N_PARAM_DECLARATION, N_INIT_DECLARATOR, -1
     );
     keys[K_VARIABLE] = (size_t) new ParseVariable(p_type, symbol, address);
 }
@@ -372,6 +398,14 @@ void ParseNode::set_function(const ParseFunction &function) {
             K_FUNCTION, N_FUNCTION_DEFINITION, -1
     );
     keys[K_FUNCTION] = (size_t) new ParseFunction(function);
+}
+
+void ParseNode::set_expression(const ParseExpression &expression) {
+    before_update_key<ParseExpression>(
+            "ParseNode::set_expression(const ParseFunction &expression)",
+            K_EXPRESSION, N_INIT_DECLARATOR, -1
+    );
+    keys[K_EXPRESSION] = (size_t) new ParseExpression(expression);
 }
 
 string ParseNode::get_symbol(ParseTree *_tree) const {
@@ -401,21 +435,31 @@ string ParseNode::get_symbol(ParseTree *_tree) const {
                 break;
             }
             default:
-                printf("ParseNode::get_symbol(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                
                 break;
         }
     }
-    printf("警告:节点%zu未定义字段%s\n", node_id, get_key_name(K_SYMBOL).c_str());
+    printf("ParseNode::get_symbol(ParseTree *tree): 警告: 节点%zu不支持此操作\n", node_id);
     return "";
 }
 
-int ParseNode::get_const_type(ParseTree *tree) const {
+int ParseNode::get_const_type(ParseTree *_tree) const {
     if (type == N_CONST) {
         const auto &iter = keys.find(K_CONST_TYPE);
         return *(ConstValueType *) iter->second;
     }
-    if (tree) {
+    if (_tree) {
+        ParseTree &tree = *_tree;
         switch (type) {
+            case N_INITIALIZER: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_DIRECT_DEC) {
+                        return child.get_const_type(_tree);
+                    }
+                }
+                break;
+            }
             default:
                 printf("ParseNode::get_const_type(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
                 break;
@@ -424,7 +468,7 @@ int ParseNode::get_const_type(ParseTree *tree) const {
     return -1;
 }
 
-long long ParseNode::get_const_signed_value(ParseTree *tree) const {
+long long ParseNode::get_const_signed_value(ParseTree *_tree) const {
     if (type == N_CONST) {
         auto t = keys.find(K_CONST_TYPE);
         if (t == keys.end() || t->second == 0) {
@@ -445,8 +489,18 @@ long long ParseNode::get_const_signed_value(ParseTree *tree) const {
             return 0;
         }
         return *(long long *) (v->second);
-    } else if (tree) {
+    } else if (_tree) {
+        ParseTree &tree = *_tree;
         switch (type) {
+            case N_INITIALIZER: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_DIRECT_DEC) {
+                        return child.get_const_signed_value(_tree);
+                    }
+                }
+                break;
+            }
             default:
                 printf("ParseNode::get_const_signed_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
                 break;
@@ -455,7 +509,7 @@ long long ParseNode::get_const_signed_value(ParseTree *tree) const {
     return 0;
 }
 
-unsigned long long ParseNode::get_const_unsigned_value(ParseTree *tree) const {
+unsigned long long ParseNode::get_const_unsigned_value(ParseTree *_tree) const {
     if (type == N_CONST) {
         auto t = keys.find(K_CONST_TYPE);
         if (t == keys.end() || t->second == 0) {
@@ -476,8 +530,18 @@ unsigned long long ParseNode::get_const_unsigned_value(ParseTree *tree) const {
             return 0;
         }
         return *(unsigned long long *) (v->second);
-    } else if (tree) {
+    } else if (_tree) {
+        ParseTree &tree = *_tree;
         switch (type) {
+            case N_INITIALIZER: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_DIRECT_DEC) {
+                        return child.get_const_unsigned_value(_tree);
+                    }
+                }
+                break;
+            }
             default:
                 printf("ParseNode::get_const_unsigned_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
                 break;
@@ -486,7 +550,7 @@ unsigned long long ParseNode::get_const_unsigned_value(ParseTree *tree) const {
     return 0;
 }
 
-string ParseNode::get_const_string_value(ParseTree *tree) const {
+string ParseNode::get_const_string_value(ParseTree *_tree) const {
     if (type == N_CONST) {
         auto t = keys.find(K_CONST_TYPE);
         if (t == keys.end() || t->second == 0) {
@@ -507,8 +571,18 @@ string ParseNode::get_const_string_value(ParseTree *tree) const {
             return "";
         }
         return *(string *) (v->second);
-    } else if (tree) {
+    } else if (_tree) {
+        ParseTree &tree = *_tree;
         switch (type) {
+            case N_INITIALIZER: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_DIRECT_DEC) {
+                        return child.get_const_string_value(_tree);
+                    }
+                }
+                break;
+            }
             default:
                 printf("ParseNode::get_const_string_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
                 break;
@@ -517,7 +591,7 @@ string ParseNode::get_const_string_value(ParseTree *tree) const {
     return "";
 }
 
-long double ParseNode::get_const_float_value(ParseTree *tree) const {
+long double ParseNode::get_const_float_value(ParseTree *_tree) const {
     if (type == N_CONST) {
         auto t = keys.find(K_CONST_TYPE);
         if (t == keys.end() || t->second == 0) {
@@ -538,8 +612,18 @@ long double ParseNode::get_const_float_value(ParseTree *tree) const {
             return 0;
         }
         return *(long double *) (v->second);
-    } else if (tree) {
+    } else if (_tree) {
+        ParseTree &tree = *_tree;
         switch (type) {
+            case N_INITIALIZER: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_DIRECT_DEC) {
+                        return child.get_const_float_value(_tree);
+                    }
+                }
+                break;
+            }
             default:
                 printf("ParseNode::get_const_float_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
                 break;
@@ -548,7 +632,7 @@ long double ParseNode::get_const_float_value(ParseTree *tree) const {
     return 0;
 }
 
-bool ParseNode::get_const_bool_value(ParseTree *tree) const {
+bool ParseNode::get_const_bool_value(ParseTree *_tree) const {
     if (type == N_CONST) {
         auto t = keys.find(K_CONST_TYPE);
         if (t == keys.end() || t->second == 0) {
@@ -569,8 +653,18 @@ bool ParseNode::get_const_bool_value(ParseTree *tree) const {
             return false;
         }
         return *(bool *) (v->second);
-    } else if (tree) {
+    } else if (_tree) {
+        ParseTree &tree = *_tree;
         switch (type) {
+            case N_INITIALIZER: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    ParseNode &child = tree.nodes[each];
+                    if (child.type == N_DIRECT_DEC) {
+                        return child.get_const_bool_value(_tree);
+                    }
+                }
+                break;
+            }
             default:
                 printf("ParseNode::get_const_bool_value(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
                 break;

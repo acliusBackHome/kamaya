@@ -6,6 +6,7 @@
 
 #include "ParseDef.hpp"
 #include "ParseType.hpp"
+#include "ParseExpression.hpp"
 #include <string>
 #include <map>
 
@@ -209,6 +210,13 @@ public:
      * @param function
      */
     void set_function(const ParseFunction &function);
+
+    /**
+     * 设置节点的K_EXPRESSION键对应的值
+     * 设置表达式记录
+     * @param expression
+     */
+    void set_expression(const ParseExpression &expression);
 
     /**
      * 获取节点信息

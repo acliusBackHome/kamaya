@@ -58,7 +58,19 @@ enum NodeType {
     //函数声明
     //function参数记录
             N_FUNCTION_DEFINITION = 10,
-
+    // 初始化声明器
+    // variable: 声明的变量
+    // expression: 初始化表达式
+    // 可进行的操作:
+    // set_variable: 设置其声明的变量
+    // set_expression:  设置其声明的表达式
+            N_INIT_DECLARATOR = 11,
+    // 初始化声明器列表
+    // type: 已声明的变量类型, 由初始化声明之前的声明提供
+            N_INIT_DECLARATOR_LIST = 12,
+    // 初始化器
+    // 目前没有直接键值
+            N_INITIALIZER = 13,
 };
 
 enum NodeKey {
@@ -76,6 +88,8 @@ enum NodeKey {
             K_IS_PTR = 5,
     // 函数记录
             K_FUNCTION = 6,
+    // 表达式记录
+            K_EXPRESSION = 7,
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

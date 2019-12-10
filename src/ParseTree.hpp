@@ -156,6 +156,19 @@ public:
             size_t address = (size_t) -1);
 
     /**
+     * 生成一个初始化声明器节点
+     * @return
+     */
+    size_t make_init_declarator_node(const ParseVariable &variable, const ParseExpression& expression);
+
+
+    /**
+     * 生成一个初始化器节点
+     * @return
+     */
+    size_t make_initializer_node();
+
+    /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
      * @param type_name
      * @param type

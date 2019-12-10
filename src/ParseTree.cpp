@@ -89,6 +89,9 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
         case N_PARAM_LIST:
         case N_PARAM_DECLARATION:
         case N_FUNCTION_DEFINITION:
+        case N_INIT_DECLARATOR:
+        case N_INIT_DECLARATOR_LIST:
+        case N_INITIALIZER:
             printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
             break;
         case N_NORMAL:
@@ -239,6 +242,19 @@ size_t ParseTree::make_function_definition_node(
     ));
     return new_one;
 }
+
+size_t ParseTree::make_init_declarator_node(const ParseVariable &variable,
+                                            const ParseExpression &expression) {
+    size_t new_one = new_node(N_INIT_DECLARATOR);
+    nodes[new_one].set_variable(variable);
+    nodes[new_one].set_expression(expression);
+    return new_one;
+}
+
+size_t ParseTree::make_initializer_node() {
+    return new_node(N_INITIALIZER);
+}
+
 
 ParseVariable::ParseVariable() : type(T_UNKNOWN), symbol(), address((size_t) -1) {}
 
