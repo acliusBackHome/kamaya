@@ -466,10 +466,12 @@ declaration_specifiers
 
 init_declarator_list
 	: init_declarator {
-    $$ = tree.new_node("initialize declarator list");
+    $$ = tree.make_init_declarator_list_node();
+    tree.node($$)->add_init_declarator(tree.node($1)->get_init_declarator(tree));
     tree.set_parent($1, $$);
   }
 	| init_declarator_list COMMA init_declarator {
+    tree.node($1)->add_init_declarator(tree.node($3)->get_init_declarator(tree));
     $$ = $1;
     tree.set_parent($3, $$);
   }
@@ -480,13 +482,7 @@ init_declarator
     $$ = $1;
   }
 	| declarator ASSIGN initializer {
-    $$ = tree.make_init_declarator_node(
-      ParseVariable(
-        ParseType(T_UNKNOWN),
-        tree.node($1)->get_symbol(&tree)
-      ),
-      ParseExpression()
-    );
+    $$ = tree.make_init_declarator_node();
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }

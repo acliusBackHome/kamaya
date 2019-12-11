@@ -2,6 +2,7 @@
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 #include "ParseType.hpp"
+#include "ParseTree.hpp"
 #include <set>
 
 map<ParseType, size_t> ParseType::type2id;
@@ -14,7 +15,8 @@ ParseType::ParseType(const ParseType &other) {
 }
 
 ParseType::ParseType(BaseType b_type) {
-    pointer_level = array_size = 0, lower_type = 0;
+    pointer_level = array_size = lower_type = 0;
+    specifier = 0;
     fields = nullptr;
     type_id = base_type = b_type;
     switch (base_type) {
@@ -49,28 +51,67 @@ ParseType::ParseType(BaseType b_type) {
     }
 }
 
+ParseType::ParseType(const ParseConstant &constant) {
+    pointer_level = array_size = 0, lower_type = 0;
+    fields = nullptr;
+    switch (constant.get_type()) {
+        case C_STRING: {
+            ParseType arr_c = get_array(get_pointer(ParseType(T_CHAR)),
+                                        constant.get_string().length());
+            assign(*this, arr_c);
+            break;
+        }
+        case C_SIGNED:
+            base_type = T_LONG;
+            type_id = (size_t) -1;
+            specifier = S_LONG;
+            type_size = sizeof(long long);
+            break;
+        case C_UNSIGNED:
+            base_type = T_LONG;
+            type_id = (size_t) -1;
+            specifier = S_LONG | S_UNSIGNED;
+            type_size = sizeof(unsigned long long);
+            break;
+        case C_FLOAT:
+            base_type = T_DOUBLE;
+            type_id = (size_t) -1;
+            specifier = S_LONG;
+            type_size = sizeof(long double);
+            break;
+        case C_BOOL:
+            type_id = base_type = T_BOOL;
+            type_size = sizeof(bool);
+            break;
+        case C_UNDEFINED:
+            type_id = base_type = T_UNKNOWN;
+            type_size = 0;
+            break;
+    }
+}
+
 string ParseType::get_info() const {
     size_t this_id = get_type_id(*this);
     if (this_id < id2info.size()) {
         return id2info[this_id];
     }
-    while (this_id >= id2info.size()) {
-        if (this_id == id2info.size()) {
-            id2info.emplace_back("");
-            break;
-        }
-        id2info.emplace_back(get_type(id2info.size()).get_info());
+    for (size_t i = id2info.size(); i < this_id; ++i) {
+        get_type(i).get_info();
     }
+    id2info.emplace_back("");
     char buff[32];
-    sprintf(buff, "Type-%zu {", get_type_id(*this));
+    sprintf(buff, "Type-%zu {", this_id);
     string res(buff);
     if (this_id <= T_BASE) {
-        res += get_base_type_name(base_type);
+        res += get_base_type_name(base_type, 0);
     } else {
+        if (base_type != T_UNKNOWN) {
+            res += get_base_type_name(base_type, specifier);
+        }
         if (array_size) {
             res += "array(";
             if (lower_type <= T_BASE) {
-                res += get_base_type_name((BaseType) lower_type) + ",";
+                res += get_base_type_name((BaseType) lower_type, specifier) + ",";
             } else {
                 sprintf(buff, "Type-%zu,", lower_type);
                 res += buff;
@@ -80,7 +121,7 @@ string ParseType::get_info() const {
         } else {
             if (lower_type) {
                 if (lower_type <= T_BASE) {
-                    sprintf(buff, "%s", get_base_type_name((BaseType) lower_type).c_str());
+                    sprintf(buff, "%s", get_base_type_name((BaseType) lower_type, specifier).c_str());
                 } else {
                     sprintf(buff, "Type-%zu ", lower_type);
                 }
@@ -90,7 +131,7 @@ string ParseType::get_info() const {
                 for (const auto &each: *fields) {
                     res += each.first;
                     if (each.second <= T_BASE) {
-                        sprintf(buff, ": %s, ", get_base_type_name((BaseType) each.second).c_str());
+                        sprintf(buff, ": %s, ", get_base_type_name((BaseType) each.second, 0).c_str());
                     } else {
                         sprintf(buff, ": Type-%zu ,", each.second);
                     }
@@ -119,6 +160,7 @@ void ParseType::assign(ParseType &type, const ParseType &from_type) {
         type.fields = nullptr;
     }
     type.lower_type = from_type.lower_type;
+    type.specifier = from_type.specifier;
     type.base_type = from_type.base_type;
     type.type_size = from_type.type_size;
     type.pointer_level = from_type.pointer_level;
@@ -143,20 +185,27 @@ ParseType::~ParseType() {
     delete fields;
 }
 
-string ParseType::get_base_type_name(BaseType base_type) {
+string ParseType::get_base_type_name(BaseType base_type, int specifier) {
+    string res;
+    if (specifier & S_UNSIGNED) {
+        res += "unsigned ";
+    }
+    if (specifier & S_LONG) {
+        res += "long ";
+    }
     switch (base_type) {
         case T_UNKNOWN:
             return "unknown";
         case T_SHORT:
-            return "short";
+            return res + "short";
         case T_INT:
-            return "int";
+            return res + "int";
         case T_LONG:
-            return "long";
+            return res + "long";
         case T_FLOAT:
-            return "float";
+            return res + "float";
         case T_DOUBLE:
-            return "double";
+            return res + "double";
         case T_BOOL:
             return "bool";
         case T_CHAR:
@@ -169,7 +218,7 @@ string ParseType::get_base_type_name(BaseType base_type) {
     return "unknown";
 }
 
-ParseType ParseType::get_pointer(ParseType &type, size_t ptr_level) {
+ParseType ParseType::get_pointer(const ParseType &type, size_t ptr_level) {
     if (ptr_level == 0) {
         printf("ParseType::get_pointer(const ParseType &type, size_t ptr_level): 警告: 获取类型%s的0级指针\n",
                type.get_info().c_str());
@@ -193,7 +242,6 @@ ParseType ParseType::get_struct(const vector<pair<string, ParseType> > &otherTyp
     // 这有个"特性": 如果重复调用此函数试图生成一模一样的结构体会被看成两个
     id2type.emplace_back(T_UNKNOWN);
     ParseType &res = id2type[new_type_id];
-    printf("this new id = %zu\n", new_type_id);
     res.base_type = T_UNKNOWN;
     res.type_id = (size_t) -1;
     res.lower_type = 0;
@@ -218,8 +266,6 @@ ParseType ParseType::get_struct(const vector<pair<string, ParseType> > &otherTyp
         }
     }
     type2id[res] = res.type_id = new_type_id;
-//    printf("!%s\n", res.get_info().c_str());
-//    printf("!!%s\n", id2type[new_type_id].get_info().c_str());
     return res;
 }
 
@@ -233,14 +279,19 @@ bool ParseType::operator<(const ParseType &other) const {
     } else if (type_size > other.type_size) {
         return false;
     }
-    if (lower_type < other.lower_type) {
-        return true;
-    } else if (lower_type > other.lower_type) {
-        return false;
-    }
     if (base_type < other.base_type) {
         return true;
     } else if (base_type > other.base_type) {
+        return false;
+    }
+    if (specifier < other.specifier) {
+        return true;
+    } else if (specifier > other.specifier) {
+        return false;
+    }
+    if (lower_type < other.lower_type) {
+        return true;
+    } else if (lower_type > other.lower_type) {
         return false;
     }
     if (pointer_level < other.pointer_level) {
@@ -304,9 +355,11 @@ size_t ParseType::get_type_id(const ParseType &type) {
     if (type.type_id == (size_t) -1) {
         auto iter = type2id.find(type);
         if (iter == type2id.end()) {
+
             ((ParseType &) type).type_id = id2type.size();
             type2id[type] = type.type_id;
             id2type.emplace_back(type);
+            // printf("new_type %s %zu\n", type.get_info().c_str(), id2type.size());
             return type.type_id;
         }
         return ((ParseType &) type).type_id = iter->second;
@@ -314,14 +367,14 @@ size_t ParseType::get_type_id(const ParseType &type) {
     return type.type_id;
 }
 
-ParseType ParseType::get_type(size_t type_id) {
+const ParseType &ParseType::get_type(size_t type_id) {
     if (id2type.empty()) {
         // 没有经过初始化, 进行初始化
         init();
     }
     if (type_id >= id2type.size()) {
-        printf("ParseType &ParseType::get_node_type(size_t type_id): 警告: 试图获取不存在的类型, id:%zu\n", type_id);
-        return ParseType(T_UNKNOWN);
+        printf("ParseType &ParseType::get_node_type(size_t expr_id): 警告: 试图获取不存在的类型, id:%zu\n", type_id);
+        return id2type[T_UNKNOWN];
     }
     return id2type[type_id];
 }
@@ -350,7 +403,7 @@ void ParseType::init() {
     bases.emplace_back(T_VOID);
     for (const auto &each : bases) {
         type2id[each] = id2type.size();
-        id2info.emplace_back(get_base_type_name((BaseType) id2type.size()));
+        id2info.emplace_back(get_base_type_name((BaseType) id2type.size(), 0));
         id2type.emplace_back(each);
     }
 }
@@ -391,6 +444,105 @@ size_t ParseType::get_id() const {
         return ((ParseType *) this)->type_id = get_type_id(*this);
     }
     return type_id;
+}
+
+size_t ParseType::get_specifier() const {
+    if (base_type == T_UNKNOWN) {
+        printf("ParseType::get_specifier(): 警告: 试图获取非基础类型Type-%zu的标识符\n", get_id());
+        return 0;
+    }
+    return lower_type;
+}
+
+ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) {
+    BaseType b_type1 = type1.base_type, b_type2 = type2.base_type;
+    switch (b_type1) {
+        case T_BOOL:
+        case T_CHAR:
+        case T_SHORT:
+        case T_INT:
+            switch (b_type2) {
+                case T_BOOL:
+                case T_CHAR:
+                case T_SHORT:
+                case T_INT:
+                    return ParseType(T_INT);
+                case T_LONG:
+                    return ParseType(T_LONG);
+                case T_FLOAT:
+                    return ParseType(T_FLOAT);
+                case T_DOUBLE:
+                    return ParseType(T_DOUBLE);
+                case T_ENUM:
+                case T_VOID:
+                case T_UNKNOWN:
+                    break;
+            }
+            break;
+        case T_LONG:
+            switch (b_type2) {
+                case T_BOOL:
+                case T_CHAR:
+                case T_SHORT:
+                case T_INT:
+                case T_LONG:
+                    return ParseType(T_LONG);
+                case T_FLOAT:
+                    return ParseType(T_FLOAT);
+                case T_DOUBLE:
+                    return ParseType(T_DOUBLE);
+                case T_ENUM:
+                    break;
+                case T_VOID:
+                    break;
+                case T_UNKNOWN:
+                    break;
+            }
+            break;
+        case T_FLOAT:
+            switch (b_type2) {
+                case T_BOOL:
+                case T_CHAR:
+                case T_SHORT:
+                case T_INT:
+                case T_LONG:
+                case T_FLOAT:
+                    return ParseType(T_FLOAT);
+                case T_DOUBLE:
+                    return ParseType(T_DOUBLE);
+                case T_ENUM:
+                    break;
+                case T_VOID:
+                    break;
+                case T_UNKNOWN:
+                    break;
+            }
+            break;
+        case T_DOUBLE:
+            switch (b_type2) {
+                case T_BOOL:
+                case T_CHAR:
+                case T_SHORT:
+                case T_INT:
+                case T_LONG:
+                case T_FLOAT:
+                case T_DOUBLE:
+                    return ParseType(T_DOUBLE);
+                case T_ENUM:
+                case T_VOID:
+                case T_UNKNOWN:
+                    break;
+            }
+            break;
+        case T_ENUM:
+        case T_VOID:
+        case T_UNKNOWN:
+            break;
+    }
+    printf("ParseType::wider_type(const ParseType &type1, const ParseType &type2): 警告: 试图获取"
+           "不支持的宽化类型转换(%s, %s)\n", type1.get_info().c_str(),
+           type2.get_info().c_str());
+    return ParseType(T_UNKNOWN);
 }
 
 #pragma clang diagnostic pop

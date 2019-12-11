@@ -16,6 +16,8 @@ class ParseVariable;
 
 class ParseFunction;
 
+class ParseConstant;
+
 class ParseNode {
     friend class ParseTree;
 
@@ -39,54 +41,12 @@ public:
     string get_symbol(ParseTree *tree = nullptr) const;
 
     /**
-     * 获取节点的K_CONST_TYPE键对应的值
-     * 获取该节点的常量类型,
-     * 如果不是常量类型节点,则返回-1
-     * 否则返回ConstValueType
-     * @param tree
-     * @return
-     */
-    int get_const_type(ParseTree *tree = nullptr) const;
-
-    /**
-     * 获取节点的K_CONST_VALUE键对应的有符号整数值
+     * 获取节点的K_CONST键对应的常量对象引用
      * 如果类型不正确, 会报警告, 并返回默认值
      * @param tree
      * @return
      */
-    long long get_const_signed_value(ParseTree *tree = nullptr) const;
-
-    /**
-     * 获取节点的K_CONST_VALUE键对应的无符号整数值
-     * 如果类型不正确, 会报警告, 并返回默认值
-     * @param tree
-     * @return
-     */
-    unsigned long long get_const_unsigned_value(ParseTree *tree = nullptr) const;
-
-    /**
-     * 获取节点的K_CONST_VALUE键对应的字符串值
-     * 如果类型不正确, 会报警告, 并返回默认值
-     * @param tree
-     * @return
-     */
-    string get_const_string_value(ParseTree *tree = nullptr) const;
-
-    /**
-     * 获取节点的K_CONST_VALUE键对应的浮点数值
-     * 如果类型不正确, 会报警告, 并返回默认值
-     * @param tree
-     * @return
-     */
-    long double get_const_float_value(ParseTree *tree = nullptr) const;
-
-    /**
-     * 获取节点的K_CONST_VALUE键对应的布尔值
-     * 如果类型不正确, 会报警告, 并返回默认值
-     * @param tree
-     * @return
-     */
-    bool get_const_bool_value(ParseTree *tree = nullptr) const;
+    const ParseConstant get_const(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的K_VARIABLE键对应的变量
@@ -127,7 +87,15 @@ public:
      * @param tree
      * @return
      */
-    vector<ParseVariable> get_parameters_list(const ParseTree &tree) const;
+    vector<ParseVariable> get_parameters_list(ParseTree &tree) const;
+
+    /**
+     * 获取初始化声明器
+     * 因为此函数必定会往下搜索节点, 所以所需参数是常量引用
+     * @param tree
+     * @return
+     */
+    InitDeclarator get_init_declarator(ParseTree &tree) const;
 
     /**
      * 获取节点的K_IS_ARRAY值
@@ -135,6 +103,22 @@ public:
      * @return
      */
     bool get_is_array(ParseTree *tree = nullptr) const;
+
+    /**
+     * 获取节点的K_INIT_DECLARATOR
+     * 因为复制构造比较浪费资源
+     * 所以用指针代替, 如果没有定义,返回空指针并警告
+     * @return
+     */
+    const vector<InitDeclarator> *get_init_declarator_list(ParseTree *tree = nullptr) const;
+
+    /**
+     * 获取节点的K_EXPRESSION
+     * 因为复制构造比较浪费资源
+     * 所以用指针代替, 如果没有定义,返回空指针并警告
+     * @return
+     */
+    ParseExpression get_expression(ParseTree *tree = nullptr) const;
 
     /**
      * 获取节点的类型
@@ -233,6 +217,12 @@ public:
     void set_is_array(bool is_array);
 
     /**
+     * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator
+     * 如果没有K_INIT_DECLARATOR,则new一个
+     */
+    void add_init_declarator(const InitDeclarator &init_declarator);
+
+    /**
      * 没有警告地更新K_IS_ARRAY键值
      * 更新是否声明为数组
      * @param is_array
@@ -259,42 +249,19 @@ public:
      */
     static string get_node_type_name(NodeType type);
 
-    /**
-     * 获取类型名字
-     * @param type
-     * @return
-     */
-    static string get_const_type_name(ConstValueType type);
-
 private:
 
     /**
      * 当常量值更新时需要执行的函数:负责检查键值是否存在,
      * 如果存在需要删除之,再更新其值
-     * @param const_type_address
-     * @param const_value_address
+     * @param const_address
      */
-    void update_const(size_t const_type_address, size_t const_value_address);
+    void update_const(size_t const_address);
 
     /**
      *  删除常量所涉及的字段
      */
     void delete_const();
-
-    /**
-     * 当变量更新时需要执行的函数:
-     * 负责检查键值是否存在,如果存在需要删除之
-     * @param type_address 指向变量类型的地址
-     * @param symbol_address 指向变量符号的地址
-     * @param var_add_address 指向变量地址(size_t)的地址
-     */
-//    void update_variable(size_t type_address, size_t symbol_address, size_t var_add_address);
-
-    /**
-     * 输出时用, 获取表示常量的值的字符串
-     * @return
-     */
-    string get_const_value_str() const;
 
     /**
      * 删除所有keys所指向的具体对象, 这本来是析构函数所做的事

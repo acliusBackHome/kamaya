@@ -92,12 +92,14 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
         case N_INIT_DECLARATOR:
         case N_INIT_DECLARATOR_LIST:
         case N_INITIALIZER:
+        case N_DECLARATION:
             printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
             break;
         case N_NORMAL:
         case N_UNKNOWN:
             printf("%zu:%s\n", node_id, node_msg[node_id].c_str());
             break;
+
     }
     vis[node_id] = true;
     string pre_fix;
@@ -221,11 +223,11 @@ size_t ParseTree::make_declarator_node(bool is_pointer) {
 size_t ParseTree::make_direct_declarator_node(bool is_array, const ParseExpression *expression) {
     size_t new_one = new_node(N_DIRECT_DEC);
     nodes[new_one].set_is_array(is_array);
-    if(is_array) {
-        if(expression) {
+    if (is_array) {
+        if (expression) {
             nodes[new_one].set_expression(*expression);
         } else {
-            nodes[new_one].set_expression(ParseExpression());
+            nodes[new_one].set_expression(ParseExpression::get_expression(0));
         }
     }
     return new_one;
@@ -252,16 +254,20 @@ size_t ParseTree::make_function_definition_node(
     return new_one;
 }
 
-size_t ParseTree::make_init_declarator_node(const ParseVariable &variable,
-                                            const ParseExpression &expression) {
-    size_t new_one = new_node(N_INIT_DECLARATOR);
-    nodes[new_one].set_variable(variable);
-    nodes[new_one].set_expression(expression);
-    return new_one;
+size_t ParseTree::make_init_declarator_node() {
+    return new_node(N_INIT_DECLARATOR);
 }
 
 size_t ParseTree::make_initializer_node() {
     return new_node(N_INITIALIZER);
+}
+
+size_t ParseTree::make_declaration_node() {
+    return new_node(N_DECLARATION);
+}
+
+size_t ParseTree::make_init_declarator_list_node() {
+    return new_node(N_INIT_DECLARATOR_LIST);
 }
 
 
@@ -278,7 +284,7 @@ string ParseVariable::get_info() const {
     return res + buff;
 }
 
-ParseType ParseVariable::get_type() const {
+const ParseType &ParseVariable::get_type() const {
     return type;
 }
 
@@ -292,6 +298,27 @@ size_t ParseVariable::get_address() const {
 
 void ParseVariable::set_address(size_t _address) {
     address = _address;
+}
+
+bool ParseVariable::operator<(const ParseVariable &other) const {
+    if (type < other.type) {
+        return true;
+    } else if (other.type < type) {
+        return false;
+    }
+    if (symbol.length() < other.symbol.length()) {
+        return true;
+    } else if (other.symbol.length() < symbol.length()) {
+        return false;
+    }
+    for (size_t i = 0; i < symbol.length(); ++i) {
+        if (symbol[i] < other.symbol[i]) {
+            return true;
+        } else if (other.symbol[i] < symbol[i]) {
+            return false;
+        }
+    }
+    return false;
 }
 
 ParseVariable &ParseVariable::operator=(const ParseVariable &other) = default;
@@ -334,5 +361,344 @@ string ParseFunction::get_info() const {
 }
 
 ParseFunction::ParseFunction() : ret_type(T_UNKNOWN), symbol("undefined"), args(), address((size_t) -1) {}
+
+ParseConstant::ParseConstant() : type(C_UNDEFINED), value(0) {}
+
+ParseConstant::ParseConstant(const ParseConstant &constant) {
+    assign(*this, constant);
+}
+
+
+ParseConstant::ParseConstant(long long v) {
+    type = C_SIGNED;
+    value = (size_t) new long long(v);
+}
+
+ParseConstant::ParseConstant(unsigned long long v) {
+    type = C_UNSIGNED;
+    value = (size_t) new unsigned long long(v);
+}
+
+ParseConstant::ParseConstant(bool v) {
+    type = C_BOOL;
+    value = (size_t) new bool(v);
+}
+
+ParseConstant::ParseConstant(long double v) {
+    type = C_FLOAT;
+    value = (size_t) new long double(v);
+}
+
+ParseConstant::ParseConstant(const string &v) {
+    type = C_STRING;
+    value = (size_t) new string(v);
+}
+
+long long ParseConstant::get_signed() const {
+    switch (type) {
+        case C_SIGNED:
+            return *(long long *) value;
+        case C_UNSIGNED:
+            return *(unsigned long long *) value;
+        case C_FLOAT:
+            return (long long) *(long double *) value;
+        case C_BOOL:
+            return (long long) *(bool *) value;
+        case C_STRING:
+        case C_UNDEFINED:
+            break;
+    }
+    printf("ParseConstant::get_signed(): 警告 : 试图获取非法常量值\n");
+    return 0;
+}
+
+unsigned long long ParseConstant::get_unsigned() const {
+    switch (type) {
+        case C_SIGNED:
+            return (unsigned long long) *(long long *) value;
+        case C_UNSIGNED:
+            return *(unsigned long long *) value;
+        case C_FLOAT:
+            return (unsigned long long) *(long double *) value;
+        case C_BOOL:
+            return (unsigned long long) *(bool *) value;
+        case C_STRING:
+        case C_UNDEFINED:
+            break;
+    }
+    printf("ParseConstant::get_unsigned(): 警告 : 试图获取非法常量值\n");
+    return 0;
+}
+
+long double ParseConstant::get_float() const {
+    switch (type) {
+        case C_SIGNED:
+            return *(long long *) value;
+        case C_UNSIGNED:
+            return *(unsigned long long *) value;
+        case C_FLOAT:
+            return *(long double *) value;
+        case C_BOOL:
+            return (long double) *(bool *) value;
+        case C_STRING:
+        case C_UNDEFINED:
+            break;
+    }
+    printf("ParseConstant::get_float(): 警告 : 试图获取非法常量值\n");
+    return 0;
+}
+
+bool ParseConstant::get_bool() const {
+    switch (type) {
+        case C_SIGNED:
+            return (bool) *(long long *) value;
+        case C_UNSIGNED:
+            return (bool) *(unsigned long long *) value;
+        case C_FLOAT:
+            return (bool) *(long double *) value;
+        case C_BOOL:
+            return *(bool *) value;
+        case C_STRING:
+        case C_UNDEFINED:
+            break;
+    }
+    printf("ParseConstant::get_bool(): 警告 : 试图获取非法常量值\n");
+    return false;
+}
+
+string ParseConstant::get_string() const {
+    if (type != C_STRING) {
+        printf("ParseConstant::get_string(): 警告 : 试图获取非法常量值\n");
+        return "";
+    }
+    return *(string *) value;
+}
+
+ParseConstant::~ParseConstant() {
+    switch (type) {
+        case C_STRING:
+            delete (string *) value;
+            break;
+        case C_SIGNED:
+            delete (long long *) value;
+            break;
+        case C_UNSIGNED:
+            delete (unsigned *) value;
+            break;
+        case C_FLOAT:
+            delete (long double *) value;
+            break;
+        case C_BOOL:
+            delete (bool *) value;
+            break;
+        case C_UNDEFINED:
+            break;
+    }
+}
+
+string ParseConstant::get_const_type_name(ConstValueType _type) {
+    switch (_type) {
+        case C_STRING:
+            return "const_string";
+        case C_SIGNED:
+            return "const_signed_int";
+        case C_UNSIGNED:
+            return "const_unsigned_int";
+        case C_FLOAT:
+            return "const_float";
+        case C_BOOL:
+            return "const_bool";
+        case C_UNDEFINED:
+            break;
+    }
+    return "undefined";
+}
+
+string ParseConstant::get_info() const {
+    char buff[64];
+    switch (type) {
+        case C_STRING:
+            return "const string: " + *((string *) value);
+        case C_SIGNED: {
+            sprintf(buff, "const signed: %lld", *(long long *) value);
+            return string(buff);
+        }
+        case C_UNSIGNED: {
+            sprintf(buff, "const unsigned: %llu", *(unsigned long long *) value);
+            return string(buff);
+        }
+        case C_FLOAT: {
+            sprintf(buff, "const float: %Lf", *(long double *) value);
+            return string(buff);
+        }
+        case C_BOOL: {
+            sprintf(buff, "const bool: %s", (*(bool *) value) ? "true" : "false");
+            return string(buff);
+        }
+        case C_UNDEFINED: {
+            return "undefined";
+        }
+    }
+    return "unknown";
+}
+
+bool ParseConstant::operator<(const ParseConstant &other) const {
+    if (type < other.type) {
+        return true;
+    } else if (other.type < type) {
+        return false;
+    }
+    switch (type) {
+        case C_STRING: {
+            const string &this_value = *(string *) value, &that_value = *(string *) other.value;
+            if (this_value.length() < that_value.length()) {
+                return true;
+            } else if (that_value.length() < this_value.length()) {
+                return false;
+            }
+            for (size_t i = 0; i < this_value.length(); ++i) {
+                if (this_value[i] < that_value[i]) {
+                    return true;
+                } else if (that_value[i] < this_value[i]) {
+                    return false;
+                }
+            }
+            break;
+        }
+        case C_SIGNED: {
+            const long long &this_value = *(long long *) value, &that_value = *(long long *) other.value;
+            if (this_value < that_value) {
+                return true;
+            } else if (that_value < this_value) {
+                return false;
+            }
+            break;
+        }
+        case C_UNSIGNED: {
+            const unsigned long long &this_value = *(unsigned long long *) value,
+                    &that_value = *(unsigned long long *) other.value;
+            if (this_value < that_value) {
+                return true;
+            } else if (that_value < this_value) {
+                return false;
+            }
+            break;
+        }
+        case C_FLOAT: {
+            const long double &this_value = *(long double *) value,
+                    &that_value = *(long double *) other.value;
+            if (this_value < that_value) {
+                return true;
+            } else if (that_value < this_value) {
+                return false;
+            }
+            break;
+        }
+        case C_BOOL: {
+            bool this_value = *(bool *) value,
+                    that_value = *(bool *) other.value;
+            if (!this_value && that_value) {
+                return true;
+            } else if (!that_value && this_value) {
+                return false;
+            }
+            break;
+        }
+        case C_UNDEFINED:
+            break;
+    }
+    return false;
+}
+
+void ParseConstant::assign(ParseConstant &constant, const ParseConstant &from_constant) {
+    constant.type = from_constant.type;
+    switch (constant.type) {
+        case C_STRING:
+            constant.value = (size_t) new string(*(string *) from_constant.value);
+            break;
+        case C_SIGNED:
+            constant.value = (size_t) new long long(*(long long *) from_constant.value);
+            break;
+        case C_UNSIGNED:
+            constant.value = (size_t) new unsigned long long(*(unsigned long long *) from_constant.value);
+            break;
+        case C_FLOAT:
+            constant.value = (size_t) new long double(*(long double *) from_constant.value);
+            break;
+        case C_BOOL:
+            constant.value = (size_t) new bool(*(bool *) from_constant.value);
+            break;
+        case C_UNDEFINED:
+            constant.value = 0;
+            break;
+    }
+}
+
+ParseConstant &ParseConstant::operator=(const ParseConstant &other) {
+    assign(*this, other);
+    return *this;
+}
+
+ConstValueType ParseConstant::get_type() const {
+    return type;
+}
+
+ConstValueType ParseConstant::wider_const_type(ConstValueType type1, ConstValueType type2) {
+    switch (type1) {
+        case C_BOOL:
+        case C_STRING:
+        case C_UNDEFINED:
+            if (type1 == type2) {
+                return type1;
+            }
+            break;
+        case C_SIGNED: {
+            switch (type2) {
+                case C_SIGNED:
+                    return C_SIGNED;
+                case C_UNSIGNED:
+                    return C_UNSIGNED;
+                case C_FLOAT:
+                    return C_FLOAT;
+                case C_STRING:
+                case C_BOOL:
+                case C_UNDEFINED:
+                    break;
+            }
+            break;
+        }
+        case C_UNSIGNED: {
+            switch (type2) {
+                case C_SIGNED:
+                case C_UNSIGNED:
+                    return C_UNSIGNED;
+                case C_FLOAT:
+                    return C_FLOAT;
+                case C_STRING:
+                case C_BOOL:
+                case C_UNDEFINED:
+                    break;
+            }
+            break;
+        }
+        case C_FLOAT: {
+            switch (type2) {
+                case C_SIGNED:
+                case C_UNSIGNED:
+                case C_FLOAT:
+                    return C_FLOAT;
+                case C_STRING:
+                case C_BOOL:
+                case C_UNDEFINED:
+                    break;
+            }
+            break;
+        }
+    }
+    printf("ParseConstant::wider_const_type(ConstValueType type1, ConstValueType type2):"
+           "警告:常量类型%s 与 %s无法进行运算\n", get_const_type_name(type1).c_str(),
+           get_const_type_name(type2).c_str());
+    return C_UNDEFINED;
+}
 
 #pragma clang diagnostic pop

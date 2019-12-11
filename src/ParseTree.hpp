@@ -15,6 +15,7 @@
 #include "ParseDef.hpp"
 #include "ParseType.hpp"
 #include "ParseNode.hpp"
+#include "ParseExpression.hpp"
 
 using namespace std;
 
@@ -96,15 +97,6 @@ public:
     size_t make_identifier_node(const string &symbol);
 
     /**
-     * 生成一个变量节点
-     * @param type 变量类型
-     * @param symbol 变量符号
-     * @param address 变量地址
-     * @return
-     */
-    // size_t make_variable_node(const ParseType &type, const string &symbol, size_t address);
-
-    /**
      * 生成一个类型声明节点
      * @param type 这个节点所声明的类型
      * @return
@@ -161,14 +153,25 @@ public:
      * 生成一个初始化声明器节点
      * @return
      */
-    size_t make_init_declarator_node(const ParseVariable &variable, const ParseExpression& expression);
-
+    size_t make_init_declarator_node();
 
     /**
      * 生成一个初始化器节点
      * @return
      */
     size_t make_initializer_node();
+
+    /**
+     * 生成一个声明节点
+     * @return
+     */
+    size_t make_declaration_node();
+
+    /**
+     * 生成一个带初始化声明器列表节点
+     * @return
+     */
+    size_t make_init_declarator_list_node();
 
     /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
@@ -287,7 +290,7 @@ public:
      * 获得变量的类型
      * @return
      */
-    ParseType get_type() const;
+    const ParseType &get_type() const;
 
     /**
      * 获得变量的符号
@@ -315,6 +318,8 @@ public:
     string get_info() const;
 
     ParseVariable &operator=(const ParseVariable &other);
+
+    bool operator<(const ParseVariable &other) const;
 
 private:
     ParseType type;
@@ -380,6 +385,139 @@ private:
     string symbol;
     vector<ParseVariable> args;
     size_t address;
+};
+
+/**
+ * 用于表示常量记录
+ */
+class ParseConstant {
+
+public:
+    // 默认构造:
+    // type: C_UNDEFINED
+    // value: 0
+    ParseConstant();
+
+    ParseConstant(const ParseConstant &constant);
+
+    /**
+     * 构造有符号整数常量
+     * @param v
+     */
+    explicit ParseConstant(long long v);
+
+    /**
+     * 构造无符号整数常量
+     * @param v
+     */
+    explicit ParseConstant(unsigned long long v);
+
+    /**
+     * 构造浮点数常量
+     * @param v
+     */
+    explicit ParseConstant(long double v);
+
+    /**
+     * 构造布尔常量
+     * @param v
+     */
+    explicit ParseConstant(bool v);
+
+    /**
+     * 构造字符串常量
+     * @param v
+     */
+    explicit ParseConstant(const string &v);
+
+    /**
+     * 获取有符号整数常量, type不对应会发出警告
+     * @return
+     */
+    long long get_signed() const;
+
+    /**
+     * 获取无符号整数常量, type不对应会发出警告
+     * @return
+     */
+    unsigned long long get_unsigned() const;
+
+    /**
+     * 获取浮点数常量值, type不对应会发出警告
+     * @return
+     */
+    long double get_float() const;
+
+    /**
+     * 获取布尔值常量, type不对应会发出警告
+     * @return
+     */
+    bool get_bool() const;
+
+    /**
+     * 获取字符串常量, type不对应会发出警告
+     * @return
+     */
+    string get_string() const;
+
+    /**
+     * 获取常量信息
+     * @return
+     */
+    string get_info() const;
+
+    /**
+     * 重载小于号, 用于map比较
+     * @param other
+     * @return
+     */
+    bool operator<(const ParseConstant &other) const;
+
+    /**
+     * 重载等于号: 赋值
+     * @param other
+     * @return
+     */
+    ParseConstant &operator=(const ParseConstant &other);
+
+    /**
+     * 获取常量类型
+     * @return
+     */
+    ConstValueType get_type() const;
+
+    ~ParseConstant();
+
+    /**
+     * 获取每个常量类型的名字
+     * @param _type
+     * @return
+     */
+    static string get_const_type_name(ConstValueType _type);
+
+    /**
+     * 获取常量自动类型转化后的常量类型
+     * @param type1
+     * @param type2
+     */
+    static ConstValueType wider_const_type(ConstValueType type1, ConstValueType type2);
+
+private:
+    ConstValueType type;
+    // 指针: 根据type不同指向不同的对象
+    // C_SIGNED: longlong*
+    // C_UNSIGNED: unsigned long long*
+    // C_FLOAT: long double*
+    // C_STRING: string*
+    // C_BOOL: bool*
+    size_t value;
+
+    /**
+     * 赋值函数
+     * @param constant
+     * @param from_constant
+     */
+    static void assign(ParseConstant &constant, const ParseConstant &from_constant);
 };
 
 #endif //NKU_PRACTICE_PARSE_TREE_H
