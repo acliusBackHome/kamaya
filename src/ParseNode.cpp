@@ -35,6 +35,8 @@ string ParseNode::get_key_name(NodeKey type) {
             return "init_declarators";
         case K_SCOPE_ID:
             return "scope_id";
+        case K_PARAM_LIST_NODE:
+            return "param_list_node";
     }
     return "unknown";
 }
@@ -119,6 +121,14 @@ string ParseNode::get_node_info() const {
                 }
                 info += ", ";
                 break;
+            case K_PARAM_LIST_NODE: {
+                info += "param_list_node: ";
+                char buff[32];
+                sprintf(buff, "%zu", *((size_t *)each.second));
+                info += buff;
+                info += ", ";
+                break;
+            }
             case K_EXPRESSION:
                 info += "expression: " + ((ParseExpression *) each.second)->get_info() + ", ";
                 break;
@@ -141,6 +151,9 @@ string ParseNode::get_node_info() const {
                             ", is_pointer: " + ((get<2>(dec)) ? "true" : "false") +
                             ", array_size: ";
                     sprintf(buff, "%zu", get<3>(dec));
+                    info += buff;
+                    info += ", param_list_node: ";
+                    sprintf(buff, "%zu", get<4>(dec));
                     info += buff;
                     info += " }, ";
                 }
@@ -216,13 +229,13 @@ void ParseNode::delete_all_keys() {
             break;
         }
         case N_DECLARATOR: {
-            auto iter = keys.find(K_IS_PTR);
-            if (iter == keys.end() || iter->second == 0) {
+            auto p = keys.find(K_IS_PTR);
+            if (p == keys.end() || p->second == 0) {
                 printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
                        node_id, get_node_type_name(type).c_str());
                 break;
             }
-            delete (bool *) iter->second;
+            delete (bool *) p->second;
             break;
         }
         case N_CONST:
@@ -259,13 +272,17 @@ void ParseNode::delete_all_keys() {
             break;
         }
         case N_DIRECT_DEC: {
-            auto b = keys.find(K_IS_ARRAY);
-            if (b == keys.end() || b->second == 0) {
+            auto a = keys.find(K_IS_ARRAY), p = keys.find(K_PARAM_LIST_NODE);
+            if (a == keys.end() || a->second == 0) {
                 printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
                        node_id, get_node_type_name(type).c_str());
                 break;
             }
-            auto is_array = *(bool *) (b->second);
+            if (p != keys.end() && p->second != 0) {
+                // 该键值非必要, 不需要警告
+                delete (size_t *)(p->second);
+            }
+            auto is_array = *(bool *) (a->second);
             if (is_array) {
                 auto e = keys.find(K_EXPRESSION);
                 if (e == keys.end() || e->second == 0) {
@@ -275,7 +292,7 @@ void ParseNode::delete_all_keys() {
                 }
                 delete (ParseExpression *) (e->second);
             }
-            delete (bool *) (b->second);
+            delete (bool *) (a->second);
             break;
         }
         case N_INIT_DECLARATOR_LIST: {
@@ -400,6 +417,13 @@ void ParseNode::set_is_pointer(bool is_pointer) {
                             K_IS_PTR, N_DECLARATOR, -1);
     keys[K_IS_PTR] = (size_t) new bool(is_pointer);
 }
+
+void ParseNode::set_param_list_node(size_t param_list_node) {
+    before_update_key<size_t>("ParseNode::set_param_list_node(size_t param_list_node)",
+                            K_PARAM_LIST_NODE, N_PARAM_LIST, N_DIRECT_DEC, -1);
+    keys[K_PARAM_LIST_NODE] = (size_t) new size_t(param_list_node);
+}
+
 
 void ParseNode::set_function(const ParseFunction &function) {
     before_update_key<ParseFunction>(
@@ -556,6 +580,47 @@ bool ParseNode::get_is_pointer(ParseTree *_tree) const {
     return false;
 }
 
+size_t ParseNode::get_param_list_node(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_PARAM_LIST_NODE);
+    if (iter != keys.end()) {
+        return *(bool *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            case N_DIRECT_DEC: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    if (tree.nodes[each].type == N_PARAM_LIST) {
+                        return tree.nodes[each].get_param_list_node();
+                    }
+                }
+                // 如果没有不需要发布警告没有定义
+                return 0;
+            }
+            case N_DECLARATOR: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    if (tree.nodes[each].type == N_DIRECT_DEC) {
+                        return tree.nodes[each].get_param_list_node(_tree);
+                    }
+                }
+                break;
+            }
+            case N_INIT_DECLARATOR:
+                for (const auto &each : tree.node_children[node_id]) {
+                    if (tree.nodes[each].type == N_DECLARATOR) {
+                        return tree.nodes[each].get_param_list_node(_tree);
+                    }
+                }
+                break;
+            default:
+                printf("ParseNode::get_param_list_node(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("警告:节点%zu未定义字段%s\n", node_id, get_key_name(K_PARAM_LIST_NODE).c_str());
+    return false;
+}
+
 ParseVariable ParseNode::get_variable(ParseTree *tree) const {
     const auto &iter = keys.find(K_VARIABLE);
     if (iter != keys.end()) {
@@ -698,6 +763,7 @@ const vector<InitDeclarator> *ParseNode::get_init_declarator_list(ParseTree *tre
 InitDeclarator ParseNode::get_init_declarator(ParseTree &tree) const {
     switch (type) {
         case N_DECLARATOR: {
+            size_t param_node_list = get_param_list_node(&tree);
             for (const auto &each : tree.node_children[node_id]) {
                 const ParseNode &node = tree.nodes[each];
                 switch (node.type) {
@@ -709,10 +775,14 @@ InitDeclarator ParseNode::get_init_declarator(ParseTree &tree) const {
                         if (arr_dec_expr.is_defined()) {
                             return InitDeclarator(
                                     node.get_symbol(&tree), ParseExpression(), get_is_pointer(),
-                                    arr_dec_expr.get_const().get_unsigned()
+                                    arr_dec_expr.get_const().get_unsigned(),
+                                    param_node_list
                             );
                         }
-                        return InitDeclarator(node.get_symbol(&tree), ParseExpression(), get_is_pointer(), 0);
+                        return InitDeclarator(
+                                node.get_symbol(&tree), ParseExpression(),
+                                get_is_pointer(), 0, param_node_list
+                        );
                     }
                     default:
                         break;
@@ -722,6 +792,7 @@ InitDeclarator ParseNode::get_init_declarator(ParseTree &tree) const {
         }
         case N_INIT_DECLARATOR: {
             bool is_ptr = get_is_pointer(&tree);
+            size_t param_node_list = get_param_list_node(&tree);
             string symbol = get_symbol(&tree);
             ParseExpression init_expr,
                     arr_dec_expr;
@@ -743,15 +814,19 @@ InitDeclarator ParseNode::get_init_declarator(ParseTree &tree) const {
                 }
             }
             if (arr_dec_expr.is_defined()) {
-                return InitDeclarator(symbol, init_expr, is_ptr, arr_dec_expr.get_const().get_unsigned());
+                return InitDeclarator(
+                        symbol, init_expr, is_ptr,
+                        arr_dec_expr.get_const().get_unsigned(),
+                        param_node_list
+                );
             }
-            return InitDeclarator(symbol, init_expr, is_ptr, 0);
+            return InitDeclarator(symbol, init_expr, is_ptr, 0, param_node_list);
         }
         default:
             break;
     }
     printf("ParseNode::get_init_declarator(const ParseTree &tree): 警告: 节点%zu不支持此操作\n", node_id);
-    return InitDeclarator("", ParseExpression(), false, 0);
+    return InitDeclarator("", ParseExpression(), false, 0, false);
 }
 
 ParseExpression ParseNode::get_expression(ParseTree *_tree) const {
@@ -828,8 +903,10 @@ void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const
         const string &symbol = get<0>(each);// 变量符号
         const ParseExpression &init_expr = get<1>(each);// 初始化表达式
         // TODO: 产生将初始化表达式赋值给变量的代码
-        bool is_ptr = get<2>(each); // 是否声明为指针
-        const size_t &array_size = get<3>(each);// 数组大小: 如果为0, 则表明不是数组
+        bool is_ptr = get<2>(each);// 是否声明为指针
+        const size_t &array_size = get<3>(each),// 数组大小: 如果为0, 则表明不是数组
+                &param_list_node = get<4>(each)// 声明为函数时的参数列表节点, 如果不声明为函数该值为0
+                ;
         ParseType this_type(dec_type);
         if (is_ptr) {
             this_type = ParseType::get_pointer(this_type);
@@ -837,7 +914,14 @@ void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const
         if (array_size) {
             this_type = ParseType::get_array(this_type, array_size);
         }
-        ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol));
+        if (param_list_node) {
+            const auto &args = ((ParseTree &)tree).node(param_list_node)->get_parameters_list((ParseTree &)tree);
+            ParseScope::get_scope(scope_id).declaration(symbol, 
+                ParseFunction(this_type, symbol, args)    
+            );
+        } else {
+            ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol));
+        }
     }
 }
 

@@ -58,14 +58,15 @@ enum NodeType {
     // 目前没有直接键值
             N_DECLARATION_SPE,
     // 声明器:
-    // 目前没有直接键值
+    // is_pointer: 是否声明为指针
+    // is_function: 是否声明为函数
             N_DECLARATOR,
     // 直接声明:
     // is_array: 是否声明成数组标记
     // expression: 表达式, 表示数组大小的表达式
             N_DIRECT_DEC,
     // 参数列表:
-    // 目前没有直接键值
+    // scope_id: 表示该参数声明所在的新空间id
             N_PARAM_LIST,
     // 参数声明
     // variable参数变量
@@ -122,6 +123,9 @@ enum NodeKey {
             K_INIT_DECLARATORS = 9,
     // 语句块空间id size_t*
             K_SCOPE_ID = 10,
+    // 是否声明为函数, 如果声明为参数, 该值不为0,
+    // 表示树中的一个节点, 该节点存有声明函数的参数列表  size_t*
+            K_PARAM_LIST_NODE = 11,
 };
 
 enum ExpressionType {
@@ -147,9 +151,10 @@ class ParseExpression;
 
 /**
  *类型声明所需信息
- * <符号, 初始化赋值表达式, 是否声明为指针, 数组大小(如果不是数组则是0, 没有声明大小为(size_t)-1>
+ * <符号, 初始化赋值表达式, 是否声明为指针, 数组大小(如果不是数组则是0, 没有声明大小为(size_t)-1, 
+ *   参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
  */
-typedef tuple<string, ParseExpression, bool, size_t> InitDeclarator;
+typedef tuple<string, ParseExpression, bool, size_t, size_t> InitDeclarator;
 
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

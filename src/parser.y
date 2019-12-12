@@ -768,7 +768,7 @@ direct_declarator
     $$ = $1;
   }
   | direct_declarator LP parameter_type_list RP {
-    $$ = tree.make_direct_declarator_node();
+    $$ = tree.make_direct_declarator_node(false);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -817,6 +817,7 @@ type_qualifier_list
 parameter_type_list
   : parameter_list {
     $$ = $1;
+    tree.node($$)->set_param_list_node($$);
   }
   | parameter_list COMMA ELLIPSIS {
     $$ = $1;

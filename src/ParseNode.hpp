@@ -73,6 +73,14 @@ public:
     bool get_is_pointer(ParseTree *tree = nullptr) const;
 
     /**
+    * 获取节点的K_PARAM_LIST_NODE键对应的布尔值
+    * 如果类型不正确, 会报警告, 并返回未知类型
+     * @param tree
+    * @return
+    */
+    size_t get_param_list_node(ParseTree *tree = nullptr) const;
+
+    /**
     * 获取节点的K_FUNCTION键对应的函数记录
     * 如果类型不正确, 会报警告, 并返回默认
      * @param tree
@@ -196,10 +204,18 @@ public:
 
     /**
      * 设置节点的K_IS_PTR键对应的值
-     * 设置类型修饰声明
+     * 设置是否声明为指针
      * @param is_pointer
      */
     void set_is_pointer(bool is_pointer = false);
+
+    /**
+     * 设置节点的K_PARAM_LIST_NODE键值
+     * 设置是否声明为函数, 如果声明为函数, 则该值不为0,
+     * 其值为存有该函数
+     * @param param_list_node
+     */
+    void set_param_list_node(size_t param_list_node = 0);
 
     /**
      * 设置节点的K_FUNCTION键对应的值
