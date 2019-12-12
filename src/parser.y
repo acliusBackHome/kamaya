@@ -1206,11 +1206,12 @@ function_definition
     tree.set_parent($4, $$);
   }
   | declaration_specifiers declarator compound_statement {
-    $$ = tree.make_function_definition_node(
-      tree.node($1)->get_type(&tree),
-      tree.node($2)->get_symbol(&tree),
-      tree.node($2)->get_parameters_list(tree)
-    );
+    const auto &symbol = tree.node($2)->get_symbol(&tree);
+    const auto &ret_type = tree.node($1)->get_type(&tree);
+    const auto &args = tree.node($2)->get_parameters_list(tree);
+    $$ = tree.make_function_definition_node(ret_type, symbol, args);
+    ParseScope::get_scope(scope_now).declaration(symbol, ParseFunction(ret_type,
+      symbol, args));
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);

@@ -572,6 +572,10 @@ void ParseScope::print_all_declaration() {
         const auto &symbol2dec = scope.symbol2dec_ptr;
         printf("scope: %zu(%zu):\n",  scope.this_scope, scope.parent_scope);
         for (const auto &each : symbol2dec) {
+            if(each.first.empty()) {
+                continue;
+            }
+            printf("%s: ", each.first.c_str());
             DeclarationType dec_type = each.second.first;
             switch (dec_type) {
                 case D_FUNCTION: {
