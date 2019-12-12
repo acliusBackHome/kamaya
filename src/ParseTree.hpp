@@ -175,10 +175,28 @@ public:
     size_t make_init_declarator_list_node();
 
     /**
-     * 生成一表达式节点
+     * 生成一个表达式节点
      * @return
      */
     size_t make_expression_node(const ParseExpression &expression);
+
+    /**
+     * 生成一个语句块列表节点
+     * @return
+     */
+    size_t make_block_item_list_node();
+
+    /**
+     * 生成一个语句块列表节点
+     * @return
+     */
+    size_t make_compound_statement_node();
+
+    /**
+     * 生成一个for语句节点
+     * @return
+     */
+    size_t make_for_statement_node();
 
     /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射

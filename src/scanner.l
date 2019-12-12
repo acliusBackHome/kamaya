@@ -180,7 +180,8 @@ int main(int argc, char** argv) {
   ParseType::print_all_type();
   printf("所有表达式:\n");
   ParseExpression::print_all_expression();
-  
+  printf("所有语句块空间声明:\n");
+  ParseScope::print_all_declaration();
   int sz = tree.error_cnt();
   if (sz) {
     cout << "错误报告" << endl;

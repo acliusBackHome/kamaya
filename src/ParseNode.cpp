@@ -33,6 +33,8 @@ string ParseNode::get_key_name(NodeKey type) {
             return "is_array";
         case K_INIT_DECLARATORS:
             return "init_declarators";
+        case K_SCOPE_ID:
+            return "scope_id";
     }
     return "unknown";
 }
@@ -71,6 +73,12 @@ string ParseNode::get_node_type_name(NodeType type) {
             return "declaration";
         case N_EXPRESSION:
             return "expression";
+        case N_BLOCK_ITEM_LIST:
+            return "block_item_list";
+        case N_COMP_STMT:
+            return "compound_statement";
+        case N_FOR_STMT:
+            return "for statement";
     }
     return "unknown";
 }
@@ -123,7 +131,7 @@ string ParseNode::get_node_info() const {
                 }
                 info += ", ";
                 break;
-            case K_INIT_DECLARATORS:
+            case K_INIT_DECLARATORS: {
                 info += "init_declarators: [";
                 vector<InitDeclarator> &list = *(vector<InitDeclarator> *) (each.second);
                 char buff[32];
@@ -136,8 +144,17 @@ string ParseNode::get_node_info() const {
                     info += buff;
                     info += " }, ";
                 }
-                info += "]";
+                info += "], ";
                 break;
+            }
+            case K_SCOPE_ID: {
+                char buff[32];
+                info += "scope_id: ";
+                sprintf(buff, "%zu", *(size_t *) each.second);
+                info += buff;
+                info += ", ";
+                break;
+            }
         }
     }
     return info + "}";
@@ -185,6 +202,8 @@ void ParseNode::delete_all_keys() {
         case N_DECLARATION:
         case N_INITIALIZER:
         case N_INIT_DECLARATOR:
+        case N_BLOCK_ITEM_LIST:
+        case N_FOR_STMT:
             break;
         case N_IDENTIFIER: {
             auto iter = keys.find(K_SYMBOL);
@@ -277,6 +296,16 @@ void ParseNode::delete_all_keys() {
                 break;
             }
             delete (ParseExpression *) (e->second);
+            break;
+        }
+        case N_COMP_STMT: {
+            auto s = keys.find(K_SCOPE_ID);
+            if (s == keys.end() || s->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            delete (size_t *) (s->second);
             break;
         }
     }
@@ -394,6 +423,14 @@ void ParseNode::set_is_array(bool is_array) {
             K_IS_ARRAY, N_DIRECT_DEC, -1
     );
     keys[K_IS_ARRAY] = (size_t) new bool(is_array);
+}
+
+void ParseNode::set_scope_id(size_t scope_id) {
+    before_update_key<size_t>(
+            "ParseNode::set_scope_id(size_t scope_id)",
+            K_SCOPE_ID, N_COMP_STMT, N_FOR_STMT, -1
+    );
+    keys[K_SCOPE_ID] = (size_t) new size_t(scope_id);
 }
 
 void ParseNode::update_is_array(bool is_array) {
@@ -746,6 +783,62 @@ ParseExpression ParseNode::get_expression(ParseTree *_tree) const {
     printf("ParseNode::get_expression(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
            node_id, get_key_name(K_EXPRESSION).c_str());
     return ParseExpression();
+}
+
+size_t ParseNode::get_scope_id(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_SCOPE_ID);
+    if (iter != keys.end()) {
+        return *(size_t *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_scope_id(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_scope_id(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_SCOPE_ID).c_str());
+    return (size_t) -1;
+}
+
+void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const {
+    if (type != N_DECLARATION) {
+        printf("ParseNode::action_declaration(size_t scope_id, const ParseTree &tree): 警告: "
+               "节点%zu不支持此操作\n", node_id);
+        return;
+    }
+    size_t init_declarator_list_node = 0, declaration_specifiers_node = 0;
+    for (const auto &each :tree.node_children[node_id]) {
+        if (tree.nodes[each].type == N_INIT_DECLARATOR_LIST) {
+            init_declarator_list_node = each;
+        } else if (tree.nodes[each].type == N_DECLARATION_SPE) {
+            declaration_specifiers_node = each;
+        }
+    }
+    if (!init_declarator_list_node || !declaration_specifiers_node) {
+        printf("ParseNode::action_declaration(size_t scope_id, const ParseTree &tree): 警告: "
+               "节点%zu的字段定义不完整,请检查实现或调用\n", node_id);
+        return;
+    }
+    const auto &init_dec_list = *(tree.nodes[init_declarator_list_node].get_init_declarator_list());
+    const auto &dec_type = tree.nodes[declaration_specifiers_node].get_type(&(ParseTree &) tree);
+    for (const auto &each : init_dec_list) {
+        const string &symbol = get<0>(each);// 变量符号
+        const ParseExpression &init_expr = get<1>(each);// 初始化表达式
+        // TODO: 产生将初始化表达式赋值给变量的代码
+        bool is_ptr = get<2>(each); // 是否声明为指针
+        const size_t &array_size = get<3>(each);// 数组大小: 如果为0, 则表明不是数组
+        ParseType this_type(dec_type);
+        if (is_ptr) {
+            this_type = ParseType::get_pointer(this_type);
+        }
+        if (array_size) {
+            this_type = ParseType::get_array(this_type, array_size);
+        }
+        ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol));
+    }
 }
 
 #pragma clang diagnostic pop

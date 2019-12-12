@@ -432,66 +432,58 @@ ConstValueType ParseConstant::wider_const_type(ConstValueType type1, ConstValueT
     return C_UNDEFINED;
 }
 
-vector<ParseDeclaration::Scope> ParseDeclaration::scope_stack;
+vector<ParseScope> ParseScope::scopes;
 
-void ParseDeclaration::declaration(const string &symbol, const ParseVariable &variable) {
+ParseScope::ParseScope(size_t parent) {
+    this_scope = parent_scope = parent;
+}
+
+ParseScope::ParseScope(const ParseScope &other) {
+    assign(*this, other);
+}
+
+void ParseScope::declaration(const string &symbol, const ParseVariable &variable) {
     if (symbol.empty()) {
         printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: 试图声明空符号\n");
         return;
     }
-    if (scope_stack.empty()) {
-        init();
-    }
-    size_t top_scope = scope_stack.size() - 1;
-    auto &id2var = scope_stack[top_scope].id2var;
-    auto &id2func = scope_stack[top_scope].id2func;
-    auto &symbol2dec = scope_stack[top_scope].symbol2dec;
-    auto it = symbol2dec.find(symbol);
-    if (it != symbol2dec.end()) {
+    auto it = symbol2dec_ptr.find(symbol);
+    if (it != symbol2dec_ptr.end()) {
         printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: 试图重声明符号"
                "%s 为 变量:%s 跳过该操作\n", symbol.c_str(), variable.get_info().c_str());
         return;
     }
-    vector<size_t> var_id;
-    var_id.emplace_back(id2var.size());
-    symbol2dec[symbol] = pair<DeclarationType, vector<size_t> >(D_VARIABLE, var_id);
-    id2var.emplace_back(variable);
-    id2func.emplace_back(ParseFunction());
+    vector<size_t> var_ptr;
+    var_ptr.emplace_back((size_t) new ParseVariable(variable));
+    symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(D_VARIABLE, var_ptr);
 }
 
-void ParseDeclaration::declaration(const string &symbol, const ParseFunction &function) {
+void ParseScope::declaration(const string &symbol, const ParseFunction &function) {
     if (symbol.empty()) {
         printf("ParseDeclaration(const string &symbol, const ParseFunction &function): 警告: 试图声明空符号\n");
         return;
     }
-    if (scope_stack.empty()) {
-        init();
-    }
-    size_t top_scope = scope_stack.size() - 1;
-    if(top_scope) {
+    if (parent_scope) {
         // TODO: 加入结构体后需要判断当前语句块是否是结构体声明里的
         printf("ParseDeclaration(const string &symbol, const ParseFunction &function): 警告: 试图在非静态区声明函数%s\n",
-            function.get_info().c_str());
+               function.get_info().c_str());
         return;
     }
-    auto &id2var = scope_stack[top_scope].id2var;
-    auto &id2func = scope_stack[top_scope].id2func;
-    auto &symbol2dec = scope_stack[top_scope].symbol2dec;
-    auto it = symbol2dec.find(symbol);
-    if (it != symbol2dec.end()) {
+    auto it = symbol2dec_ptr.find(symbol);
+    if (it != symbol2dec_ptr.end()) {
         if (it->second.first != D_FUNCTION) {
             printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: "
                    "符号%s已被声明但不是函数声明, 试图重声明为函数%s\n", symbol.c_str(),
                    function.get_info().c_str());
             return;
         }
-        vector<size_t> &dec_funcs = it->second.second;
-        if (dec_funcs.empty()) {
+        vector<size_t> &dec_ptr = it->second.second;
+        if (dec_ptr.empty()) {
             printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: 发现异常:"
                    "符号%s被声明为函数, 但是找不到其记录, 请检查实现和调用\n", symbol.c_str());
             return;
         }
-        const ParseType &ret_type = id2func[dec_funcs[0]].get_ret_type(),
+        const ParseType &ret_type = ((ParseFunction *) dec_ptr[0])->get_ret_type(),
                 &this_ret_type = function.get_ret_type();
         if (ret_type < this_ret_type || this_ret_type < ret_type) {
             printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: "
@@ -500,8 +492,8 @@ void ParseDeclaration::declaration(const string &symbol, const ParseFunction &fu
             return;
         }
         const auto &this_args = function.get_args();
-        for (const auto &func_id : dec_funcs) {
-            const auto &args = id2func[func_id].get_args();
+        for (const auto &func_ptr : dec_ptr) {
+            const auto &args = ((ParseFunction *) func_ptr)->get_args();
             if (this_args.size() == args.size()) {
                 bool is_the_same = true;
                 for (size_t i = 0; is_the_same && i < this_args.size(); ++i) {
@@ -516,97 +508,77 @@ void ParseDeclaration::declaration(const string &symbol, const ParseFunction &fu
                 }
             }
         }
-        dec_funcs.emplace_back(id2var.size());
-        id2var.emplace_back(ParseVariable());
-        id2func.emplace_back(function);
+        dec_ptr.emplace_back((size_t) new ParseFunction(function));
         return;
     }
-    vector<size_t> func_id;
-    func_id.emplace_back(id2var.size());
-    symbol2dec[symbol] = pair<DeclarationType, vector<size_t> >(D_FUNCTION, func_id);
-    id2var.emplace_back(ParseVariable());
-    id2func.emplace_back(function);
+    vector<size_t> func_ptr;
+    func_ptr.emplace_back((size_t) new ParseFunction(function));
+    symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(D_FUNCTION, func_ptr);
 }
 
-vector<ParseFunction> ParseDeclaration::get_function_declaration(const string &symbol) {
+vector<ParseFunction> ParseScope::get_function_declaration(const string &symbol) {
     vector<ParseFunction> res;
-    if (scope_stack.empty()) {
-        init();
-        printf("ParseDeclaration::get_function_declaration(const string &symbol): 警告 :未定义符号:"
-               "%s\n", symbol.c_str());
-        return res;
-    }
-    for (size_t each_scope = scope_stack.size() - 1;; --each_scope) {
-        const auto &id2var = scope_stack[each_scope].id2var;
-        const auto &id2func = scope_stack[each_scope].id2func;
-        const auto &symbol2dec = scope_stack[each_scope].symbol2dec;
-        auto it = symbol2dec.find(symbol);
-        if (it == symbol2dec.end()) {
-            if (!each_scope) {
-                printf("ParseDeclaration::get_function_declaration(const string &symbol): 警告 :未定义符号:"
-                       "%s\n", symbol.c_str());
-                return res;
-            }
-            continue;
-        }
-        if (it->second.first != D_FUNCTION) {
-            printf("ParseDeclaration::get_function_declaration(const string &symbol): 警告 :非函数声明"
+    auto it = symbol2dec_ptr.find(symbol);
+    if (it == symbol2dec_ptr.end()) {
+        if (parent_scope == this_scope) {
+            printf("ParseDeclaration::get_function_declaration(const string &symbol): 警告 :未定义符号:"
                    "%s\n", symbol.c_str());
             return res;
         }
-        const vector<size_t> decs = it->second.second;
-        for (const auto &each : decs) {
-            res.emplace_back(id2func[each]);
-        }
+        return get_scope(parent_scope).get_function_declaration(symbol);
+    }
+    if (it->second.first != D_FUNCTION) {
+        printf("ParseDeclaration::get_function_declaration(const string &symbol): 警告 :非函数声明"
+               "%s\n", symbol.c_str());
         return res;
     }
+    const vector<size_t> decs = it->second.second;
+    for (const auto &each : decs) {
+        res.emplace_back((*(ParseFunction *) each));
+    }
+    return res;
 }
 
-const ParseVariable &ParseDeclaration::get_variable_declaration(const string &symbol) {
-    if (scope_stack.empty()) {
-        init();
-        printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告 :未定义符号:"
-               "%s\n", symbol.c_str());
-        return scope_stack[0].id2var[0];
-    }
-    for (size_t each_scope = scope_stack.size() - 1;; --each_scope) {
-        const auto &id2var = scope_stack[each_scope].id2var;
-        const auto &id2func = scope_stack[each_scope].id2func;
-        const auto &symbol2dec = scope_stack[each_scope].symbol2dec;
-        auto it = symbol2dec.find(symbol);
-        if (it == symbol2dec.end()) {
-            if (!each_scope) {
-                printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告 :未定义符号:"
-                       "%s\n", symbol.c_str());
-                return scope_stack[0].id2var[0];
-            }
-            continue;
-        }
-        if (it->second.first != D_VARIABLE) {
-            printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告: 非变量声明"
+ParseVariable ParseScope::get_variable_declaration(const string &symbol) {
+    auto it = symbol2dec_ptr.find(symbol);
+    if (it == symbol2dec_ptr.end()) {
+        if (parent_scope == this_scope) {
+            printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告 :未定义符号:"
                    "%s\n", symbol.c_str());
-            return scope_stack[0].id2var[0];
+            return ParseVariable();
         }
-        return id2var[it->second.second[0]];
+        return get_scope(parent_scope).get_variable_declaration(symbol);
     }
+    if (it->second.first != D_VARIABLE) {
+        printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告: 非变量声明"
+               "%s\n", symbol.c_str());
+        return ParseVariable();
+    }
+    const auto &var_ptr_list = it->second.second;
+    if (var_ptr_list.empty()) {
+        printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告: 数据一致性被破坏,"
+               "请检查实现或者调用\n");
+        return ParseVariable();
+    }
+    return *((ParseVariable *) var_ptr_list[0]);
 }
 
-void ParseDeclaration::print_all_declaration() {
-    for (size_t i = scope_stack.size() - 1;; --i) {
-        const auto &id2var = scope_stack[i].id2var;
-        const auto &id2func = scope_stack[i].id2func;
-        const auto &symbol2dec = scope_stack[i].symbol2dec;
-        if (id2var.size() != id2func.size()) {
-            printf("ParseDeclaration::print_all_declaration(): 警告: 数据一致性被破坏,请检查实现或者调用\n");
-        }
+size_t ParseScope::get_parent_scope_id() const {
+    return parent_scope;
+}
+
+void ParseScope::print_all_declaration() {
+    for (const auto &scope: scopes) {
+        const auto &symbol2dec = scope.symbol2dec_ptr;
+        printf("scope: %zu(%zu):\n",  scope.this_scope, scope.parent_scope);
         for (const auto &each : symbol2dec) {
             DeclarationType dec_type = each.second.first;
             switch (dec_type) {
                 case D_FUNCTION: {
                     putchar('\n');
-                    const auto &func_id_list = each.second.second;
-                    for (const auto &func_id:func_id_list) {
-                        printf("    %s\n", id2func[func_id].get_info().c_str());
+                    const auto &func_ptr_list = each.second.second;
+                    for (const auto &func_ptr:func_ptr_list) {
+                        printf("    %s\n", ((ParseFunction *) func_ptr)->get_info().c_str());
                     }
                     break;
                 }
@@ -615,8 +587,8 @@ void ParseDeclaration::print_all_declaration() {
                         printf("异常: 定义为变量但未发现记录, 请检查实现或者调用\n");
                         continue;
                     }
-                    const auto &var_id = each.second.second[0];
-                    printf("%s\n", id2var[var_id].get_info().c_str());
+                    const auto &var_ptr = each.second.second[0];
+                    printf("%s\n", ((ParseVariable *) var_ptr)->get_info().c_str());
                     break;
                 }
                 default: {
@@ -625,26 +597,90 @@ void ParseDeclaration::print_all_declaration() {
                 }
             }
         }
-        if (i == 0) {
-            break;
+    }
+}
+
+void ParseScope::init() {
+    scopes.emplace_back(0);
+    ParseScope &static_scope = scopes[0];
+    vector<size_t> ptr;
+    ptr.emplace_back(0);
+    static_scope.symbol2dec_ptr[string()] = pair<DeclarationType, vector<size_t> >(D_UNKNOWN, ptr);
+}
+
+size_t ParseScope::new_scope(size_t parent) {
+    if (scopes.empty()) {
+        init();
+    }
+    if (parent >= scopes.size()) {
+        printf("ParseDeclaration::new_scope(size_t parent): 警告: 试图获取不存在的空间%zu\n", parent);
+        return 0;
+    }
+    scopes.emplace_back(parent);
+    scopes[scopes.size() - 1].this_scope = scopes.size() - 1;
+    return scopes.size() - 1;
+}
+
+ParseScope &ParseScope::get_scope(size_t scope_id) {
+    if (scopes.empty()) {
+        init();
+    }
+    if (scope_id >= scopes.size()) {
+        return scopes[0];
+    }
+    return scopes[scope_id];
+}
+
+void ParseScope::assign(ParseScope &scope, const ParseScope &from_scope) {
+    scope.parent_scope = from_scope.parent_scope;
+    scope.this_scope = from_scope.this_scope;
+    for (const auto &each : from_scope.symbol2dec_ptr) {
+        const auto &symbol = each.first;
+        const auto &type = each.second.first;
+        const auto &from_ptr = each.second.second;
+        vector<size_t> ptr_list;
+        switch (type) {
+            case D_FUNCTION:
+                for (const auto &each_ptr: from_ptr) {
+                    ptr_list.emplace_back((size_t) new ParseFunction(*(ParseFunction *) each_ptr));
+                }
+                scope.symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(type, ptr_list);
+                break;
+            case D_VARIABLE:
+                for (const auto &each_ptr: from_ptr) {
+                    ptr_list.emplace_back((size_t) new ParseVariable(*(ParseVariable *) each_ptr));
+                }
+                scope.symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(type, ptr_list);
+                break;
+            case D_UNKNOWN:
+                scope.symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(type, ptr_list);
+                break;
         }
     }
 }
 
-void ParseDeclaration::init() {
-    push_scope();
-    Scope &static_scope = scope_stack[0];
-    static_scope.symbol2dec[string()] = pair<DeclarationType, vector<size_t> >(D_UNKNOWN, vector<size_t>());
-    static_scope.id2var.emplace_back(ParseVariable());
-    static_scope.id2func.emplace_back(ParseFunction());
+ParseScope::~ParseScope() {
+    for (const auto &each : symbol2dec_ptr) {
+        switch (each.second.first) {
+            case D_UNKNOWN:
+                break;
+            case D_FUNCTION:
+                for (const auto &each_ptr : each.second.second) {
+                    delete (ParseFunction *) (each_ptr);
+                }
+                break;
+            case D_VARIABLE:
+                for (const auto &each_ptr : each.second.second) {
+                    delete (ParseVariable *) (each_ptr);
+                }
+                break;
+        }
+    }
 }
 
-void ParseDeclaration::push_scope() {
-    scope_stack.emplace_back();
-}
-
-void ParseDeclaration::pop_scope() {
-    scope_stack.pop_back();
+ParseScope &ParseScope::operator=(const ParseScope &other) {
+    assign(*this, other);
+    return *this;
 }
 
 #pragma clang diagnostic pop

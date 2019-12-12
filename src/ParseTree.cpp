@@ -95,6 +95,9 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
         case N_INITIALIZER:
         case N_DECLARATION:
         case N_EXPRESSION:
+        case N_BLOCK_ITEM_LIST:
+        case N_COMP_STMT:
+        case N_FOR_STMT:
             printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
             break;
         case N_NORMAL:
@@ -275,10 +278,23 @@ size_t ParseTree::make_expression_node(const ParseExpression &expression) {
     return new_one;
 }
 
+size_t ParseTree::make_block_item_list_node() {
+    return new_node(N_BLOCK_ITEM_LIST);
+}
+
+size_t ParseTree::make_compound_statement_node() {
+    return new_node(N_COMP_STMT);
+}
+
+size_t ParseTree::make_for_statement_node() {
+    return new_node(N_FOR_STMT);
+}
+
 ParseTree::~ParseTree() {
     for (auto &each : nodes) {
         each.delete_all_keys();
     }
 }
+
 
 #pragma clang diagnostic pop

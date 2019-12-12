@@ -72,25 +72,38 @@ void test_make_node() {
 }
 
 void test_make_expression() {
-    ParseDeclaration::declaration("a", ParseVariable(ParseType(T_INT), "a"));
-    ParseDeclaration::declaration("b", ParseVariable(ParseType(T_INT), "b"));
+    ParseScope::get_scope(0).declaration("a", ParseVariable(ParseType(T_INT), "a"));
+    ParseScope::get_scope(0).declaration("b", ParseVariable(ParseType(T_INT), "b"));
     ParseExpression undefined;
     ParseTree tree("program");
     size_t n1 = tree.make_expression_node(
-            ParseExpression(ParseDeclaration::get_variable_declaration("a"))
+            ParseExpression(ParseScope::get_scope(0).get_variable_declaration("a"))
     ), n2 = tree.make_expression_node(
             ParseExpression(ParseConstant((long long) 10)) / undefined
     ), n3 = tree.make_expression_node(
-            ParseExpression(ParseDeclaration::get_variable_declaration("b"))
+            ParseExpression(ParseScope::get_scope(0).get_variable_declaration("b"))
     ), n4 = tree.make_expression_node(
             tree.node(n3)->get_expression(&tree) + tree.node(n2)->get_expression(&tree)
     );
 }
 
+void test_scope() {
+    ParseTree tree("program");
+    ParseScope::new_scope(0);
+    ParseScope::new_scope(1);
+    ParseScope::new_scope(2);
+    ParseScope::new_scope(0);
+    ParseScope::new_scope(0);
+    ParseScope::new_scope(2);
+    ParseScope::new_scope(3);
+    ParseScope::print_all_declaration();
+}
+
 
 int main() {
-    //test_parse_type();
-    //test_make_node();
+    test_parse_type();
+    test_make_node();
     test_make_expression();
+    test_scope();
     return 0;
 }

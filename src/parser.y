@@ -5,6 +5,8 @@
   using namespace std;
   int yylex(void);
   char buff[1024];
+  // 当前全局语句块空间, 用于声明的时候
+  size_t scope_now = 0;
 %}
 
 %token MAIN RETURN
@@ -50,7 +52,7 @@ primary_expression
   : id_delaration {
     $$ = tree.make_expression_node(
       ParseExpression(
-        ParseDeclaration::get_variable_declaration(
+        ParseScope::get_scope(scope_now).get_variable_declaration(
           tree.node($1)->get_symbol()
         )
       )
@@ -203,7 +205,7 @@ multiplicative_expression
   }
   | multiplicative_expression MUL power_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() * 
+      tree.node($1)->get_expression() *
       tree.node($3)->get_expression()
     );
     tree.set_parent($1, $$);
@@ -211,7 +213,7 @@ multiplicative_expression
   }
   | multiplicative_expression DIV power_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() / 
+      tree.node($1)->get_expression() /
       tree.node($3)->get_expression()
     );
     tree.set_parent($1, $$);
@@ -219,7 +221,7 @@ multiplicative_expression
   }
   | multiplicative_expression MOD power_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() % 
+      tree.node($1)->get_expression() %
       tree.node($3)->get_expression()
     );
     tree.set_parent($1, $$);
@@ -233,7 +235,7 @@ additive_expression
   }
   | additive_expression ADD multiplicative_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() + 
+      tree.node($1)->get_expression() +
       tree.node($3)->get_expression()
     );
     tree.set_parent($1, $$);
@@ -241,7 +243,7 @@ additive_expression
   }
   | additive_expression SUB multiplicative_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() - 
+      tree.node($1)->get_expression() -
       tree.node($3)->get_expression()
     );
     tree.set_parent($1, $$);
@@ -444,25 +446,9 @@ declaration
   }
   | declaration_specifiers init_declarator_list SEMICOLON {
     $$ = tree.make_declaration_node();
-    const auto &init_dec_list = *(tree.node($2)->get_init_declarator_list());
-    const auto &dec_type = tree.node($1)->get_type(&tree);
-    for(const auto& each : init_dec_list) {
-    	const string &symbol = get<0>(each);// 变量符号
-    	const ParseExpression &init_expr = get<1>(each);// 初始化表达式
-    	// TODO: 产生将初始化表达式赋值给变量的代码
-    	bool is_ptr = get<2>(each); // 是否声明为指针
-    	const size_t &array_size = get<3>(each);// 数组大小: 如果为0, 则表明不是数组
-    	ParseType this_type(dec_type);
-    	if(is_ptr) {
-    	  this_type = ParseType::get_pointer(this_type);
-    	}
-    	if(array_size) {
-          this_type = ParseType::get_array(this_type, array_size);
-    	}
-	    ParseDeclaration::declaration(symbol, ParseVariable(this_type, symbol));
-    }
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
+    tree.node($$)->action_declaration(scope_now, tree);
   }
   ;
 
@@ -864,7 +850,7 @@ parameter_declaration
     tree.set_parent($2, $$);
   }
   | declaration_specifiers abstract_declarator {
-    $$ = tree.new_node("parameter declaration 2"); 
+    $$ = tree.new_node("parameter declaration 2");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -1061,11 +1047,15 @@ labeled_statement
 
 compound_statement
   : LB RB {
-    $$ = tree.new_node("compound statement");
+    $$ = tree.new_node("empty compound statement");
   }
-  | LB block_item_list RB {
-    $$ = tree.new_node("compound statement");
-    tree.set_parent($2, $$);
+  | LB {
+    scope_now = ParseScope::new_scope(scope_now);
+  } block_item_list RB {
+    $$ = tree.make_compound_statement_node();
+    tree.node($$)->set_scope_id(scope_now);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
+    tree.set_parent($3, $$);
   }
   ;
 
@@ -1125,6 +1115,12 @@ selection_statement
   }
   ;
 
+for
+  : FOR {
+    scope_now = ParseScope::new_scope(scope_now);
+  }
+  ;
+
 iteration_statement
   : WHILE LP expression RP statement {
     $$ = tree.new_node("while statement");
@@ -1136,31 +1132,39 @@ iteration_statement
     tree.set_parent($2, $$);
     tree.set_parent($5, $$);
   }
-  | FOR LP expression_statement expression_statement RP statement {
-    $$ = tree.new_node("for statement");
+  | for LP expression_statement expression_statement RP statement {
+    $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($6, $$);
+    tree.node($$)->set_scope_id(scope_now);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
-  | FOR LP expression_statement expression_statement expression RP statement {
-    $$ = tree.new_node("for statement");
+  | for LP expression_statement expression_statement expression RP statement {
+    $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($5, $$);
     tree.set_parent($7, $$);
+    tree.node($$)->set_scope_id(scope_now);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
-  | FOR LP declaration expression_statement RP statement {
-    $$ = tree.new_node("for statement");
+  | for LP declaration expression_statement RP statement {
+    $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($6, $$);
+    tree.node($$)->set_scope_id(scope_now);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
-  | FOR LP declaration expression_statement expression RP statement {
-    $$ = tree.new_node("for statement");
+  | for LP declaration expression_statement expression RP statement {
+    $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($5, $$);
     tree.set_parent($7, $$);
+    tree.node($$)->set_scope_id(scope_now);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
   ;
 

@@ -268,81 +268,109 @@ private:
     static void assign(ParseConstant &constant, const ParseConstant &from_constant);
 };
 
+class ParseDeclaration;
+
 /**
- * 用于记录和表示已经声明符号和对应的函数,常量,变量等声明
+ * 语句块空间
  */
-class ParseDeclaration {
+class ParseScope {
+    friend class ParseDeclaration;
+
 public:
-    /**
-     * 进入一个新的空间:
-     * 符号表中可以重复声明之前声明过的变量符号
-     * init()函数初始化一个空间,这个空间就是静态空间
-     */
-    static void push_scope();
 
     /**
-     * 离开之前的空间, 释放这个空间内压栈的所有局部变量声明
+     * 用ParseDeclaration::new_scope(size_t)创建有效的对象
+     * 这个构造函数构造出的对象不会被全局注册
+     * @param parent
      */
-    static void pop_scope();
+    explicit ParseScope(size_t parent = 0);
+
+    ParseScope(const ParseScope &other);
+
+    ParseScope &operator=(const ParseScope &other);
+
+    /**
+     *获取该语句块空间的父空间, 0(静态区)的父空间是0
+     * @param symbol
+     * @return
+     */
+    size_t get_parent_scope_id() const;
 
     /**
      * 声明符号为变量
      * @param symbol
      * @param variable
      */
-    static void declaration(const string &symbol, const ParseVariable &variable);
+    void declaration(const string &symbol, const ParseVariable &variable);
 
     /**
      * 声明符号为函数
      * @param symbol
      * @param variable
      */
-    static void declaration(const string &symbol, const ParseFunction &function);
+    void declaration(const string &symbol, const ParseFunction &function);
 
     /**
-     * 获取声明的函数, 如果没有对应记录, 警告并返回无效声明
-     * @param symbol
-     * @return
-     */
-    static vector<ParseFunction> get_function_declaration(const string &symbol);
+    * 获取声明的函数, 如果没有对应记录, 警告并返回无效声明
+    * @param symbol
+    * @return
+    */
+    vector<ParseFunction> get_function_declaration(const string &symbol);
 
     /**
      *获取声明的变量, 如果没有对应记录, 警告并返回无效声明
      * @param symbol
      * @return
      */
-    static const ParseVariable &get_variable_declaration(const string &symbol);
+    ParseVariable get_variable_declaration(const string &symbol);
+
+    /**
+     * 进入一个新的空间:
+     * 符号表中可以重复声明之前声明过的变量符号
+     * init()函数初始化一个空间,这个空间就是静态空间
+     * @return
+     */
+    static size_t new_scope(size_t parent = 0);
+
+    /**
+     * 获取指定的scope
+     * @param scope_id
+     * @return
+     */
+    static ParseScope &get_scope(size_t scope_id);
 
     /**
      * 打印所有已有的声明
      */
     static void print_all_declaration();
 
-private:
-    struct Scope {
-        //由于有函数重载, 所以映射到的对象是id的集合
-        map<string, pair<DeclarationType , vector<size_t> > > symbol2dec;
-        // 这里有些冗余, 但是这个类没有对象, 所以没有析构函数
-        // 为了自动清除这些记录, 所以用了有些冗余的处理方式
-        // 如果该id不是变量,则存默认值, 否则存有效值
-        vector<ParseVariable> id2var;
-        // 如果该id不是函数,则存默认值, 否则存有效值
-        vector<ParseFunction> id2func;
-    };
+    ~ParseScope();
 
-    static vector<Scope> scope_stack;
+private:
+    // 父空间和本空间的全局id
+    size_t parent_scope, this_scope;
+    //由于有函数重载, 所以映射到的对象是id的集合
+    // vector<size_t> 记录声明的指针, 根据DeclarationType不同而值不同
+    // 如果是D_UNKNOWN, 则为0
+    // 如果是D_FUNCTION, 则为ParseFunction*
+    // 如果是D_VARIABLE, 则为ParseVariable*
+    map<string, pair<DeclarationType, vector<size_t> > > symbol2dec_ptr;
+
+    // 所有注册的scope
+    static vector<ParseScope> scopes;
 
     /**
-     * 不允许生成对象
+     * 赋值
+     * @param scope
+     * @param from_scope
      */
-    ParseDeclaration() = default;
+    static void assign(ParseScope &scope, const ParseScope &from_scope);
 
     /**
      * 初始化
      */
     static void init();
 };
-
 
 #endif //NKU_PRACTICE_PARSE_DECLARATION_HPP
 

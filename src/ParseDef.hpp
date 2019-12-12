@@ -90,6 +90,15 @@ enum NodeType {
     //表达式节点
     // expression: 该节点表示的表达式
             N_EXPRESSION,
+    // 语句块语句列表节点
+    // 目前没有直接键值
+            N_BLOCK_ITEM_LIST,
+    // 语句块语句
+    // scope_id: 这个语句块对应的语句块空间id
+            N_COMP_STMT,
+    // for语句
+    // 目前没有直接键值
+            N_FOR_STMT,
 };
 
 enum NodeKey {
@@ -111,6 +120,8 @@ enum NodeKey {
             K_IS_ARRAY = 8,
     // vector<InitDeclarator>* 符号和初始化表达式列表
             K_INIT_DECLARATORS = 9,
+    // 语句块空间id size_t*
+            K_SCOPE_ID = 10,
 };
 
 enum ExpressionType {

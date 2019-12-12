@@ -121,6 +121,12 @@ public:
     ParseExpression get_expression(ParseTree *tree = nullptr) const;
 
     /**
+     * 获取节点所属的语句块
+     * @return
+     */
+    size_t get_scope_id(ParseTree *tree = nullptr) const;
+
+    /**
      * 获取节点的类型
      * @return
      */
@@ -217,6 +223,13 @@ public:
     void set_is_array(bool is_array);
 
     /**
+     * 设置节点的K_SCOPE_ID键值
+     * 设置其属于的语句块空间id
+     * @param scope_id
+     */
+    void set_scope_id(size_t scope_id);
+
+    /**
      * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator
      * 如果没有K_INIT_DECLARATOR,则new一个
      */
@@ -228,6 +241,13 @@ public:
      * @param is_array
      */
     void update_is_array(bool is_array);
+
+    /**
+     * 节点动作: 注册声明, 根据节点和子节点的信息声明变量等
+     * @param scope_id
+     * @param tree
+     */
+    void action_declaration(size_t scope_id, const ParseTree &tree) const;
 
     /**
      * 获取节点信息
