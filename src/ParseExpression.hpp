@@ -110,6 +110,14 @@ public:
     ParseConstant get_const() const;
 
     /**
+     * 获取表达式的子表达式id, child参数目前小于2
+     * 如果该表达式的类型没有子表达式, 则返回(size_t) -1
+     * @param child
+     * @return
+     */
+    size_t get_child(size_t child) const;
+
+    /**
      * 判断该表达式是否定义
      * @return
      */

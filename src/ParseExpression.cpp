@@ -497,6 +497,30 @@ const ParseType &ParseExpression::get_ret_type() const {
     return ParseType::get_type(T_UNKNOWN);
 }
 
+size_t ParseExpression::get_child(size_t _child) const {
+    if (_child >= 2) {
+        printf("ParseExpression::get_child(size_t _child): 警告: 试图获取表达式%zu的异常子表达式 child_id %zu\n",
+               get_expr_id(*this), _child);
+        return (size_t) -1;
+    }
+    switch (expr_type) {
+        case E_ADD:
+        case E_SUB:
+        case E_MUL:
+        case E_DIV:
+        case E_MOD:
+        case E_POW:
+            return child[_child];
+        case E_VAR:
+        case E_CONST:
+        case E_UNDEFINED:
+            printf("ParseExpression::get_child(size_t _child): 警告:  试图获取表达式%zu的未定义子表达式\n",
+                   get_expr_id(*this));
+            return (size_t) -1;
+    }
+    return (size_t) -1;
+}
+
 void ParseExpression::print_all_expression() {
     for (size_t i = 0; i < id2expr.size(); ++i) {
         printf("%zu: %s\n", i, id2expr[i].get_info().c_str());
