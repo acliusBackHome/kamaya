@@ -48,7 +48,14 @@ id_delaration
 // 以下是表达式
 primary_expression
   : id_delaration {
-    $$ = $1;
+    $$ = tree.make_expression_node(
+      ParseExpression(
+        ParseDeclaration::get_variable_declaration(
+          tree.node($1)->get_symbol()
+        )
+      )
+    );
+    tree.set_parent($1, $$);
   }
   | NUMBER {
     $$ = tree.make_const_node((long long)$1);
@@ -110,15 +117,15 @@ postfix_expression
   ;
 
 argument_expression_list
-	: assignment_expression {
+  : assignment_expression {
     $$ = tree.new_node("argument expression list");
     tree.set_parent($1, $$);
   }
-	| argument_expression_list COMMA assignment_expression {
+  | argument_expression_list COMMA assignment_expression {
     $$ = $1;
     tree.set_parent($3, $1);
   }
-	;
+  ;
 
 unary_expression
   : postfix_expression {
@@ -148,36 +155,36 @@ unary_expression
   ;
 
 unary_operator
-	: AND {
+  : AND {
     $$ = tree.new_node("&");
   }
-	| MUL {
+  | MUL {
     $$ = tree.new_node("*");
   }
-	| ADD {
+  | ADD {
     $$ = tree.new_node("+");
   }
-	| SUB {
+  | SUB {
     $$ = tree.new_node("-");
   }
-	| BIT_NOT {
+  | BIT_NOT {
     $$ = tree.new_node("~");
   }
-	| NOT {
+  | NOT {
     $$ = tree.new_node("!");
   }
-	;
+  ;
 
 cast_expression
-	: unary_expression {
+  : unary_expression {
     $$ = $1;
   }
-	| LP type_name RP cast_expression {
+  | LP type_name RP cast_expression {
     $$ = tree.new_node("cast expression");
     tree.set_parent($2, $$);
     tree.set_parent($4, $$);
   }
-	;
+  ;
 
 power_expression
   : cast_expression {
@@ -195,17 +202,26 @@ multiplicative_expression
     $$ = $1;
   }
   | multiplicative_expression MUL power_expression {
-    $$ = tree.new_node("expression operator * ");
+    $$ = tree.make_expression_node(
+      tree.node($1)->get_expression() * 
+      tree.node($3)->get_expression()
+    );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | multiplicative_expression DIV power_expression {
-    $$ = tree.new_node("expression operator / ");
+    $$ = tree.make_expression_node(
+      tree.node($1)->get_expression() / 
+      tree.node($3)->get_expression()
+    );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | multiplicative_expression MOD power_expression {
-    $$ = tree.new_node("expression operator % ");
+    $$ = tree.make_expression_node(
+      tree.node($1)->get_expression() % 
+      tree.node($3)->get_expression()
+    );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -216,12 +232,18 @@ additive_expression
     $$ = $1;
   }
   | additive_expression ADD multiplicative_expression {
-    $$ = tree.new_node("expression operator + ");
+    $$ = tree.make_expression_node(
+      tree.node($1)->get_expression() + 
+      tree.node($3)->get_expression()
+    );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | additive_expression SUB multiplicative_expression {
-    $$ = tree.new_node("expression operator - ");
+    $$ = tree.make_expression_node(
+      tree.node($1)->get_expression() - 
+      tree.node($3)->get_expression()
+    );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -297,9 +319,9 @@ and_expression
   ;
 
 inclusive_or_expression
-	: and_expression
-	| inclusive_or_expression OR and_expression
-	;
+  : and_expression
+  | inclusive_or_expression OR and_expression
+  ;
 
 logic_and_expression
   : inclusive_or_expression {
@@ -408,103 +430,122 @@ expression
   ;
 
 constant_expression
-	: conditional_expression {
+  : conditional_expression {
     $$ = $1;
   }
-	;
+  ;
 
 declaration
-	: declaration_specifiers SEMICOLON {
-    $$ = tree.new_node("declaration 1");
+  : declaration_specifiers SEMICOLON {
+    // 这里是只声明不给定义
+    // 比如 class A;
+    $$ = tree.make_declaration_node();
     tree.set_parent($1, $$);
   }
-	| declaration_specifiers init_declarator_list SEMICOLON {
-    $$ = tree.new_node("declaration 2");
+  | declaration_specifiers init_declarator_list SEMICOLON {
+    $$ = tree.make_declaration_node();
+    const auto &init_dec_list = *(tree.node($2)->get_init_declarator_list());
+    const auto &dec_type = tree.node($1)->get_type(&tree);
+    for(const auto& each : init_dec_list) {
+    	const string &symbol = get<0>(each);// 变量符号
+    	const ParseExpression &init_expr = get<1>(each);// 初始化表达式
+    	// TODO: 产生将初始化表达式赋值给变量的代码
+    	bool is_ptr = get<2>(each); // 是否声明为指针
+    	const size_t &array_size = get<3>(each);// 数组大小: 如果为0, 则表明不是数组
+    	ParseType this_type(dec_type);
+    	if(is_ptr) {
+    	  this_type = ParseType::get_pointer(this_type);
+    	}
+    	if(array_size) {
+          this_type = ParseType::get_array(this_type, array_size);
+    	}
+	    ParseDeclaration::declaration(symbol, ParseVariable(this_type, symbol));
+    }
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 declaration_specifiers
-	: storage_class_specifier {
+  : storage_class_specifier {
     $$ = tree.new_node("declaration specifiers 1");
     tree.set_parent($1, $$);
   }
-	| storage_class_specifier declaration_specifiers {
+  | storage_class_specifier declaration_specifiers {
     $$ = tree.new_node("declaration specifiers 2");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	| type_specifier {
+  | type_specifier {
     $$ = tree.make_declaration_specifier_node();
     tree.set_parent($1, $$);
   }
-	| type_specifier declaration_specifiers {
+  | type_specifier declaration_specifiers {
     $$ = tree.new_node("declaration specifiers 4");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	| type_qualifier {
+  | type_qualifier {
     $$ = tree.new_node("declaration specifiers 5");
     tree.set_parent($1, $$);
   }
-	| type_qualifier declaration_specifiers {
+  | type_qualifier declaration_specifiers {
     $$ = tree.new_node("declaration specifiers 6");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	| function_specifier {
+  | function_specifier {
     $$ = tree.new_node("declaration specifiers 7");
     tree.set_parent($1, $$);
   }
-	| function_specifier declaration_specifiers {
+  | function_specifier declaration_specifiers {
     $$ = tree.new_node("declaration specifiers 8");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 init_declarator_list
-	: init_declarator {
+  : init_declarator {
     $$ = tree.make_init_declarator_list_node();
     tree.node($$)->add_init_declarator(tree.node($1)->get_init_declarator(tree));
     tree.set_parent($1, $$);
   }
-	| init_declarator_list COMMA init_declarator {
+  | init_declarator_list COMMA init_declarator {
     tree.node($1)->add_init_declarator(tree.node($3)->get_init_declarator(tree));
     $$ = $1;
     tree.set_parent($3, $$);
   }
-	;
+  ;
 
 init_declarator
-	: declarator {
+  : declarator {
     $$ = $1;
   }
-	| declarator ASSIGN initializer {
+  | declarator ASSIGN initializer {
     $$ = tree.make_init_declarator_node();
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-	;
+  ;
 
 storage_class_specifier
-	: TYPEDEF {
+  : TYPEDEF {
     $$ = tree.new_node("storage class specifier typedef");
   }
-	| EXTERN {
+  | EXTERN {
     $$ = tree.new_node("storage class specifier extern");
   }
-	| STATIC {
+  | STATIC {
     $$ = tree.new_node("storage class specifier static");
   }
-	| AUTO {
+  | AUTO {
     $$ = tree.new_node("storage class specifier auto");
   }
-	| REGISTER {
+  | REGISTER {
     $$ = tree.new_node("storage class specifier register");
   }
-	;
+  ;
 
 // 类型声明
 type_specifier
@@ -542,274 +583,274 @@ type_specifier
   ;
 
 struct_or_union_specifier
-	: struct_or_union id_delaration LB struct_declaration_list RB {
+  : struct_or_union id_delaration LB struct_declaration_list RB {
     $$ = tree.new_node("struct or union_specifier");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
     tree.set_parent($4, $$);
   }
-	| struct_or_union LB struct_declaration_list RB {
+  | struct_or_union LB struct_declaration_list RB {
     $$ = tree.new_node("struct or union_specifier");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-	| struct_or_union id_delaration {
+  | struct_or_union id_delaration {
     $$ = tree.new_node("struct or union_specifier");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 struct_or_union
-	: STRUCT {
+  : STRUCT {
     $$ = tree.new_node("struct");
   }
-	| UNION {
+  | UNION {
     $$ = tree.new_node("union");
   }
-	;
+  ;
 
 struct_declaration_list
-	: struct_declaration {
+  : struct_declaration {
     $$ = tree.new_node("struct declaration list");
     tree.set_parent($1, $$);
   }
-	| struct_declaration_list struct_declaration {
+  | struct_declaration_list struct_declaration {
     $$ = $1;
     tree.set_parent($1, $$);
   }
-	;
+  ;
 
 struct_declaration
-	: specifier_qualifier_list struct_declarator_list SEMICOLON {
+  : specifier_qualifier_list struct_declarator_list SEMICOLON {
     $$ = tree.new_node("struct declaration");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 // 修饰并声明的列表
 specifier_qualifier_list
-	: type_specifier {
+  : type_specifier {
     $$ = tree.new_node("specifier_qualifier_list");
     tree.set_parent($1, $$);
   }
-	| type_specifier specifier_qualifier_list {
+  | type_specifier specifier_qualifier_list {
     $$ = $2;
     tree.set_parent($1, $$);
   }
-	| type_qualifier {
+  | type_qualifier {
     $$ = tree.new_node("specifier_qualifier_list");
     tree.set_parent($1, $$);
   }
-	| type_qualifier specifier_qualifier_list {
+  | type_qualifier specifier_qualifier_list {
     $$ = $1;
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 struct_declarator_list
-	: struct_declarator {
+  : struct_declarator {
     $$ = tree.new_node("struct declarator list");
     tree.set_parent($1, $$);
   }
-	| struct_declarator_list COMMA struct_declarator {
+  | struct_declarator_list COMMA struct_declarator {
     $$ = $1;
     tree.set_parent($1, $$);
   }
-	;
+  ;
 
 struct_declarator
-	: declarator {
+  : declarator {
     $$ = $1;
   }
-	//| COLON constant_expression
-	//| declarator COLON constant_expression
-	;
+  //| COLON constant_expression
+  //| declarator COLON constant_expression
+  ;
 
 enum_specifier
-	: ENUM LB enumerator_list RB {
+  : ENUM LB enumerator_list RB {
     $$ = tree.new_node("enum specifier");
     tree.set_parent($3, $$);
   }
-	| ENUM id_delaration LB enumerator_list RB {
+  | ENUM id_delaration LB enumerator_list RB {
     $$ = tree.new_node("enum specifier");
     tree.set_parent($2, $$);
     tree.set_parent($4, $$);
   }
-	| ENUM LB enumerator_list COMMA RB {
+  | ENUM LB enumerator_list COMMA RB {
     $$ = tree.new_node("enum specifier");
     tree.set_parent($3, $$);
   }
-	| ENUM id_delaration LB enumerator_list COMMA RB {
+  | ENUM id_delaration LB enumerator_list COMMA RB {
     $$ = tree.new_node("enum specifier");
     tree.set_parent($2, $$);
     tree.set_parent($4, $$);
   }
-	| ENUM id_delaration {
+  | ENUM id_delaration {
     $$ = tree.new_node("enum specifier");
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 enumerator_list
-	: enumerator {
+  : enumerator {
     $$ = tree.new_node("enumerator list");
     tree.set_parent($1, $$);
   }
-	| enumerator_list COMMA enumerator {
+  | enumerator_list COMMA enumerator {
     $$ = $1;
     tree.set_parent($3, $$);
   }
-	;
+  ;
 
 enumerator
-	: id_delaration {
+  : id_delaration {
     $$ = tree.new_node("enumerator");
     tree.set_parent($1, $$);
   }
-	| id_delaration ASSIGN constant_expression {
+  | id_delaration ASSIGN constant_expression {
     $$ = tree.new_node("enumerator");
     size_t temp = tree.new_node("assignment expression");
     tree.set_parent($1, temp);
     tree.set_parent($3, temp);
     tree.set_parent(temp, $$);
   }
-	;
+  ;
 
 // 类型修饰
 type_qualifier
-	: CONST {
+  : CONST {
     $$ = tree.new_node("type qualifier const");
   }
-	| RESTRICT {
+  | RESTRICT {
     $$ = tree.new_node("type qualifier restrict");
   }
-	| VOLATILE {
+  | VOLATILE {
     $$ = tree.new_node("type qualifier volatile");
   }
-	;
+  ;
 
 function_specifier
-	: INLINE {
+  : INLINE {
     $$ = tree.new_node("inline specifier");
   }
-	;
+  ;
 
 declarator
-	: pointer direct_declarator {
+  : pointer direct_declarator {
     $$ = tree.make_declarator_node(true);
     // todo: 这里要将变量的类型更新为指针
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	| direct_declarator {
+  | direct_declarator {
     $$ = tree.make_declarator_node();
     tree.set_parent($1, $$);
   }
-	;
+  ;
 
 direct_declarator
-	: id_delaration {
+  : id_delaration {
     $$ = tree.make_direct_declarator_node();
     tree.set_parent($1, $$);
   }
-	| LP declarator RP {
+  | LP declarator RP {
     $$ = $1;
   }
-	| direct_declarator ML type_qualifier_list assignment_expression MR {
+  | direct_declarator ML type_qualifier_list assignment_expression MR {
     $$ = $1;
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
   }
-	| direct_declarator ML type_qualifier_list MR {
+  | direct_declarator ML type_qualifier_list MR {
     $$ = $1;
     tree.set_parent($3, $$);
   }
-	| direct_declarator ML assignment_expression MR {
+  | direct_declarator ML assignment_expression MR {
     // todo: 这里要将$1的变量类型更新为数组, 但是大小为$3的表达式
     $$ = $1;
     tree.set_parent($3, $$);
   }
-	//| direct_declarator ML STATIC type_qualifier_list assignment_expression MR
-	//| direct_declarator ML type_qualifier_list STATIC assignment_expression MR
-	//| direct_declarator ML type_qualifier_list MUL MR
-	//| direct_declarator ML MUL MR
-	| direct_declarator ML MR {
+  //| direct_declarator ML STATIC type_qualifier_list assignment_expression MR
+  //| direct_declarator ML type_qualifier_list STATIC assignment_expression MR
+  //| direct_declarator ML type_qualifier_list MUL MR
+  //| direct_declarator ML MUL MR
+  | direct_declarator ML MR {
     tree.node($1)->update_is_array(true);
     tree.node($1)->set_expression(ParseExpression());
     $$ = $1;
   }
-	| direct_declarator LP parameter_type_list RP {
+  | direct_declarator LP parameter_type_list RP {
     $$ = tree.make_direct_declarator_node();
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-	| direct_declarator LP identifier_list RP {
+  | direct_declarator LP identifier_list RP {
     $$ = tree.new_node("declaration with identifier");
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
-	| direct_declarator LP RP {
+  | direct_declarator LP RP {
     $$ = tree.make_direct_declarator_node();
     tree.set_parent($1, $$);
   }
-	;
+  ;
 
 pointer
-	: MUL {
+  : MUL {
     $$ = tree.new_node("pointer");
   }
-	| MUL type_qualifier_list {
+  | MUL type_qualifier_list {
     $$ = tree.new_node("pointer");
     tree.set_parent($2, $$);
   }
-	| MUL pointer {
+  | MUL pointer {
     $$ = tree.new_node("pointer");
     tree.set_parent($1, $$);
   }
-	| MUL type_qualifier_list pointer {
+  | MUL type_qualifier_list pointer {
     $$ = tree.new_node("pointer");
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);
   }
-	;
+  ;
 
 // 类型的修饰符列表
 type_qualifier_list
-	: type_qualifier {
+  : type_qualifier {
     $$ = tree.new_node("type_qualifier_list");
     tree.set_parent($1, $$);
   }
-	| type_qualifier_list type_qualifier {
+  | type_qualifier_list type_qualifier {
     $$ = $1;
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 parameter_type_list
-	: parameter_list {
+  : parameter_list {
     $$ = $1;
   }
-	| parameter_list COMMA ELLIPSIS {
+  | parameter_list COMMA ELLIPSIS {
     $$ = $1;
     tree.set_parent(tree.new_node("varargs ..."), $$);
   }
-	;
+  ;
 
 parameter_list
-	: parameter_declaration {
+  : parameter_declaration {
     $$ = tree.make_parameter_list_node();
     tree.set_parent($1, $$);
   }
-	| parameter_list COMMA parameter_declaration {
+  | parameter_list COMMA parameter_declaration {
     $$ = $1;
     tree.set_parent($3, $$);
   }
-	;
+  ;
 
 parameter_declaration
-	: declaration_specifiers declarator {
+  : declaration_specifiers declarator {
     auto type = tree.node($1)->get_type(&tree);
     if(tree.node($2)->get_is_pointer()) {
       type = ParseType::get_pointer(type);
@@ -822,164 +863,164 @@ parameter_declaration
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	| declaration_specifiers abstract_declarator {
+  | declaration_specifiers abstract_declarator {
     $$ = tree.new_node("parameter declaration 2"); 
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	| declaration_specifiers {
+  | declaration_specifiers {
     $$ = $1;
   }
-	;
+  ;
 
 identifier_list
-	: id_delaration {
+  : id_delaration {
     $$ = tree.new_node("identifier list");
     tree.set_parent($1, $$);
   }
-	| identifier_list COMMA id_delaration {
+  | identifier_list COMMA id_delaration {
       $$ = $1;
       tree.set_parent($3, $$);
   }
-	;
+  ;
 
 type_name
-	: specifier_qualifier_list {
+  : specifier_qualifier_list {
     $$ = tree.new_node("type name");
     tree.set_parent($1, $$);
   }
-	| specifier_qualifier_list abstract_declarator {
+  | specifier_qualifier_list abstract_declarator {
     $$ = tree.new_node("type name");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 abstract_declarator
-	: pointer {
+  : pointer {
     $$ = $1;
   }
-	| direct_abstract_declarator {
+  | direct_abstract_declarator {
     $$ = $1;
   }
-	| pointer direct_abstract_declarator {
+  | pointer direct_abstract_declarator {
     $$ = $1;
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 // 用于声明数组或者多维数组或者函数指针
 direct_abstract_declarator
-	: LP abstract_declarator RP {
+  : LP abstract_declarator RP {
     $$ = $1;
   }
   // 例:int a[][][];
-	| ML MR {
+  | ML MR {
     $$ = tree.new_node("direct abstract declarator []");
   }
-	| ML assignment_expression MR {
+  | ML assignment_expression MR {
     $$ = tree.new_node("direct abstract declarator []");
     tree.set_parent($2, $$);
   }
-	| direct_abstract_declarator ML MR {
+  | direct_abstract_declarator ML MR {
     $$ = $1;
     tree.set_parent(tree.new_node("direct abstract declarator []"), $$);
   }
-	| direct_abstract_declarator ML assignment_expression MR {
+  | direct_abstract_declarator ML assignment_expression MR {
     $$ = $1;
     size_t temp = tree.new_node("direct abstract declarator []");
     tree.set_parent($3, temp);
     tree.set_parent(temp, $$);
   }
-	// | ML '*' MR
-	// | direct_abstract_declarator ML '*' MR
+  // | ML '*' MR
+  // | direct_abstract_declarator ML '*' MR
   // 用于函数指针: int (*p)(int,int)
-	| LP RP {
+  | LP RP {
     $$ = tree.new_node("direct abstract declarator ()");
   }
   | LP parameter_type_list RP {
     $$ = tree.new_node("direct abstract declarator ()");
     tree.set_parent($2, $$);
   }
-	| direct_abstract_declarator LP RP {
+  | direct_abstract_declarator LP RP {
     $$ = $1;
     tree.set_parent(tree.new_node("direct abstract declarator ()"), $$);
   }
-	| direct_abstract_declarator LP parameter_type_list RP {
+  | direct_abstract_declarator LP parameter_type_list RP {
     $$ = $1;
     size_t temp = tree.new_node("direct abstract declarator ()");
     tree.set_parent($3, temp);
     tree.set_parent(temp, $$);
   }
-	;
+  ;
 
 initializer
-	: assignment_expression {
+  : assignment_expression {
     $$ = tree.make_initializer_node();
     tree.set_parent($1, $$);
   }
-	| LB initializer_list RB {
+  | LB initializer_list RB {
     $$ = tree.new_node("initializer 2");
     tree.set_parent($1, $$);
   }
-	| LB initializer_list COMMA RB {
+  | LB initializer_list COMMA RB {
     $$ = tree.new_node("initializer 3");
     tree.set_parent($1, $$);
   }
-	;
+  ;
 
 initializer_list
-	: initializer {
+  : initializer {
     $$ = tree.new_node("initializer list");
     tree.set_parent($1, $$);
   }
-	| designation initializer {
+  | designation initializer {
     size_t temp = tree.new_node("assignment initializer");
     tree.set_parent($1, temp);
     tree.set_parent($2, temp);
     $$ = tree.new_node("initializer list");
     tree.set_parent(temp, $$);
   }
-	| initializer_list COMMA initializer {
+  | initializer_list COMMA initializer {
     $$ = $1;
     tree.set_parent($3, $$);
   }
-	| initializer_list COMMA designation initializer {
+  | initializer_list COMMA designation initializer {
     $$ = $1;
     size_t temp = tree.new_node("assignment initializer");
     tree.set_parent($3, temp);
     tree.set_parent($4, temp);
     tree.set_parent(temp, $$);
   }
-	;
+  ;
 
 designation
-	: designator_list ASSIGN {
+  : designator_list ASSIGN {
     $$ = $1;
   }
-	;
+  ;
 
 designator_list
-	: designator {
+  : designator {
     $$ = tree.new_node("designator list");
     tree.set_parent($1, $$);
   }
-	| designator_list designator {
+  | designator_list designator {
     $$ = $1;
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 designator
-	: ML constant_expression MR {
+  : ML constant_expression MR {
     $$ = tree.new_node("designator []");
     tree.set_parent($2, $$);
   }
-	| POINT id_delaration {
+  | POINT id_delaration {
     $$ = tree.new_node("designator .");
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 statement
   : labeled_statement {
@@ -1029,24 +1070,24 @@ compound_statement
   ;
 
 block_item_list
-	: block_item {
+  : block_item {
     $$ = tree.new_node("block item list");
     tree.set_parent($1, $$);
   }
-	| block_item_list block_item {
+  | block_item_list block_item {
     $$ = $1;
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 block_item
-	: declaration {
+  : declaration {
     $$ = $1;
   }
-	| statement {
+  | statement {
     $$ = $1;
   }
-	;
+  ;
 
 expression_statement
   : expression SEMICOLON {
@@ -1153,14 +1194,14 @@ external_declaration
   ;
 
 function_definition
-	: declaration_specifiers declarator declaration_list compound_statement {
+  : declaration_specifiers declarator declaration_list compound_statement {
     $$ = tree.new_node("function definition 1");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
   }
-	| declaration_specifiers declarator compound_statement {
+  | declaration_specifiers declarator compound_statement {
     $$ = tree.make_function_definition_node(
       tree.node($1)->get_type(&tree),
       tree.node($2)->get_symbol(&tree),
@@ -1170,18 +1211,18 @@ function_definition
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);
   }
-	;
+  ;
 
 declaration_list
-	: declaration {
+  : declaration {
     $$ = tree.new_node("declaration list");
     tree.set_parent($1, $$);
   }
-	| declaration_list declaration {
+  | declaration_list declaration {
     $$ = $1;
     tree.set_parent($2, $$);
   }
-	;
+  ;
 
 %%
 

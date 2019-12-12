@@ -359,7 +359,6 @@ size_t ParseType::get_type_id(const ParseType &type) {
             ((ParseType &) type).type_id = id2type.size();
             type2id[type] = type.type_id;
             id2type.emplace_back(type);
-            // printf("new_type %s %zu\n", type.get_info().c_str(), id2type.size());
             return type.type_id;
         }
         return ((ParseType &) type).type_id = iter->second;

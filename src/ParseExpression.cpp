@@ -47,12 +47,12 @@ string ParseExpression::get_info() const {
                 default:
                     break;
             }
-            sprintf(buff, " Expr-%zu, ", child[1]);
+            sprintf(buff, " Expr-%zu }", child[1]);
             res += buff;
             return res;
         }
         case E_VAR: {
-            res = "variable: " + ((ParseVariable *) child[0])->get_info() + ", ";
+            res += "variable: " + ((ParseVariable *) child[0])->get_info() + " }";
             return res;
         }
         case E_CONST: {
@@ -83,6 +83,7 @@ ParseExpression::ParseExpression(const ParseExpression &expr) {
 }
 
 ParseExpression::ParseExpression(const ParseVariable &variable) {
+    const_value = 0;
     ret_type_id = variable.get_type().get_id();
     expr_type = E_VAR;
     child[0] = (size_t) new ParseVariable(variable);
@@ -222,25 +223,13 @@ ParseExpression ParseExpression::operator/(const ParseExpression &expr) {
     return generate_expression(E_DIV, *this, expr);
 }
 
-ParseExpression ParseExpression::operator+(const ParseVariable &variable) {
-    return generate_expression(E_ADD, *this, ParseExpression(variable));
-}
-
-ParseExpression ParseExpression::operator-(const ParseVariable &variable) {
-    return generate_expression(E_SUB, *this, ParseExpression(variable));
-}
-
-ParseExpression ParseExpression::operator*(const ParseVariable &variable) {
-    return generate_expression(E_MUL, *this, ParseExpression(variable));
-}
-
-ParseExpression ParseExpression::operator/(const ParseVariable &variable) {
-    return generate_expression(E_DIV, *this, ParseExpression(variable));
+ParseExpression ParseExpression::operator%(const ParseExpression &expr) {
+    return generate_expression(E_MOD, *this, expr);
 }
 
 size_t ParseExpression::get_expr_id(const ParseExpression &expr) {
-    if (expr.expr_type) {
-        return expr.expr_type;
+    if (expr.expr_id) {
+        return expr.expr_id;
     }
     update(expr);
     return expr.expr_id;
@@ -299,8 +288,8 @@ ParseConstant ParseExpression::get_const() const {
         case E_DIV:
         case E_MOD:
         case E_POW: {
-            ParseConstant const1 = ((ParseExpression *) child[0])->get_const(),
-                    const2 = ((ParseExpression *) child[1])->get_const();
+            ParseConstant const1 = id2expr[child[0]].get_const(),
+                    const2 = id2expr[child[1]].get_const();
             ConstValueType ret_const_type = ParseConstant::wider_const_type(const1.get_type(), const2.get_type());
             if (ret_const_type == C_UNDEFINED) {
                 return ParseConstant();
@@ -488,7 +477,7 @@ const ParseType &ParseExpression::get_ret_type() const {
         case E_POW: {
             size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
             ret_cache = ParseType::wider_type(
-                    ((ParseExpression *) child[0])->get_ret_type(), ((ParseExpression *) child[0])->get_ret_type()
+                    id2expr[child[0]].get_ret_type(), id2expr[child[0]].get_ret_type()
             ).get_id();
             return ParseType::get_type(ret_cache);
         }

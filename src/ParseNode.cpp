@@ -69,6 +69,8 @@ string ParseNode::get_node_type_name(NodeType type) {
             return "initializer";
         case N_DECLARATION:
             return "declaration";
+        case N_EXPRESSION:
+            return "expression";
     }
     return "unknown";
 }
@@ -180,7 +182,7 @@ void ParseNode::delete_all_keys() {
         case N_UNKNOWN:
         case N_DECLARATION_SPE:
         case N_PARAM_LIST:
-        case N_INIT_DECLARATOR_LIST:
+        case N_DECLARATION:
         case N_INITIALIZER:
         case N_INIT_DECLARATOR:
             break;
@@ -257,7 +259,7 @@ void ParseNode::delete_all_keys() {
             delete (bool *) (b->second);
             break;
         }
-        case N_DECLARATION: {
+        case N_INIT_DECLARATOR_LIST: {
             auto l = keys.find(K_INIT_DECLARATORS);
             if (l == keys.end() || l->second == 0) {
                 printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
@@ -267,8 +269,17 @@ void ParseNode::delete_all_keys() {
             delete (vector<InitDeclarator> *) (l->second);
             break;
         }
+        case N_EXPRESSION: {
+            auto e = keys.find(K_EXPRESSION);
+            if (e == keys.end() || e->second == 0) {
+                printf("ParseNode::delete_all_keys(): 警告:节点%zu,类型%s的字段定义不完全\n",
+                       node_id, get_node_type_name(type).c_str());
+                break;
+            }
+            delete (ParseExpression *) (e->second);
+            break;
+        }
     }
-
 }
 
 //=========================set_key系列===========================
@@ -372,7 +383,7 @@ void ParseNode::set_function(const ParseFunction &function) {
 void ParseNode::set_expression(const ParseExpression &expression) {
     before_update_key<ParseExpression>(
             "ParseNode::set_expression(const ParseFunction &expression)",
-            K_EXPRESSION, N_INIT_DECLARATOR, N_DIRECT_DEC, -1
+            K_EXPRESSION, N_INIT_DECLARATOR, N_DIRECT_DEC, N_EXPRESSION, -1
     );
     keys[K_EXPRESSION] = (size_t) new ParseExpression(expression);
 }
@@ -707,9 +718,13 @@ InitDeclarator ParseNode::get_init_declarator(ParseTree &tree) const {
 }
 
 ParseExpression ParseNode::get_expression(ParseTree *_tree) const {
-    const auto &iter = keys.find(K_EXPRESSION);
+    auto iter = keys.find(K_EXPRESSION);
     if (iter != keys.end()) {
         return *(ParseExpression *) iter->second;
+    }
+    iter = keys.find(K_CONST);
+    if (iter != keys.end()) {
+        return ParseExpression(*(ParseConstant *) iter->second);
     }
     if (_tree) {
         ParseTree &tree = *_tree;

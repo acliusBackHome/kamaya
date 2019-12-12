@@ -87,6 +87,9 @@ enum NodeType {
     //声明
     //目前没有直接键值
             N_DECLARATION,
+    //表达式节点
+    // expression: 该节点表示的表达式
+            N_EXPRESSION,
 };
 
 enum NodeKey {
@@ -122,6 +125,13 @@ enum ExpressionType {
     E_CONST,// 常量
 };
 
+enum DeclarationType {
+    D_UNKNOWN, //未知,可以占位
+    D_FUNCTION,// 函数声明
+    D_VARIABLE,// 变量声明
+    // TODO: 类或者结构体声明
+};
+
 class ParseExpression;
 
 /**
@@ -129,5 +139,6 @@ class ParseExpression;
  * <符号, 初始化赋值表达式, 是否声明为指针, 数组大小(如果不是数组则是0, 没有声明大小为(size_t)-1>
  */
 typedef tuple<string, ParseExpression, bool, size_t> InitDeclarator;
+
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

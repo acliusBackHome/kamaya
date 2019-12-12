@@ -74,12 +74,6 @@ public:
      */
     ParseExpression operator+(const ParseExpression &expr);
 
-    /**
-     * 获得加法表达式
-     * @param variable
-     * @return
-     */
-    ParseExpression operator+(const ParseVariable &variable);
 
     /**
      * 获得减法表达式
@@ -89,25 +83,11 @@ public:
     ParseExpression operator-(const ParseExpression &expr);
 
     /**
-     * 获得减法表达式
-     * @param variable
-     * @return
-     */
-    ParseExpression operator-(const ParseVariable &variable);
-
-    /**
      * 获得乘法表达式
      * @param expr
      * @return
      */
     ParseExpression operator*(const ParseExpression &expr);
-
-    /**
-     * 获得乘法表达式
-     * @param variable
-     * @return
-     */
-    ParseExpression operator*(const ParseVariable &variable);
 
     /**
      * 获得除法表达式
@@ -117,11 +97,11 @@ public:
     ParseExpression operator/(const ParseExpression &expr);
 
     /**
-     * 获得除法表达式
-     * @param variable
+     * 获得取模表达式
+     * @param expr
      * @return
      */
-    ParseExpression operator/(const ParseVariable &variable);
+    ParseExpression operator%(const ParseExpression &expr);
 
     /**
      * 获取表达式的常量, 如果不存在常量值,则会发出警告,可以在未来成熟后改成异常

@@ -71,9 +71,26 @@ void test_make_node() {
     PType::print_all_type();
 }
 
+void test_make_expression() {
+    ParseDeclaration::declaration("a", ParseVariable(ParseType(T_INT), "a"));
+    ParseDeclaration::declaration("b", ParseVariable(ParseType(T_INT), "b"));
+    ParseExpression undefined;
+    ParseTree tree("program");
+    size_t n1 = tree.make_expression_node(
+            ParseExpression(ParseDeclaration::get_variable_declaration("a"))
+    ), n2 = tree.make_expression_node(
+            ParseExpression(ParseConstant((long long) 10)) / undefined
+    ), n3 = tree.make_expression_node(
+            ParseExpression(ParseDeclaration::get_variable_declaration("b"))
+    ), n4 = tree.make_expression_node(
+            tree.node(n3)->get_expression(&tree) + tree.node(n2)->get_expression(&tree)
+    );
+}
+
 
 int main() {
     //test_parse_type();
-    test_make_node();
+    //test_make_node();
+    test_make_expression();
     return 0;
 }

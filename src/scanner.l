@@ -171,15 +171,16 @@ int main(int argc, char** argv) {
   yyparse();
 
   // 连接错误结点
-
   tree.last_combine();
-
   tree.print();
-  printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
-  printf("已声明类型:\n");
-  ParseType::print_all_type();
-  ParseExpression::print_all_expression();
   fclose(file);
+
+  printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
+  printf("所有类型:\n");
+  ParseType::print_all_type();
+  printf("所有表达式:\n");
+  ParseExpression::print_all_expression();
+  
   int sz = tree.error_cnt();
   if (sz) {
     cout << "错误报告" << endl;
