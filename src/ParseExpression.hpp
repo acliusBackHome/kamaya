@@ -34,6 +34,18 @@ public:
     string get_info() const;
 
     /**
+     * 获取表达式的类型
+     * @return
+     */
+    ExpressionType get_expr_type() const;
+
+    /**
+     * 获取表达式的全局注册id
+     * @return
+     */
+    size_t get_id() const;
+
+    /**
      * 获取表达式的返回值
      * @return
      */

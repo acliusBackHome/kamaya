@@ -532,5 +532,13 @@ bool ParseExpression::is_defined() const {
     return get_expr_id(*this) != E_UNDEFINED;
 }
 
+ExpressionType ParseExpression::get_expr_type() const {
+    return expr_type;
+}
+
+size_t ParseExpression::get_id() const {
+    return get_expr_id(*this);
+}
+
 
 #pragma clang diagnostic pop
