@@ -153,6 +153,12 @@ private:
     static vector<ParseExpression> id2expr;
 
     /**
+     * 计算当前表达式的常数值, 如果不能计算常数值, 则返回默认值
+     * @return
+     */
+    void calculate_const();
+
+    /**
     * 生成表达式统一处理函数
     * @param expr1
     * @param expr2

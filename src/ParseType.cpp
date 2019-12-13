@@ -14,9 +14,15 @@ ParseType::ParseType(const ParseType &other) {
     assign(*this, other);
 }
 
-ParseType::ParseType(BaseType b_type) {
+ParseType::ParseType(BaseType b_type, int spe) {
     pointer_level = array_size = lower_type = 0;
     specifier = 0;
+    if (spe & S_UNSIGNED) {
+        specifier |= S_UNSIGNED;
+    }
+    if (spe & S_LONG) {
+        specifier |= S_LONG;
+    }
     fields = nullptr;
     type_id = base_type = b_type;
     switch (base_type) {
@@ -25,27 +31,51 @@ ParseType::ParseType(BaseType b_type) {
             type_size = 0;
             break;
         case T_SHORT:
+            // 取消long 修饰符, short没有long 修饰符
+            specifier &= (~((int) S_LONG));
             type_size = sizeof(short);
             break;
         case T_INT:
-            type_size = sizeof(int);
+            if (specifier & S_LONG) {
+                type_size = sizeof(long int);
+            } else {
+                type_size = sizeof(int);
+            }
             break;
         case T_LONG:
-            type_size = sizeof(long);
+            if (specifier & S_LONG) {
+                type_size = sizeof(long long);
+            } else {
+                type_size = sizeof(long);
+            }
             break;
         case T_FLOAT:
+            // 取消unsigned long修饰符, float没有unsigned long 修饰符
+            // long float  在C89标准中已经删除
+            specifier &= (~((int) S_UNSIGNED));
+            specifier &= (~((int) S_LONG));
             type_size = sizeof(float);
             break;
         case T_DOUBLE:
-            type_size = sizeof(double);
+            specifier &= (~((int) S_UNSIGNED));
+            if (specifier & S_LONG) {
+                type_size = sizeof(long double);
+            } else {
+                type_size = sizeof(double);
+            }
             break;
         case T_BOOL:
+            specifier &= (~((int) S_UNSIGNED));
+            specifier &= (~((int) S_LONG));
             type_size = sizeof(bool);
             break;
         case T_CHAR:
+            specifier &= (~((int) S_UNSIGNED));
             type_size = sizeof(char);
             break;
         case T_ENUM:
+            specifier &= (~((int) S_UNSIGNED));
+            specifier &= (~((int) S_LONG));
             type_size = sizeof(int);
             break;
     }
@@ -455,6 +485,13 @@ size_t ParseType::get_specifier() const {
 
 ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) {
     BaseType b_type1 = type1.base_type, b_type2 = type2.base_type;
+    int ret_spe = 0, spe1 = type1.specifier, spe2 = type2.specifier;
+    if (spe1 | spe2 & S_LONG) {
+        ret_spe |= S_LONG;
+    }
+    if (spe1 | spe2 & S_UNSIGNED) {
+        ret_spe |= S_UNSIGNED;
+    }
     switch (b_type1) {
         case T_BOOL:
         case T_CHAR:
@@ -465,13 +502,16 @@ ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) 
                 case T_CHAR:
                 case T_SHORT:
                 case T_INT:
-                    return ParseType(T_INT);
+                    return ParseType(T_INT, ret_spe);
                 case T_LONG:
-                    return ParseType(T_LONG);
+                    return ParseType(T_LONG, ret_spe);
                 case T_FLOAT:
-                    return ParseType(T_FLOAT);
+                    ret_spe &= ~((int) S_LONG);
+                    ret_spe &= ~((int) S_UNSIGNED);
+                    return ParseType(T_FLOAT, ret_spe);
                 case T_DOUBLE:
-                    return ParseType(T_DOUBLE);
+                    ret_spe &= ~((int) S_UNSIGNED);
+                    return ParseType(T_DOUBLE, ret_spe);
                 case T_ENUM:
                 case T_VOID:
                 case T_UNKNOWN:
@@ -485,15 +525,16 @@ ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) 
                 case T_SHORT:
                 case T_INT:
                 case T_LONG:
-                    return ParseType(T_LONG);
+                    return ParseType(T_LONG, ret_spe);
                 case T_FLOAT:
-                    return ParseType(T_FLOAT);
+                    ret_spe &= ~((int) S_LONG);
+                    ret_spe &= ~((int) S_UNSIGNED);
+                    return ParseType(T_FLOAT, ret_spe);
                 case T_DOUBLE:
-                    return ParseType(T_DOUBLE);
+                    ret_spe &= ~((int) S_UNSIGNED);
+                    return ParseType(T_DOUBLE, ret_spe);
                 case T_ENUM:
-                    break;
                 case T_VOID:
-                    break;
                 case T_UNKNOWN:
                     break;
             }
@@ -506,9 +547,12 @@ ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) 
                 case T_INT:
                 case T_LONG:
                 case T_FLOAT:
-                    return ParseType(T_FLOAT);
+                    ret_spe &= ~((int) S_LONG);
+                    ret_spe &= ~((int) S_UNSIGNED);
+                    return ParseType(T_FLOAT, ret_spe);
                 case T_DOUBLE:
-                    return ParseType(T_DOUBLE);
+                    ret_spe &= ~((int) S_LONG);
+                    return ParseType(T_DOUBLE, ret_spe);
                 case T_ENUM:
                     break;
                 case T_VOID:
@@ -526,7 +570,8 @@ ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) 
                 case T_LONG:
                 case T_FLOAT:
                 case T_DOUBLE:
-                    return ParseType(T_DOUBLE);
+                    ret_spe &= ~((int) S_LONG);
+                    return ParseType(T_DOUBLE, ret_spe);
                 case T_ENUM:
                 case T_VOID:
                 case T_UNKNOWN:

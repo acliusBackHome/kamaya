@@ -19,10 +19,12 @@ class ParseType {
     friend class ParseTree;
 
 public:
-    /**
-     * 通过基本类型构造Type
-     */
-    explicit ParseType(BaseType b_type);
+     /**
+      * 通过基本类型构造Type
+      * @param b_type 基本类型
+      * @param spe 修饰符
+      */
+    explicit ParseType(BaseType b_type, int spe = 0);
 
     /**
      * 从常量中获取类型信息

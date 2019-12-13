@@ -271,7 +271,7 @@ private:
 class ParseDeclaration;
 
 /**
- * 语句块空间
+ * 作用域类
  */
 class ParseScope {
     friend class ParseDeclaration;
@@ -290,7 +290,7 @@ public:
     ParseScope &operator=(const ParseScope &other);
 
     /**
-     *获取该语句块空间的父空间, 0(静态区)的父空间是0
+     *获取该作用域的父作用域, 0(静态区)的父作用域是0
      * @param symbol
      * @return
      */
@@ -327,13 +327,13 @@ public:
     /**
      * 进入一个新的空间:
      * 符号表中可以重复声明之前声明过的变量符号
-     * init()函数初始化一个空间,这个空间就是静态空间
+     * init()函数初始化一个作用域,这个作用域就是静态区
      * @return
      */
     static size_t new_scope(size_t parent = 0);
 
     /**
-     * 获取指定的scope
+     * 获取指定的作用域
      * @param scope_id
      * @return
      */
@@ -347,7 +347,7 @@ public:
     ~ParseScope();
 
 private:
-    // 父空间和本空间的全局id
+    // 父作用域和本作用域的全局id
     size_t parent_scope, this_scope;
     //由于有函数重载, 所以映射到的对象是id的集合
     // vector<size_t> 记录声明的指针, 根据DeclarationType不同而值不同
@@ -356,7 +356,7 @@ private:
     // 如果是D_VARIABLE, 则为ParseVariable*
     map<string, pair<DeclarationType, vector<size_t> > > symbol2dec_ptr;
 
-    // 所有注册的scope
+    // 所有注册的作用域
     static vector<ParseScope> scopes;
 
     /**

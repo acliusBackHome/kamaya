@@ -617,7 +617,7 @@ size_t ParseScope::new_scope(size_t parent) {
         init();
     }
     if (parent >= scopes.size()) {
-        printf("ParseDeclaration::new_scope(size_t parent): 警告: 试图获取不存在的空间%zu\n", parent);
+        printf("ParseDeclaration::new_scope(size_t parent): 警告: 试图获取不存在的作用域%zu\n", parent);
         return 0;
     }
     scopes.emplace_back(parent);
