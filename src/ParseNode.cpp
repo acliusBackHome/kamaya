@@ -583,7 +583,7 @@ bool ParseNode::get_is_pointer(ParseTree *_tree) const {
 size_t ParseNode::get_param_list_node(ParseTree *_tree) const {
     const auto &iter = keys.find(K_PARAM_LIST_NODE);
     if (iter != keys.end()) {
-        return *(bool *) iter->second;
+        return *(size_t *) iter->second;
     }
     if (_tree) {
         ParseTree &tree = *_tree;
@@ -618,7 +618,7 @@ size_t ParseNode::get_param_list_node(ParseTree *_tree) const {
         }
     }
     printf("警告:节点%zu未定义字段%s\n", node_id, get_key_name(K_PARAM_LIST_NODE).c_str());
-    return false;
+    return 0;
 }
 
 ParseVariable ParseNode::get_variable(ParseTree *tree) const {
