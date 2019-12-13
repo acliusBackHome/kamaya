@@ -24,7 +24,11 @@ ParseType::ParseType(BaseType b_type, int spe) {
         specifier |= S_LONG;
     }
     fields = nullptr;
-    type_id = base_type = b_type;
+    type_id = (size_t) -1;
+    if(!specifier) {
+        type_id = b_type;
+    }
+    base_type = b_type;
     switch (base_type) {
         case T_UNKNOWN:
         case T_VOID:
@@ -486,10 +490,10 @@ size_t ParseType::get_specifier() const {
 ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) {
     BaseType b_type1 = type1.base_type, b_type2 = type2.base_type;
     int ret_spe = 0, spe1 = type1.specifier, spe2 = type2.specifier;
-    if (spe1 | spe2 & S_LONG) {
+    if ((spe1 | spe2) & S_LONG) {
         ret_spe |= S_LONG;
     }
-    if (spe1 | spe2 & S_UNSIGNED) {
+    if ((spe1 | spe2) & S_UNSIGNED) {
         ret_spe |= S_UNSIGNED;
     }
     switch (b_type1) {

@@ -60,6 +60,9 @@ string ParseExpression::get_info() const {
             break;
         }
     }
+    if(expr_type != E_CONST && const_value) {
+        res += "const_value: " + ((ParseConstant *)const_value)->get_info() + ", ";
+    }
     res += "return_type: " + get_ret_type().get_info() + "}";
     return res;
 }
@@ -244,7 +247,18 @@ ParseExpression ParseExpression::generate_expression(
     res.expr_type = type;
     res.child[0] = get_expr_id(expr1);
     res.child[1] = get_expr_id(expr2);
-    res.ret_type_id = ParseType::wider_type(expr1.get_ret_type(), expr2.get_ret_type()).get_id();
+    // 如果其中一个是不可在编译期计算的表达式, 另一个是常量表达式, 则表达式返回值为不可计算表达式的类型
+    if((!expr1.const_value) && expr2.const_value) {
+        res.ret_type_id = expr1.get_ret_type().get_id();
+    } else if(!(expr2.const_value) && expr1.const_value) {
+        res.ret_type_id = expr2.get_ret_type().get_id();
+    } else {
+        // 两者都是变量或者两者都是常量
+        res.ret_type_id = ParseType::wider_type(expr1.get_ret_type(), expr2.get_ret_type()).get_id();
+        if(expr1.const_value && expr2.const_value) {
+            res.calculate_const();
+        }
+    }
     update(res);
     return res;
 }

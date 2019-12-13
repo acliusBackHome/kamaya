@@ -806,7 +806,7 @@ InitDeclarator ParseNode::get_init_declarator(ParseTree &tree) const {
                         break;
                     }
                     case N_INITIALIZER : {
-                        init_expr = ParseExpression(node.get_const(&tree));
+                        init_expr = ParseExpression(node.get_expression(&tree));
                         break;
                     }
                     default:
@@ -850,8 +850,17 @@ ParseExpression ParseNode::get_expression(ParseTree *_tree) const {
                 }
                 break;
             }
+            case N_INITIALIZER: {
+                for (const auto &each : tree.node_children[node_id]) {
+                    const ParseNode &node = tree.nodes[each];
+                    if (node.type == N_EXPRESSION || node.type == N_CONST) {
+                        return node.get_expression();
+                    }
+                }
+                break;
+            }
             default:
-                printf("ParseNode::get_expression(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                printf("ParseNode::get_expression(ParseTree *tree): 警告: 节点%zu不支持此操作\n", node_id);
                 break;
         }
     }
