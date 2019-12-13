@@ -29,7 +29,7 @@ string ParseExpression::get_info() const {
         case E_DIV: {
             const ParseExpression &expr1 = id2expr[child[0]],
                     &expr2 = id2expr[child[1]];
-            sprintf(buff, "Expr-%zu ", child[0]);
+            sprintf(buff, "{ Expr-%zu ", child[0]);
             res += buff;
             switch (expr_type) {
                 case E_ADD:
@@ -47,16 +47,17 @@ string ParseExpression::get_info() const {
                 default:
                     break;
             }
-            sprintf(buff, " Expr-%zu }", child[1]);
+            sprintf(buff, " Expr-%zu }, ", child[1]);
             res += buff;
-            return res;
+            break;
         }
         case E_VAR: {
-            res += "variable: " + ((ParseVariable *) child[0])->get_info() + " }";
-            return res;
+            res += "variable:{ " + ((ParseVariable *) child[0])->get_info() + " }, ";
+            break;
         }
         case E_CONST: {
             res += "constant: " + ((ParseConstant *) child[0])->get_info() + ", ";
+            break;
         }
     }
     res += "return_type: " + get_ret_type().get_info() + "}";
