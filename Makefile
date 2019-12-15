@@ -11,7 +11,7 @@ copy:
 
 dist/kamaya.cpp: copy
 
-compile: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp dist/ParseTree.cpp dist/ParseNode.cpp dist/ParseType.cpp dist/ParseExpression.cpp dist/ParseDeclaration.cpp dist/ParseTreeErrorHandle.cpp
+compile: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp dist/ParseTree.cpp dist/ParseNode.cpp dist/ParseType.cpp dist/ParseExpression.cpp dist/ParseDeclaration.cpp dist/ParseTreeErrorHandle.cpp dist/x86.cpp
 	g++ -o dist/bin/main $^ -std=c++11
 
 main:

@@ -2,6 +2,7 @@
 #define KAMAYA_HPP
 
 #include <bits/stdc++.h>
+#include "x86.hpp"
 
 #define YY_USER_ACTION yyUserActon();
 #define YYSTYPE unsigned long
@@ -22,6 +23,7 @@ extern int yylineno;
 extern int yyleng;
 extern char *yytext;
 extern FILE *file;
+extern x86::Assembler assembler;
 
 void initName();
 std::string getName(int);
