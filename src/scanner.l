@@ -4,6 +4,7 @@
 #include "kamaya.hpp"
 
 using namespace std;
+using namespace x86;
 
 map<int, string> nameTable;
 map<string, string> symbolTabel;
@@ -13,6 +14,7 @@ ParseTree tree("program");
 string before;
 int yycolumn = 0;
 FILE* file;
+Assembler assembler(cout);
 
 unsigned long install_id() {
   before = yytext;
@@ -198,5 +200,9 @@ int main(int argc, char** argv) {
       cout << errorStrings[i] << endl;
     }
   }
+  assembler.setSectionData(ParseScope::emitData2Nasm());
+  assembler.setSectionText(ParseScope::emitText2Nasm());
+  printf("ParseTree 2 Nasm x86\n");
+  assembler.handleNasm();
   return  0;
 }

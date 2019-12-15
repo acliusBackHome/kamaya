@@ -604,6 +604,62 @@ void ParseScope::print_all_declaration() {
     }
 }
 
+map<string, ParseFunction> ParseScope::emitText2Nasm() {
+    map<string, ParseFunction> sectionText;
+    for (const auto &scope: scopes) {
+        const auto &symbol2dec = scope.symbol2dec_ptr;
+        for (const auto &each : symbol2dec) {
+            if(each.first.empty()) {
+                continue;
+            }
+            DeclarationType dec_type = each.second.first;
+            switch (dec_type) {
+                case D_FUNCTION: {
+                    const auto &func_ptr_list = each.second.second;
+                    for (const auto &func_ptr:func_ptr_list) {
+                        sectionText[((ParseFunction *) func_ptr)->get_symbol()] = *((ParseFunction *) func_ptr);
+                    }
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+    }
+    return sectionText;
+}
+
+map<string, ParseVariable> ParseScope::emitData2Nasm() {
+    map<string, ParseVariable> sectionData;
+    for (const auto &scope: scopes) {
+        const auto &symbol2dec = scope.symbol2dec_ptr;
+        string scope_str = to_string(scope.this_scope) + "@";
+        for (const auto &each : symbol2dec) {
+            if(each.first.empty()) {
+                continue;
+            }
+            DeclarationType dec_type = each.second.first;
+            switch (dec_type) {
+                case D_VARIABLE: {
+                    if (each.second.second.empty()) {
+                        continue;
+                    }
+                    const auto &var_ptr = each.second.second[0];
+                    string var_name = scope_str + ((ParseVariable *) var_ptr)->get_symbol();
+                    ParseVariable var = *((ParseVariable *) var_ptr);
+                    sectionData[var_name] = var;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+    }
+    return sectionData;
+}
+
 void ParseScope::init() {
     scopes.emplace_back(0);
     ParseScope &static_scope = scopes[0];

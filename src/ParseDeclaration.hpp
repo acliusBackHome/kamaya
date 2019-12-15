@@ -344,6 +344,9 @@ public:
      */
     static void print_all_declaration();
 
+    static map<string, ParseVariable> emitData2Nasm();
+    static map<string, ParseFunction> emitText2Nasm();
+
     ~ParseScope();
 
 private:
