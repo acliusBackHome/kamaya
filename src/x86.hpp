@@ -32,14 +32,14 @@ namespace x86 {
       return string("xmm")+to_string(idx);
     }
     /*
-      mov x, y      	x ← y
-      and x, y	x ← x and y
-      or x, y	x ← x or y
-      xor x, y	x ← x xor y
-      add x, y	x ← x + y
-      sub x, y	x ← x – y
-      inc x	x ← x + 1
-      dec x	x ← x – 1
+      mov  x, y  x ← y
+      and  x, y  x ← x and y
+      or   x, y  x ← x or y
+      xor  x, y  x ← x xor y
+      add  x, y  x ← x + y
+      sub  x, y  x ← x – y
+      inc  x     x ← x + 1
+      dec  x     x ← x – 1
      */
     inline void mov(string dist, string src) {
       static string movins = "mov";
@@ -87,6 +87,7 @@ namespace x86 {
     void handleNasm();
     void handleProgram();
     void handleData();
+    void handleExpr(ParseExpression expr);
     void handleFunction(ParseFunction func);
     string getWideStr(size_t size);
     void setSectionData(map<string, ParseVariable> data);
