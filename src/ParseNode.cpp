@@ -49,6 +49,12 @@ string ParseNode::get_key_name(NodeKey type) {
             return "true_list";
         case K_FALSE_LIST:
             return "false_list";
+        case K_TRUE_JUMP:
+            return "true_jump";
+        case K_FALSE_JUMP:
+            return "false_jump";
+        case K_NEXT_LIST:
+            return "next_list";
     }
     return "unknown";
 }
@@ -225,6 +231,33 @@ string ParseNode::get_node_info() const {
             }
             case K_FALSE_LIST: {
                 info += "false_list: [";
+                vector<size_t> &list = *(vector<size_t> *) (each.second);
+                char buff[32];
+                for (const auto &t: list) {
+                    sprintf(buff, "%zu, ", t);
+                    info += buff;
+                }
+                info += "], ";
+                break;
+            }
+            case K_TRUE_JUMP: {
+                char buff[32];
+                info += "true_jump: ";
+                sprintf(buff, "%zu", *(size_t *) each.second);
+                info += buff;
+                info += ", ";
+                break;
+            }
+            case K_FALSE_JUMP: {
+                char buff[32];
+                info += "false_jump: ";
+                sprintf(buff, "%zu", *(size_t *) each.second);
+                info += buff;
+                info += ", ";
+                break;
+            }
+            case K_NEXT_LIST: {
+                info += "next_list: [";
                 vector<size_t> &list = *(vector<size_t> *) (each.second);
                 char buff[32];
                 for (const auto &t: list) {
@@ -571,6 +604,29 @@ void ParseNode::set_false_list(const vector<size_t> &false_list) {
     keys[K_FALSE_LIST] = (size_t) new vector<size_t>(false_list);
 }
 
+void ParseNode::set_true_jump(size_t true_jump) {
+    auto t = keys.find(K_TRUE_JUMP);
+    if (t != keys.end()) {
+        delete (size_t *) t->second;
+    }
+    keys[K_TRUE_JUMP] = (size_t) new size_t(true_jump);
+}
+
+void ParseNode::set_false_jump(size_t false_jump) {
+    auto t = keys.find(K_FALSE_JUMP);
+    if (t != keys.end()) {
+        delete (size_t *) t->second;
+    }
+    keys[K_FALSE_JUMP] = (size_t) new size_t(false_jump);
+}
+
+void ParseNode::set_next_list(const vector<size_t> &next_list) {
+    auto t = keys.find(K_NEXT_LIST);
+    if (t != keys.end()) {
+        delete (vector<size_t> *) t->second;
+    }
+    keys[K_NEXT_LIST] = (size_t) new vector<size_t>(next_list);
+}
 
 void ParseNode::update_is_array(bool is_array) {
     auto i = keys.find(K_IS_ARRAY);
@@ -1107,6 +1163,60 @@ vector<size_t> *ParseNode::get_false_list(ParseTree *_tree) {
     }
     printf("ParseNode::get_false_list(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
            node_id, get_key_name(K_FALSE_LIST).c_str());
+    return nullptr;
+}
+
+size_t ParseNode::get_true_jump(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_TRUE_JUMP);
+    if (iter != keys.end()) {
+        return *(size_t *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_true_jump(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_true_jump(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_TRUE_JUMP).c_str());
+    return 0;
+}
+
+size_t ParseNode::get_false_jump(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_FALSE_JUMP);
+    if (iter != keys.end()) {
+        return *(size_t *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_false_jump(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_false_jump(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_FALSE_JUMP).c_str());
+    return 0;
+}
+
+vector<size_t> *ParseNode::get_next_list(ParseTree *_tree) {
+    const auto &iter = keys.find(K_NEXT_LIST);
+    if (iter != keys.end()) {
+        return (vector<size_t> *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_next_list(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_next_list(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_NEXT_LIST).c_str());
     return nullptr;
 }
 
