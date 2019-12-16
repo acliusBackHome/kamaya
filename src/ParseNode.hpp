@@ -134,40 +134,53 @@ public:
     size_t get_scope_id(ParseTree *tree = nullptr) const;
 
     /**
-     * 设置节点的K_NEXT键值
-     * @param next
+     * 获取节点的K_NEXT键值
      */
     size_t get_next(ParseTree *tree = nullptr) const;
 
     /**
-     * 设置节点的K_BEGIN键值
-     * @param begin
+     * 获取节点的K_BEGIN键值
      */
     size_t get_begin(ParseTree *tree = nullptr) const;
 
     /**
-     * 设置节点的K_CODE键值
-     * @param code
+     * 获取节点的K_CODE键值
      */
     size_t get_code(ParseTree *tree = nullptr) const;
 
     /**
-     * 设置节点的K_INSTR键值
-     * @param instr
+     * 获取节点的K_INSTR键值
      */
     size_t get_instr(ParseTree *tree = nullptr) const;
 
     /**
-     * 设置节点的K_TRUE_LIST键值
-     * @param true_list
+     * 获取节点的K_TRUE_LIST键值
      */
     vector<size_t> *get_true_list(ParseTree *tree = nullptr);
 
     /**
-     * 设置节点的K_TRUE_LIST键值
-     * @param true_list
+     * 获取节点的K_FALSE_LIST键值
      */
     vector<size_t> *get_false_list(ParseTree *tree = nullptr);
+
+    /**
+     * 获取节点的K_TRUE_JUMP键值
+     * @param tree
+     */
+    size_t get_true_jump(ParseTree *tree = nullptr) const;
+
+    /**
+     * 获取节点的K_FALSE_JUMP键值
+     * @param tree
+     */
+    size_t get_false_jump(ParseTree *tree = nullptr) const;
+
+    /**
+     * 获取节点的K_NEXT_LIST键值
+     * @param true_list
+     */
+    vector<size_t> *get_next_list(ParseTree *tree = nullptr);
+
 
     /**
      * 获取节点的类型
@@ -312,9 +325,27 @@ public:
 
     /**
      * 设置节点的K_FALSE_LIST键值
-     * @param true_list
+     * @param false_list
      */
     void set_false_list(const vector<size_t> &false_list);
+
+    /**
+     * 设置节点的K_TRUE_JUMP键值
+     * @param true_jump
+     */
+    void set_true_jump(size_t true_jump);
+
+    /**
+     * 设置节点的K_FALSE_JUMP键值
+     * @param false_jump
+     */
+    void set_false_jump(size_t );
+
+    /**
+     * 设置节点的K_NEXT_LIST键值
+     * @param next_list
+     */
+    void set_next_list(const vector<size_t> &next_list);
 
     /**
      * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator

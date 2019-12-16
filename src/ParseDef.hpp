@@ -137,7 +137,13 @@ enum NodeKey {
     // true_list vector<size_t>*
             K_TRUE_LIST = 16,
     // false_list vector<size_t>*
-            K_FALSE_LIST = 17
+            K_FALSE_LIST = 17,
+    // true_jump size_t*
+            K_TRUE_JUMP,
+    // false_jump size_t*
+            K_FALSE_JUMP,
+    // next_list vector<size_t>*
+            K_NEXT_LIST
 
 };
 
