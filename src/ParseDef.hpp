@@ -126,6 +126,19 @@ enum NodeKey {
     // 是否声明为函数, 如果声明为参数, 该值不为0,
     // 表示树中的一个节点, 该节点存有声明函数的参数列表  size_t*
             K_PARAM_LIST_NODE = 11,
+    //next, size_t *
+            K_NEXT = 12,
+    //begin size_t *
+            K_BEGIN = 13,
+    //code size_t *
+            K_CODE = 14,
+    // instr size_t *
+            K_INSTR = 15,
+    // true_list vector<size_t>*
+            K_TRUE_LIST = 16,
+    // false_list vector<size_t>*
+            K_FALSE_LIST = 17
+
 };
 
 enum ExpressionType {

@@ -37,6 +37,18 @@ string ParseNode::get_key_name(NodeKey type) {
             return "scope_id";
         case K_PARAM_LIST_NODE:
             return "param_list_node";
+        case K_NEXT:
+            return "next";
+        case K_BEGIN:
+            return "begin";
+        case K_CODE:
+            return "code";
+        case K_INSTR:
+            return "instr";
+        case K_TRUE_LIST:
+            return "true_list";
+        case K_FALSE_LIST:
+            return "false_list";
     }
     return "unknown";
 }
@@ -124,7 +136,7 @@ string ParseNode::get_node_info() const {
             case K_PARAM_LIST_NODE: {
                 info += "param_list_node: ";
                 char buff[32];
-                sprintf(buff, "%zu", *((size_t *)each.second));
+                sprintf(buff, "%zu", *((size_t *) each.second));
                 info += buff;
                 info += ", ";
                 break;
@@ -166,6 +178,60 @@ string ParseNode::get_node_info() const {
                 sprintf(buff, "%zu", *(size_t *) each.second);
                 info += buff;
                 info += ", ";
+                break;
+            }
+            case K_NEXT: {
+                char buff[32];
+                info += "next: ";
+                sprintf(buff, "%zu", *(size_t *) each.second);
+                info += buff;
+                info += ", ";
+                break;
+            }
+            case K_BEGIN: {
+                char buff[32];
+                info += "begin: ";
+                sprintf(buff, "%zu", *(size_t *) each.second);
+                info += buff;
+                info += ", ";
+                break;
+            }
+            case K_CODE: {
+                char buff[32];
+                info += "code: ";
+                sprintf(buff, "%zu", *(size_t *) each.second);
+                info += buff;
+                info += ", ";
+                break;
+            }
+            case K_INSTR: {
+                char buff[32];
+                info += "instr: ";
+                sprintf(buff, "%zu", *(size_t *) each.second);
+                info += buff;
+                info += ", ";
+                break;
+            }
+            case K_TRUE_LIST: {
+                info += "true_list: [";
+                vector<size_t> &list = *(vector<size_t> *) (each.second);
+                char buff[32];
+                for (const auto &t: list) {
+                    sprintf(buff, "%zu, ", t);
+                    info += buff;
+                }
+                info += "], ";
+                break;
+            }
+            case K_FALSE_LIST: {
+                info += "false_list: [";
+                vector<size_t> &list = *(vector<size_t> *) (each.second);
+                char buff[32];
+                for (const auto &t: list) {
+                    sprintf(buff, "%zu, ", t);
+                    info += buff;
+                }
+                info += "], ";
                 break;
             }
         }
@@ -280,7 +346,7 @@ void ParseNode::delete_all_keys() {
             }
             if (p != keys.end() && p->second != 0) {
                 // 该键值非必要, 不需要警告
-                delete (size_t *)(p->second);
+                delete (size_t *) (p->second);
             }
             auto is_array = *(bool *) (a->second);
             if (is_array) {
@@ -420,7 +486,7 @@ void ParseNode::set_is_pointer(bool is_pointer) {
 
 void ParseNode::set_param_list_node(size_t param_list_node) {
     before_update_key<size_t>("ParseNode::set_param_list_node(size_t param_list_node)",
-                            K_PARAM_LIST_NODE, N_PARAM_LIST, N_DIRECT_DEC, -1);
+                              K_PARAM_LIST_NODE, N_PARAM_LIST, N_DIRECT_DEC, -1);
     keys[K_PARAM_LIST_NODE] = (size_t) new size_t(param_list_node);
 }
 
@@ -456,6 +522,55 @@ void ParseNode::set_scope_id(size_t scope_id) {
     );
     keys[K_SCOPE_ID] = (size_t) new size_t(scope_id);
 }
+
+void ParseNode::set_next(size_t next) {
+    auto t = keys.find(K_NEXT);
+    if (t != keys.end()) {
+        delete (size_t *) t->second;
+    }
+    keys[K_NEXT] = (size_t) new size_t(next);
+}
+
+void ParseNode::set_begin(size_t begin) {
+    auto t = keys.find(K_BEGIN);
+    if (t != keys.end()) {
+        delete (size_t *) t->second;
+    }
+    keys[K_BEGIN] = (size_t) new size_t(begin);
+}
+
+void ParseNode::set_code(size_t code) {
+    auto t = keys.find(K_CODE);
+    if (t != keys.end()) {
+        delete (size_t *) t->second;
+    }
+    keys[K_CODE] = (size_t) new size_t(code);
+}
+
+void ParseNode::set_instr(size_t instr) {
+    auto t = keys.find(K_INSTR);
+    if (t != keys.end()) {
+        delete (size_t *) t->second;
+    }
+    keys[K_INSTR] = (size_t) new size_t(instr);
+}
+
+void ParseNode::set_true_list(const vector<size_t> &true_list) {
+    auto t = keys.find(K_TRUE_LIST);
+    if (t != keys.end()) {
+        delete (vector<size_t> *) t->second;
+    }
+    keys[K_TRUE_LIST] = (size_t) new vector<size_t>(true_list);
+}
+
+void ParseNode::set_false_list(const vector<size_t> &false_list) {
+    auto t = keys.find(K_FALSE_LIST);
+    if (t != keys.end()) {
+        delete (vector<size_t> *) t->second;
+    }
+    keys[K_FALSE_LIST] = (size_t) new vector<size_t>(false_list);
+}
+
 
 void ParseNode::update_is_array(bool is_array) {
     auto i = keys.find(K_IS_ARRAY);
@@ -887,6 +1002,114 @@ size_t ParseNode::get_scope_id(ParseTree *_tree) const {
     return (size_t) -1;
 }
 
+size_t ParseNode::get_next(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_NEXT);
+    if (iter != keys.end()) {
+        return *(size_t *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_next(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_next(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_NEXT).c_str());
+    return 0;
+}
+
+size_t ParseNode::get_begin(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_BEGIN);
+    if (iter != keys.end()) {
+        return *(size_t *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_begin(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_begin(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_BEGIN).c_str());
+    return 0;
+}
+
+size_t ParseNode::get_code(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_CODE);
+    if (iter != keys.end()) {
+        return *(size_t *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_code(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_code(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_CODE).c_str());
+    return 0;
+}
+
+size_t ParseNode::get_instr(ParseTree *_tree) const {
+    const auto &iter = keys.find(K_INSTR);
+    if (iter != keys.end()) {
+        return *(size_t *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_instr(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_instr(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_INSTR).c_str());
+    return 0;
+}
+
+vector<size_t> *ParseNode::get_true_list(ParseTree *_tree) {
+    const auto &iter = keys.find(K_TRUE_LIST);
+    if (iter != keys.end()) {
+        return (vector<size_t> *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_true_list(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_true_list(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_TRUE_LIST).c_str());
+    return nullptr;
+}
+
+vector<size_t> *ParseNode::get_false_list(ParseTree *_tree) {
+    const auto &iter = keys.find(K_FALSE_LIST);
+    if (iter != keys.end()) {
+        return (vector<size_t> *) iter->second;
+    }
+    if (_tree) {
+        ParseTree &tree = *_tree;
+        switch (type) {
+            default:
+                printf("ParseNode::get_false_list(ParseTree *tree): 警告: 节点%zu不支持此操作", node_id);
+                break;
+        }
+    }
+    printf("ParseNode::get_false_list(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
+           node_id, get_key_name(K_FALSE_LIST).c_str());
+    return nullptr;
+}
+
 void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const {
     if (type != N_DECLARATION) {
         printf("ParseNode::action_declaration(size_t scope_id, const ParseTree &tree): 警告: "
@@ -915,7 +1138,7 @@ void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const
         bool is_ptr = get<2>(each);// 是否声明为指针
         const size_t &array_size = get<3>(each),// 数组大小: 如果为0, 则表明不是数组
                 &param_list_node = get<4>(each)// 声明为函数时的参数列表节点, 如果不声明为函数该值为0
-                ;
+        ;
         ParseType this_type(dec_type);
         if (is_ptr) {
             this_type = ParseType::get_pointer(this_type);
@@ -924,9 +1147,9 @@ void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const
             this_type = ParseType::get_array(this_type, array_size);
         }
         if (param_list_node) {
-            const auto &args = ((ParseTree &)tree).node(param_list_node)->get_parameters_list((ParseTree &)tree);
-            ParseScope::get_scope(scope_id).declaration(symbol, 
-                ParseFunction(this_type, symbol, args)    
+            const auto &args = ((ParseTree &) tree).node(param_list_node)->get_parameters_list((ParseTree &) tree);
+            ParseScope::get_scope(scope_id).declaration(symbol,
+                                                        ParseFunction(this_type, symbol, args)
             );
         } else {
             ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol));
