@@ -3,6 +3,7 @@
 
 #include <bits/stdc++.h>
 #include "x86.hpp"
+#include "IR.hpp"
 
 #define YY_USER_ACTION yyUserActon();
 #define YYSTYPE unsigned long
@@ -24,6 +25,7 @@ extern int yyleng;
 extern char *yytext;
 extern FILE *file;
 extern x86::Assembler assembler;
+extern IR ir;
 
 void initName();
 std::string getName(int);

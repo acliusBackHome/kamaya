@@ -61,6 +61,8 @@ void initName(){
   nameTable[(int)COLON] = enum2str(COLON);
   nameTable[(int)RETURN] = enum2str(RETURN);
   nameTable[(int)ERRORFORMAT] = enum2str(ERRORFORMAT);
+  nameTable[(int)TRUE] = enum2str(TRUE);
+  nameTable[(int)FALSE] = enum2str(FALSE);
 }
 
 string getName(int token) {

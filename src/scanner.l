@@ -15,6 +15,7 @@ string before;
 int yycolumn = 0;
 FILE* file;
 Assembler assembler(cout);
+IR ir;
 
 unsigned long install_id() {
   before = yytext;
@@ -100,6 +101,8 @@ L?\"(\\.|[^\\"\n])*\"	              {yylval = install_string(); return STRING_LI
 "struct"                            {return STRUCT;}
 "union"                             {return UNION;}
 "enum"                              {return ENUM;}
+"true"                              {return TRUE;}
+"false"                             {return FALSE;}
 {id}                                {yylval = install_id(); return ID;}
 {number}                            {yylval = install_num(); return NUMBER;}
 "<"                                 {return LT;}
@@ -200,6 +203,7 @@ int main(int argc, char** argv) {
       cout << errorStrings[i] << endl;
     }
   }
+  ir.print();
   assembler.setSectionData(ParseScope::emitData2Nasm());
   assembler.setSectionText(ParseScope::emitText2Nasm());
   printf("ParseTree 2 Nasm x86\n");
