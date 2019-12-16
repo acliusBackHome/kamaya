@@ -27,7 +27,6 @@ class ParseNode {
     map<int, size_t> keys;
 
 public:
-
     explicit ParseNode(size_t _node_id, NodeType type);
 
     ParseNode(const ParseNode &other);
@@ -133,6 +132,42 @@ public:
      * @return
      */
     size_t get_scope_id(ParseTree *tree = nullptr) const;
+
+    /**
+     * 设置节点的K_NEXT键值
+     * @param next
+     */
+    size_t get_next(ParseTree *tree = nullptr) const;
+
+    /**
+     * 设置节点的K_BEGIN键值
+     * @param begin
+     */
+    size_t get_begin(ParseTree *tree = nullptr) const;
+
+    /**
+     * 设置节点的K_CODE键值
+     * @param code
+     */
+    size_t get_code(ParseTree *tree = nullptr) const;
+
+    /**
+     * 设置节点的K_INSTR键值
+     * @param instr
+     */
+    size_t get_instr(ParseTree *tree = nullptr) const;
+
+    /**
+     * 设置节点的K_TRUE_LIST键值
+     * @param true_list
+     */
+    vector<size_t> *get_true_list(ParseTree *tree = nullptr);
+
+    /**
+     * 设置节点的K_TRUE_LIST键值
+     * @param true_list
+     */
+    vector<size_t> *get_false_list(ParseTree *tree = nullptr);
 
     /**
      * 获取节点的类型
@@ -244,6 +279,42 @@ public:
      * @param scope_id
      */
     void set_scope_id(size_t scope_id);
+
+    /**
+     * 设置节点的K_NEXT键值
+     * @param next
+     */
+    void set_next(size_t next);
+
+    /**
+     * 设置节点的K_BEGIN键值
+     * @param begin
+     */
+    void set_begin(size_t begin);
+
+    /**
+     * 设置节点的K_CODE键值
+     * @param code
+     */
+    void set_code(size_t code);
+
+    /**
+     * 设置节点的K_INSTR键值
+     * @param instr
+     */
+    void set_instr(size_t instr);
+
+    /**
+     * 设置节点的K_TRUE_LIST键值
+     * @param true_list
+     */
+    void set_true_list(const vector<size_t> &true_list);
+
+    /**
+     * 设置节点的K_FALSE_LIST键值
+     * @param true_list
+     */
+    void set_false_list(const vector<size_t> &false_list);
 
     /**
      * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator
