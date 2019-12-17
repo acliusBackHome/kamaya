@@ -1229,7 +1229,7 @@ vector<size_t> *ParseNode::get_next_list(ParseTree *_tree) {
     return nullptr;
 }
 
-void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const {
+void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree, IR &ir) const {
     if (type != N_DECLARATION) {
         printf("ParseNode::action_declaration(size_t scope_id, const ParseTree &tree): 警告: "
                "节点%zu不支持此操作\n", node_id);
@@ -1271,7 +1271,15 @@ void ParseNode::action_declaration(size_t scope_id, const ParseTree &tree) const
                                                         ParseFunction(this_type, symbol, args)
             );
         } else {
-            ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol));
+            ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, ir.getOffset()));
+            IR_EMIT {
+                ir.addOffset(this_type.get_size());
+                ParseConstant E = init_expr.get_const();
+                if (E.get_type() == ConstValueType::C_SIGNED) {
+                    ir.gen(":=", symbol, "_", to_string(E.get_signed()));
+                }
+            }
+
         }
     }
 }

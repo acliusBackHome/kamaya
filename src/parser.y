@@ -3,7 +3,6 @@
 %{
   #include "kamaya.hpp"
   using namespace std;
-  #define IR_EMIT ;;; // do no thing now
   int yylex(void);
   char buff[1024];
   // 当前全局语句块空间, 用于声明的时候
@@ -492,7 +491,7 @@ declaration
     $$ = tree.make_declaration_node();
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
-    tree.node($$)->action_declaration(scope_now, tree);
+    tree.node($$)->action_declaration(scope_now, tree, ir);
   }
   ;
 
@@ -1105,11 +1104,13 @@ compound_statement
   }
   | LB {
     scope_now = ParseScope::new_scope(scope_now);
+    ir.recordBegin();
   } block_item_list RB {
     $$ = tree.make_compound_statement_node();
     tree.node($$)->set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
     tree.set_parent($3, $$);
+    ir.recordEnd();
   }
   | error RB {
     $$ = tree.get_error(tree.error_cnt()-1);

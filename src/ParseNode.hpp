@@ -7,6 +7,7 @@
 #include "ParseDef.hpp"
 #include "ParseType.hpp"
 #include "ParseExpression.hpp"
+#include "IR.hpp"
 #include <string>
 #include <map>
 
@@ -365,7 +366,7 @@ public:
      * @param scope_id
      * @param tree
      */
-    void action_declaration(size_t scope_id, const ParseTree &tree) const;
+    void action_declaration(size_t scope_id, const ParseTree &tree, IR &ir) const;
 
     /**
      * 获取节点信息
