@@ -3,6 +3,7 @@
 %{
   #include "kamaya.hpp"
   using namespace std;
+  #define IR_EMIT ;;; // do no thing now
   int yylex(void);
   char buff[1024];
   // 当前全局语句块空间, 用于声明的时候
@@ -314,15 +315,21 @@ equality_expression
   }
   | TRUE {
     $$ = tree.make_const_node((bool)true);
-    ParseNode B = *tree.node($$);
-    B.set_true_list(ir.makelist(ir.getNextinstr()));
-    ir.gen("jmp", "_", "_", "_");
+
+    IR_EMIT {
+      ParseNode& B = *tree.node($$);
+      B.set_true_list(ir.makelist(ir.getNextinstr()));
+      ir.gen("jmp", "_", "_", "_");
+    }
   }
   | FALSE {
     $$ = tree.make_const_node((bool)false);
-    ParseNode B = *tree.node($$);
-    B.set_true_list(ir.makelist(ir.getNextinstr()));
-    ir.gen("jmp", "_", "_", "_");
+
+    IR_EMIT {
+      ParseNode& B = *tree.node($$);
+      B.set_true_list(ir.makelist(ir.getNextinstr()));
+      ir.gen("jmp", "_", "_", "_");
+    }
   }
   ;
 
@@ -351,13 +358,15 @@ logic_and_expression
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
 
-    ParseNode B = *tree.node($$);
-    ParseNode B1 = *tree.node($1);
-    ParseNode M = *tree.node($3);
-    ParseNode B2 = *tree.node($4);
-    ir.backpatch(B1.get_true_list(), M.get_instr());
-    B.set_true_list(*B2.get_true_list());
-    B.set_false_list(ir.merge(B1.get_false_list(), B2.get_false_list()));
+    IR_EMIT {
+      ParseNode& B = *tree.node($$);
+      ParseNode& B1 = *tree.node($1);
+      ParseNode& M = *tree.node($3);
+      ParseNode& B2 = *tree.node($4);
+      ir.backpatch(B1.get_true_list(), M.get_instr());
+      B.set_true_list(*B2.get_true_list());
+      B.set_false_list(ir.merge(B1.get_false_list(), B2.get_false_list()));
+    }
   }
   ;
 
@@ -370,13 +379,15 @@ logic_or_expression
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
 
-    ParseNode B = *tree.node($$);
-    ParseNode B1 = *tree.node($1);
-    ParseNode M = *tree.node($3);
-    ParseNode B2 = *tree.node($4);
-    ir.backpatch(B1.get_false_list(), M.get_instr());
-    B.set_true_list(ir.merge(B1.get_true_list(), B2.get_true_list()));
-    B.set_false_list(*B2.get_false_list());
+    IR_EMIT {
+      ParseNode& B = *tree.node($$);
+      ParseNode& B1 = *tree.node($1);
+      ParseNode& M = *tree.node($3);
+      ParseNode& B2 = *tree.node($4);
+      ir.backpatch(B1.get_false_list(), M.get_instr());
+      B.set_true_list(ir.merge(B1.get_true_list(), B2.get_true_list()));
+      B.set_false_list(*B2.get_false_list());
+    }
   }
   ;
 
@@ -1139,16 +1150,23 @@ expression_statement
   }
   ;
 
-M : "" {
+M : {
   $$ = tree.new_node("M");
-  tree.node($$)->set_instr(ir.getNextinstr());
+
+  IR_EMIT {
+    tree.node($$)->set_instr(ir.getNextinstr());
+    cout << tree.node($$)->get_instr() << endl;
+  }
 };
 
-N : "" {
+N : {
   $$ = tree.new_node("N");
-  ParseNode N = *tree.node($$);
-  N.set_next_list(ir.makelist(ir.getNextinstr()));
-  ir.gen("jmp", "_", "_", "_");
+
+  IR_EMIT {
+    ParseNode& N = *tree.node($$);
+    N.set_next_list(ir.makelist(ir.getNextinstr()));
+    ir.gen("jmp", "_", "_", "_");
+  }
 }
 
 selection_statement
@@ -1157,12 +1175,14 @@ selection_statement
     tree.set_parent($3, $$);
     tree.set_parent($6, $$); // 标号需要改一下
 
-    ParseNode S = *tree.node($$);
-    ParseNode B = *tree.node($3);
-    ParseNode M = *tree.node($5);
-    ParseNode S1 = *tree.node($6);
-    ir.backpatch(B.get_true_list(), M.get_instr());
-    S.set_next_list(ir.merge(B.get_false_list(), S1.get_next_list()));
+    IR_EMIT {
+      ParseNode& S = *tree.node($$);
+      ParseNode& B = *tree.node($3);
+      ParseNode& M = *tree.node($5);
+      ParseNode& S1 = *tree.node($6);
+      ir.backpatch(B.get_true_list(), M.get_instr());
+      S.set_next_list(ir.merge(B.get_false_list(), S1.get_next_list()));
+    }
   }
   | IF LP expression RP M statement N ELSE M statement {
     $$ = tree.new_node("if else statement");
@@ -1170,17 +1190,19 @@ selection_statement
     tree.set_parent($6, $$);
     tree.set_parent($10, $$);
 
-    ParseNode S = *tree.node($$);
-    ParseNode B = *tree.node($3);
-    ParseNode M1 = *tree.node($5);
-    ParseNode S1 = *tree.node($6);
-    ParseNode N = *tree.node($7);
-    ParseNode M2 = *tree.node($9);
-    ParseNode S2 = *tree.node($10);
-    ir.backpatch(B.get_true_list(), M1.get_instr());
-    ir.backpatch(B.get_false_list(), M2.get_instr());
-    vector<size_t> temp = ir.merge(S1.get_next_list(), N.get_next_list());
-    S.set_next_list(ir.merge(&temp, S2.get_next_list()));
+    IR_EMIT {
+      ParseNode& S = *tree.node($$);
+      ParseNode& B = *tree.node($3);
+      ParseNode& M1 = *tree.node($5);
+      ParseNode& S1 = *tree.node($6);
+      ParseNode& N = *tree.node($7);
+      ParseNode& M2 = *tree.node($9);
+      ParseNode& S2 = *tree.node($10);
+      ir.backpatch(B.get_true_list(), M1.get_instr());
+      ir.backpatch(B.get_false_list(), M2.get_instr());
+      vector<size_t> temp = ir.merge(S1.get_next_list(), N.get_next_list());
+      S.set_next_list(ir.merge(&temp, S2.get_next_list()));
+    }
   }
   | SWITCH LP expression RP statement {
     $$ = tree.new_node("switch statement");
