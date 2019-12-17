@@ -5,10 +5,52 @@
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 ParseTree::ParseTree(const string &msg) {
-    nodes.emplace_back(0, N_NORMAL);
+    nodes.emplace_back(*this, 0, N_NORMAL);
     node_parent.push_back(0);
     node_msg.push_back(msg);
     node_children.emplace_back();
+    // 初始化节点键值到指定map的映射
+    node_key2map[K_SYMBOL] = (size_t) &node_symbol;
+    node_key2map[K_CONST] = (size_t) &node_const;
+    node_key2map[K_VARIABLE] = (size_t) &node_variable;
+    node_key2map[K_TYPE] = (size_t) &node_type;
+    node_key2map[K_IS_PTR] = (size_t) &node_is_ptr;
+    node_key2map[K_FUNCTION] = (size_t) &node_function;
+    node_key2map[K_EXPRESSION] = (size_t) &node_expression;
+    node_key2map[K_IS_ARRAY] = (size_t) &node_is_array;
+    node_key2map[K_INIT_DECLARATORS] = (size_t) &node_init_declarators;
+    node_key2map[K_SCOPE_ID] = (size_t) &node_scope_id;
+    node_key2map[K_PARAM_LIST_NODE] = (size_t) &node_param_list_node;
+    node_key2map[K_NEXT] = (size_t) &node_next;
+    node_key2map[K_BEGIN] = (size_t) &node_begin;
+    node_key2map[K_CODE] = (size_t) &node_code;
+    node_key2map[K_INSTR] = (size_t) &node_instr;
+    node_key2map[K_TRUE_LIST] = (size_t) &node_true_list;
+    node_key2map[K_FALSE_LIST] = (size_t) &node_false_list;
+    node_key2map[K_TRUE_JUMP] = (size_t) &node_true_jump;
+    node_key2map[K_FALSE_JUMP] = (size_t) &node_false_jump;
+    node_key2map[K_NEXT_LIST] = (size_t) &node_next_list;
+    node_key2map[K_PARAM_LIST] = (size_t) &node_param_list;
+    node_key2map[K_INIT_DEC] = (size_t) &node_init_dec;
+    // 初始化可搜索节点
+    search_able.insert(HasNodeKey(K_SYMBOL, N_DIRECT_DEC, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_SYMBOL, N_DIRECT_DEC, N_IDENTIFIER));
+    search_able.insert(HasNodeKey(K_SYMBOL, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_SYMBOL, N_INIT_DECLARATOR, N_DECLARATOR));
+    search_able.insert(HasNodeKey(K_TYPE, N_DECLARATION_SPE, N_TYPE_SPE));
+    search_able.insert(HasNodeKey(K_IS_PTR, N_INIT_DECLARATOR, N_DECLARATOR));
+    search_able.insert(HasNodeKey(K_IS_PTR, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_PARAM_LIST_NODE, N_DIRECT_DEC, N_PARAM_LIST));
+    search_able.insert(HasNodeKey(K_PARAM_LIST_NODE, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_PARAM_LIST_NODE, N_INIT_DECLARATOR, N_DECLARATOR));
+    search_able.insert(HasNodeKey(K_PARAM_LIST, N_DIRECT_DEC, N_PARAM_LIST));
+    search_able.insert(HasNodeKey(K_PARAM_LIST, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_IS_ARRAY, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_CONST, N_INITIALIZER, N_CONST));
+    search_able.insert(HasNodeKey(K_EXPRESSION, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_EXPRESSION));
+    search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_CONST));
+    search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_CONST));
 }
 
 string ParseTree::get_msg(size_t node_id) const {
@@ -23,7 +65,7 @@ size_t ParseTree::new_node(const string &msg, NodeType node_type) {
     node_parent.push_back((size_t) (-1));
     node_children.emplace_back();
     size_t this_node = node_msg.size() - 1;
-    nodes.emplace_back(this_node, node_type);
+    nodes.emplace_back(*this, this_node, node_type);
     last_nodes.insert(this_node);
     return this_node;
 }
@@ -98,7 +140,11 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
         case N_BLOCK_ITEM_LIST:
         case N_COMP_STMT:
         case N_FOR_STMT:
-            printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
+            try {
+                printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
+            } catch (ParseException &ext) {
+                printf("exception-node %zu:%s\n", node_id, ParseNode::get_node_type_name(nodes[node_id].type).c_str());
+            }
             break;
         case N_NORMAL:
         case N_UNKNOWN:
@@ -288,12 +334,6 @@ size_t ParseTree::make_compound_statement_node() {
 
 size_t ParseTree::make_for_statement_node() {
     return new_node(N_FOR_STMT);
-}
-
-ParseTree::~ParseTree() {
-    for (auto &each : nodes) {
-        each.delete_all_keys();
-    }
 }
 
 

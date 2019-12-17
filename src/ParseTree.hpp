@@ -20,8 +20,6 @@
 
 using namespace std;
 
-class ParseVariable;
-
 class ParseTree {
     friend class ParseNode;
 
@@ -298,6 +296,44 @@ private:
     set<size_t> last_nodes; // 剩下的节点
     //类型字典: 从自定义id映射到ParseType
     map<string, size_t> type_dic;
+
+    // node_id->指定对象的映射:
+    // 这是个系列: node_'key_name': 键是节点id, 如果id为x的节点有symbol键值"a"
+    // 那么node_symbol里就有一个<x, "a">记录, 该节点的keys & K_SYMBOL 就不等于0
+    // 这样利用map和整数值建立起了所需信息的链接, 而且复制构造节点时只需要复制构造节点的数值即可
+    // 内存管理交给map, 减少出错概率
+    map<size_t, string> node_symbol;
+    map<size_t, ParseConstant> node_const;
+    map<size_t, ParseVariable> node_variable;
+    map<size_t, ParseType> node_type;
+    map<size_t, bool> node_is_ptr;
+    map<size_t, ParseFunction> node_function;
+    map<size_t, ParseExpression> node_expression;
+    map<size_t, bool> node_is_array;
+    map<size_t, vector<InitDeclarator> > node_init_declarators;
+    map<size_t, size_t> node_scope_id;
+    map<size_t, size_t> node_param_list_node;
+    map<size_t, size_t> node_next;
+    map<size_t, size_t> node_begin;
+    map<size_t, size_t> node_code;
+    map<size_t, size_t> node_instr;
+    map<size_t, vector<size_t> > node_true_list;
+    map<size_t, vector<size_t> > node_false_list;
+    map<size_t, size_t> node_true_jump;
+    map<size_t, size_t> node_false_jump;
+    map<size_t, vector<size_t> > node_next_list;
+    map<size_t, vector<ParseVariable> > node_param_list;
+    map<size_t, InitDeclarator > node_init_dec;
+
+    // 建立NodeKey枚举到相应的map地址的映射在Node类里用来
+    // 用模板将类型强制转换回来, 减少代码量
+    map<NodeKey, size_t> node_key2map;
+
+    // 当某个类型type的节点没有键值key时, 如果在search_able中有存在
+    // <key, type, child_type>的记录,
+    // 那么表明该节点虽然没有key的直接存储,但是它的子孙节点中存在类型key
+    // 唯一信息, 可以向其类型为child_type的子节点继续搜索key
+    set<HasNodeKey> search_able;
 
     void print_node(size_t node_id, vector<size_t> &has_next_children,
                     size_t depth, bool last_child, bool *vis) const;

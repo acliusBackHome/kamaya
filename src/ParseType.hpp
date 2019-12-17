@@ -10,15 +10,12 @@
 
 using namespace std;
 
-class ParseTree;
-
-class ParseConstant;
-
 // 用于表示运行时类型的类
 class ParseType {
     friend class ParseTree;
 
 public:
+
      /**
       * 通过基本类型构造Type
       * @param b_type 基本类型
@@ -157,6 +154,11 @@ private:
             pointer_level{},// 该类型的指针等级, 不是指针就是0
             array_size{};// 该类型的数组大小, 如果不是数组就是0
 
+    /**
+     * 该构造函数构造的对象是无效的
+     */
+    ParseType();
+
     // 类型字典, 用于记录现有所有类型
     // 将类型映射到类型对应的id, 防止结构体自指针指向自己导致无限循环
     static map<ParseType, size_t> type2id;
@@ -165,11 +167,6 @@ private:
     // 为了减少字符串运算, 增加一点冗余信息, 记录每个节点的get_info结果
     // 要求不能修改已经有id的类型的信息, 否则会造成信息不一致的情况
     static vector<string> id2info;
-
-    /**
-     * 不允许用户自己构造一个类型对象, 该构造函数构造的对象是无效的
-     */
-    ParseType();
 
     /**
      * 实现方便的构造函数,只是简单的赋值

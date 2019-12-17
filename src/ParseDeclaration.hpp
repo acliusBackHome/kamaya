@@ -268,8 +268,6 @@ private:
     static void assign(ParseConstant &constant, const ParseConstant &from_constant);
 };
 
-class ParseDeclaration;
-
 /**
  * 作用域类
  */

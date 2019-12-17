@@ -35,12 +35,21 @@ unsigned long install_num() {
 }
 
 unsigned long install_string() {
+  // 因为这里匹配的字符串包括了两端的引号,所以要去除引号
   before = yytext;
-  if (stringTabel.find(yytext) != stringTabel.end()) {
-    return (unsigned long)stringTabel[yytext].c_str();
+  if(!before.empty()) {
+    if(before[0] == '"') {
+      before.erase(0, 1);
+    }
+    if(before[before.length() - 1] == '"') {
+      before.erase(before.length() - 1, 1);
+    }
   }
-  stringTabel[yytext] = yytext;
-  return (unsigned long)stringTabel[yytext].c_str();
+  if (stringTabel.find(before) != stringTabel.end()) {
+    return (unsigned long)stringTabel[before].c_str();
+  }
+  stringTabel[before] = before;
+  return (unsigned long)stringTabel[before].c_str();
 }
 %}
 
@@ -179,11 +188,15 @@ int main(int argc, char** argv) {
   rewind(file);
   yyset_in(file);
   initName();
-  yyparse();
-
+  try {
+    yyparse();
+    tree.print();
+  } catch (ParseException &exc) {
+    printf("未处理异常:%s\n", exc.get_info().c_str());
+    tree.print();
+  }
   // 连接错误结点
   tree.last_combine();
-  tree.print();
   fclose(file);
 
   printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
