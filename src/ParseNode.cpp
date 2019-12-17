@@ -1145,6 +1145,8 @@ vector<size_t> *ParseNode::get_true_list(ParseTree *_tree) {
     }
     printf("ParseNode::get_true_list(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
            node_id, get_key_name(K_TRUE_LIST).c_str());
+    set_true_list(vector<size_t>());
+    return get_true_list();
     return nullptr;
 }
 
@@ -1163,6 +1165,11 @@ vector<size_t> *ParseNode::get_false_list(ParseTree *_tree) {
     }
     printf("ParseNode::get_false_list(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
            node_id, get_key_name(K_FALSE_LIST).c_str());
+    /*
+     * Must be original
+     */
+    set_false_list(vector<size_t>());
+    return get_false_list(_tree);
     return nullptr;
 }
 
@@ -1217,6 +1224,8 @@ vector<size_t> *ParseNode::get_next_list(ParseTree *_tree) {
     }
     printf("ParseNode::get_next_list(ParseTree *tree): 警告:节点%zu未定义字段%s\n",
            node_id, get_key_name(K_NEXT_LIST).c_str());
+    set_next_list(vector<size_t>());
+    return get_next_list();
     return nullptr;
 }
 

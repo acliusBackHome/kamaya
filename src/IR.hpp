@@ -33,20 +33,12 @@ class IR {
     *addr = nextinstr;
   }
   inline vector<size_t> makelist(size_t i) {
-    return vector<size_t>(i);
+    return vector<size_t>(1, i);
   }
   inline vector<size_t> makelist() {
     return vector<size_t>();
   }
-  inline void print() {
-    cout << "quas" << endl;
-    for (int i = 0; i < quas.size(); i++) {
-      cout << to_string(i) << "\t(" << get<0>(quas[i]) << "," <<
-                                            get<1>(quas[i]) << "," <<
-                                            get<2>(quas[i]) << "," <<
-                                            get<3>(quas[i]) << ")" << endl;
-    }
-  }
+  void print();
   vector<size_t> merge(vector<size_t> *p1, vector<size_t> *p2);
   void backpatch(vector<size_t> *p, size_t i);
 };
