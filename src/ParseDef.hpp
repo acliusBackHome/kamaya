@@ -5,6 +5,28 @@
 
 using namespace std;
 
+// 表示表达式的数据结构
+class ParseExpression;
+
+// 表示变量的数据结构
+class ParseVariable;
+
+// 表示函数的数据结构
+class ParseFunction;
+
+// 表示常量的数据结构
+class ParseConstant;
+
+// 表示自定义异常的数据结构
+class ParseException;
+
+// 表示语法树的数据结构
+class ParseTree;
+
+//类型声明所需信息<符号, 初始化赋值表达式, 是否声明为指针, 数组大小(如果不是数组则是0,
+// 没有声明大小为(size_t)-1, 参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
+typedef tuple<string, ParseExpression, bool, size_t, size_t> InitDeclarator;
+
 // 基本类型的枚举
 enum BaseType {
     T_UNKNOWN = 0,
@@ -44,108 +66,120 @@ enum NodeType {
     // 平凡节点, 什么都没有, 但是可以负责向下传递修改节点信号
             N_NORMAL = 0,
     // 异常节点, 什么都没有, 一般树中不应该存在异常节点, 一旦存在则说明有异常
-            N_UNKNOWN,
+            N_UNKNOWN = 1,
     // 标识符:
     //symbol: 符号
-            N_IDENTIFIER,
+            N_IDENTIFIER = 2,
     // 常量节点:
     //value: 常量值
-            N_CONST,
+            N_CONST = 3,
     // 类型声明:
     // type: 声明的类型
-            N_TYPE_SPE,
+            N_TYPE_SPE = 4,
     // 类型修饰声明:
     // 目前没有直接键值
-            N_DECLARATION_SPE,
+            N_DECLARATION_SPE = 5,
     // 声明器:
     // is_pointer: 是否声明为指针
     // is_function: 是否声明为函数
-            N_DECLARATOR,
+            N_DECLARATOR = 6,
     // 直接声明:
     // is_array: 是否声明成数组标记
     // expression: 表达式, 表示数组大小的表达式
-            N_DIRECT_DEC,
+            N_DIRECT_DEC = 7,
     // 参数列表:
     // scope_id: 表示该参数声明所在的新空间id
-            N_PARAM_LIST,
+            N_PARAM_LIST = 8,
     // 参数声明
     // variable参数变量
-            N_PARAM_DECLARATION,
+            N_PARAM_DECLARATION = 9,
     //函数声明
     //function参数记录
-            N_FUNCTION_DEFINITION,
+            N_FUNCTION_DEFINITION = 10,
     // 初始化声明器
     // 可进行的操作:
-            N_INIT_DECLARATOR,
+            N_INIT_DECLARATOR = 11,
     // 初始化声明器列表
     // symbol_initializers: vector<InitDeclarator>,
     // string 是符号, ParseExpression是初始化表达式,
     // 用于给声明提供带初始化的符号信息
-            N_INIT_DECLARATOR_LIST,
+            N_INIT_DECLARATOR_LIST = 12,
     // 初始化器
     // 目前没有直接键值
-            N_INITIALIZER,
+            N_INITIALIZER = 13,
     //声明
     //目前没有直接键值
-            N_DECLARATION,
+            N_DECLARATION = 14,
     //表达式节点
     // expression: 该节点表示的表达式
-            N_EXPRESSION,
+            N_EXPRESSION = 15,
     // 语句块语句列表节点
     // 目前没有直接键值
-            N_BLOCK_ITEM_LIST,
+            N_BLOCK_ITEM_LIST = 16,
     // 语句块语句
     // scope_id: 这个语句块对应的语句块空间id
-            N_COMP_STMT,
+            N_COMP_STMT = 17,
     // for语句
     // 目前没有直接键值
-            N_FOR_STMT,
+            N_FOR_STMT = 18,
 };
 
+// 用64位整数表示该节点所拥有的键值
+// 如果一个节点有相应的键值, 那么该节点的size_t keys字段按位与上下列的值
+// 后不会是0值, 以此判断该节点是否有指定键值
 enum NodeKey {
-    // 符号, string*
-            K_SYMBOL = 0,
-    // 常量, ParseConstant*
-            K_CONST = 1,
-    // 变量, ParseVariable*
-            K_VARIABLE = 3,
-    // 类型, 用于类型声明中, ParseType*
-            K_TYPE = 4,
-    // 是否声明为指针标记, bool*
-            K_IS_PTR = 5,
-    // 函数记录, ParseFunction*
-            K_FUNCTION = 6,
-    // 表达式记录, ParseExpression*
-            K_EXPRESSION = 7,
-    // 是否被声明成数组布尔值, ParseExpression*
-            K_IS_ARRAY = 8,
-    // vector<InitDeclarator>* 符号和初始化表达式列表
-            K_INIT_DECLARATORS = 9,
-    // 语句块空间id size_t*
-            K_SCOPE_ID = 10,
-    // 是否声明为函数, 如果声明为参数, 该值不为0,
-    // 表示树中的一个节点, 该节点存有声明函数的参数列表  size_t*
-            K_PARAM_LIST_NODE = 11,
-    //next, size_t *
-            K_NEXT = 12,
-    //begin size_t *
-            K_BEGIN = 13,
-    //code size_t *
-            K_CODE = 14,
-    // instr size_t *
-            K_INSTR = 15,
-    // true_list vector<size_t>*
-            K_TRUE_LIST = 16,
-    // false_list vector<size_t>*
-            K_FALSE_LIST = 17,
-    // true_jump size_t*
-            K_TRUE_JUMP,
-    // false_jump size_t*
-            K_FALSE_JUMP,
-    // next_list vector<size_t>*
-            K_NEXT_LIST
-
+    // 符号, string
+            K_SYMBOL = 1,
+    // 常量, ParseConstant
+            K_CONST = 1 << 1,
+    // 变量, ParseVariable
+            K_VARIABLE = 1 << 2,
+    // 类型, 用于类型声明中, ParseExpression
+            K_TYPE = 1 << 3,
+    // 是否声明为指针标记, bool
+            K_IS_PTR = 1 << 4,
+    // 函数记录, ParseFunction
+            K_FUNCTION = 1 << 5,
+    // 表达式记录, ParseExpression
+            K_EXPRESSION = 1 << 6,
+    // 是否被声明成数组布尔值, bool
+            K_IS_ARRAY = 1 << 7,
+    // 符号和初始化表达式列表, vector<InitDeclarator>
+            K_INIT_DECLARATORS = 1 << 8,
+    // 语句块空间id, size_t
+            K_SCOPE_ID = 1 << 9,
+    // 是否声明为函数, size_t ,
+    // 如果声明为参数, 该值不为0, 表示树中的一个节点, 该节点存有声明函数的参数列表
+            K_PARAM_LIST_NODE = 1 << 10,
+    //next, size_t
+            K_NEXT = 1 << 11,
+    //begin size_t
+            K_BEGIN = 1 << 12,
+    //code size_t
+            K_CODE = 1 << 13,
+    // instr size_t
+            K_INSTR = 1 << 14,
+    // true_list vector<size_t>
+            K_TRUE_LIST = 1 << 15,
+    // false_list vector<size_t>
+            K_FALSE_LIST = 1 << 16,
+    // true_jump size_t
+            K_TRUE_JUMP = 1 << 17,
+    // false_jump size_t
+            K_FALSE_JUMP = 1 << 18,
+    // next_list vector<size_t>
+            K_NEXT_LIST = 1 << 19,
+    // 参数列表: vector<ParseVariable>
+            K_PARAM_LIST = 1 << 20,
+    // 初始化声明器 InitDeclarator
+            K_INIT_DEC = 1 << 21,
 };
+#define NUM_OF_NODE_KEY_TYPE 22
+#define MAX_NODE_KEY_TYPE ((1 << (NUM_OF_NODE_KEY_TYPE - 1)) + 1)
+
+// 用于表示参数2所表示的节点中是否存在它的子节点中是否有参数1类型的唯一的key,
+// 如果有, 那么就向其子节点为参数3的子节点中搜索
+typedef tuple<NodeKey, NodeType, NodeType> HasNodeKey;
 
 enum ExpressionType {
     E_UNDEFINED = 0,
@@ -175,14 +209,14 @@ enum DeclarationType {
     // TODO: 类或者结构体声明
 };
 
-class ParseExpression;
-
-/**
- *类型声明所需信息
- * <符号, 初始化赋值表达式, 是否声明为指针, 数组大小(如果不是数组则是0, 没有声明大小为(size_t)-1, 
- *   参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
- */
-typedef tuple<string, ParseExpression, bool, size_t, size_t> InitDeclarator;
-
+// 自定义异常代码
+enum ExceptionCode {
+    EX_UNKNOWN = 0,//未知异常
+    EX_NODE_KEY_NOT_DEFINED, //NodeKey中未定义指定键
+    EX_NODE_NO_SUCH_KEY,//节点没有指定键值
+    EX_NODE_KEY_DEFINED_NOT_FOUND,// 节点的keys定义了该值,但是没有找见其对象
+    EX_NODE_NOT_ALLOW_OP,//节点未定义的操作但调用之
+    EX_TREE_NOT_INCOMPLETE,//树的结构不完整导致的异常
+};
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

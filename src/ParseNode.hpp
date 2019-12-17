@@ -8,180 +8,167 @@
 #include "ParseType.hpp"
 #include "ParseExpression.hpp"
 #include "IR.hpp"
+#include "ParseException.hpp"
 #include <string>
 #include <map>
 
 using namespace std;
 
-class ParseVariable;
-
-class ParseFunction;
-
-class ParseConstant;
-
 class ParseNode {
     friend class ParseTree;
 
-    size_t node_id;
+    size_t node_id, keys;
+    ParseTree &tree;
+
     NodeType type;
-    // 字段到字段值的映射, 值是一个指针需要经过转换
-    map<int, size_t> keys;
 
 public:
-    explicit ParseNode(size_t _node_id, NodeType type);
+    explicit ParseNode(ParseTree &_tree, size_t _node_id, NodeType type);
 
     ParseNode(const ParseNode &other);
 
     /**
      * 获取节点的K_SYMBOL键对应的值
-     * @param tree 如果节点的类型没有此键值,如果有可能, 会自动向下寻找其子节点中是否有符合语境的唯一的相应键值
-     *                          如果有, 返回之, 但是节点并没有存树的信息,所以这种情况下需要传一个树的指针,
-     *                          以下的get_node_key系列的tree参数都是如此
+     * get_系列函数都会抛出ParseException异常
      */
-    string get_symbol(ParseTree *tree = nullptr) const;
+    const string &get_symbol() const;
 
     /**
      * 获取节点的K_CONST键对应的常量对象引用
-     * 如果类型不正确, 会报警告, 并返回默认值
-     * @param tree
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    const ParseConstant get_const(ParseTree *tree = nullptr) const;
+    const ParseConstant &get_const() const;
 
     /**
      * 获取节点的K_VARIABLE键对应的变量
-     * 如果类型不正确, 会报警告, 并返回默认值
-     * @param tree
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    ParseVariable get_variable(ParseTree *tree = nullptr) const;
+    const ParseVariable &get_variable() const;
 
     /**
     * 获取节点的K_TYPE键对应的类型
-    * 如果类型不正确, 会报警告, 并返回未知类型
-     * @param tree
+    * get_系列函数都会抛出ParseException异常
     * @return
     */
-    ParseType get_type(ParseTree *tree = nullptr) const;
+    const ParseType &get_type() const;
 
     /**
     * 获取节点的K_IS_PTR键对应的布尔值
-    * 如果类型不正确, 会报警告, 并返回未知类型
-     * @param tree
+    * get_系列函数都会抛出ParseException异常
     * @return
     */
-    bool get_is_pointer(ParseTree *tree = nullptr) const;
+    bool get_is_pointer() const;
 
     /**
-    * 获取节点的K_PARAM_LIST_NODE键对应的布尔值
-    * 如果类型不正确, 会报警告, 并返回未知类型
-     * @param tree
+    * 获取节点的K_PARAM_LIST_NODE键对应的值
+    * get_系列函数都会抛出ParseException异常
     * @return
     */
-    size_t get_param_list_node(ParseTree *tree = nullptr) const;
+    size_t get_param_list_node() const;
 
     /**
     * 获取节点的K_FUNCTION键对应的函数记录
-    * 如果类型不正确, 会报警告, 并返回默认
-     * @param tree
+    * get_系列函数都会抛出ParseException异常
     * @return
     */
-    ParseFunction get_function(ParseTree *tree = nullptr) const;
+    const ParseFunction &get_function() const;
 
     /**
      * 获取节点的参数列表, 用于函数获取其参数列表时,
-    * 目前只有N_PARAM_LIST类型的节点有效
-     * 因为此函数必定会往下搜索节点, 所以所需参数是常量引用
-     * @param tree
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    vector<ParseVariable> get_parameters_list(ParseTree &tree) const;
+    const vector<ParseVariable> &get_parameters_list() const;
 
     /**
      * 获取初始化声明器
-     * 因为此函数必定会往下搜索节点, 所以所需参数是常量引用
-     * @param tree
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    InitDeclarator get_init_declarator(ParseTree &tree) const;
+    const InitDeclarator &get_init_declarator() const;
 
     /**
      * 获取节点的K_IS_ARRAY值
-     * @param tree
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    bool get_is_array(ParseTree *tree = nullptr) const;
+    bool get_is_array() const;
 
     /**
-     * 获取节点的K_INIT_DECLARATOR
-     * 因为复制构造比较浪费资源
-     * 所以用指针代替, 如果没有定义,返回空指针并警告
+     * 获取节点的K_INIT_DECLARATOR值
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    const vector<InitDeclarator> *get_init_declarator_list(ParseTree *tree = nullptr) const;
+    const vector<InitDeclarator> &get_init_declarators() const;
 
     /**
-     * 获取节点的K_EXPRESSION
-     * 因为复制构造比较浪费资源
-     * 所以用指针代替, 如果没有定义,返回空指针并警告
+     * 获取节点的K_EXPRESSION值
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    ParseExpression get_expression(ParseTree *tree = nullptr) const;
+    const ParseExpression &get_expression() const;
 
     /**
-     * 获取节点所属的语句块
+     * 获取节点所属的语句块id
+     * get_系列函数都会抛出ParseException异常
      * @return
      */
-    size_t get_scope_id(ParseTree *tree = nullptr) const;
+    size_t get_scope_id() const;
 
     /**
      * 获取节点的K_NEXT键值
+     * get_系列函数都会抛出ParseException异常
      */
-    size_t get_next(ParseTree *tree = nullptr) const;
+    size_t get_next() const;
 
     /**
      * 获取节点的K_BEGIN键值
+     * get_系列函数都会抛出ParseException异常
      */
-    size_t get_begin(ParseTree *tree = nullptr) const;
+    size_t get_begin() const;
 
     /**
      * 获取节点的K_CODE键值
+     * get_系列函数都会抛出ParseException异常
      */
-    size_t get_code(ParseTree *tree = nullptr) const;
+    size_t get_code() const;
 
     /**
      * 获取节点的K_INSTR键值
+     * get_系列函数都会抛出ParseException异常
      */
-    size_t get_instr(ParseTree *tree = nullptr) const;
+    size_t get_instr() const;
 
     /**
      * 获取节点的K_TRUE_LIST键值
+     * get_系列函数都会抛出ParseException异常
      */
-    vector<size_t> *get_true_list(ParseTree *tree = nullptr);
+    const vector<size_t> &get_true_list() const;
 
     /**
      * 获取节点的K_FALSE_LIST键值
+     * get_系列函数都会抛出ParseException异常
      */
-    vector<size_t> *get_false_list(ParseTree *tree = nullptr);
+    const vector<size_t> &get_false_list() const;
 
     /**
      * 获取节点的K_TRUE_JUMP键值
-     * @param tree
+     * get_系列函数都会抛出ParseException异常
      */
-    size_t get_true_jump(ParseTree *tree = nullptr) const;
+    size_t get_true_jump() const;
 
     /**
-     * 获取节点的K_FALSE_JUMP键值
-     * @param tree
+     * get_系列函数都会抛出ParseException异常
      */
-    size_t get_false_jump(ParseTree *tree = nullptr) const;
+    size_t get_false_jump() const;
 
     /**
      * 获取节点的K_NEXT_LIST键值
      * @param true_list
      */
-    vector<size_t> *get_next_list(ParseTree *tree = nullptr);
-
+    const vector<size_t> &get_next_list() const;
 
     /**
      * 获取节点的类型
@@ -340,13 +327,25 @@ public:
      * 设置节点的K_FALSE_JUMP键值
      * @param false_jump
      */
-    void set_false_jump(size_t );
+    void set_false_jump(size_t);
 
     /**
      * 设置节点的K_NEXT_LIST键值
      * @param next_list
      */
     void set_next_list(const vector<size_t> &next_list);
+
+    /**
+     * 设置节点的K_PARAM_LIST键值
+     * @param param_list
+     */
+    void set_param_list(const vector<ParseVariable> &param_list);
+
+    /**
+     * 设置节点的K_INIT_DEC键值
+     * @param init_dec
+     */
+    void set_init_dec(const InitDeclarator &init_dec);
 
     /**
      * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator
@@ -366,61 +365,64 @@ public:
      * @param scope_id
      * @param tree
      */
-    void action_declaration(size_t scope_id, const ParseTree &tree, IR &ir) const;
+    void action_declaration(size_t scope_id, IR &ir) const;
 
     /**
      * 获取节点信息
      * @return
      */
-    string get_node_info() const;
+    string get_node_info() const noexcept;
 
     /**
      * 获取节点键的名字
      * @param type
      * @return
      */
-    static string get_key_name(NodeKey type);
+    static string get_key_name(NodeKey type) noexcept;
 
     /**
      * 获取节点类型的名字
      * @param type
      * @return
      */
-    static string get_node_type_name(NodeType type);
+    static string get_node_type_name(NodeType type) noexcept;
 
 private:
 
     /**
-     * 当常量值更新时需要执行的函数:负责检查键值是否存在,
-     * 如果存在需要删除之,再更新其值
-     * @param const_address
+     * 收集K_PARAM_LIST的键值信息并存到节点的K_PARAM_LIST中
+     * collect_函数用于收集子节点分散的信息存到该节点的key中
+     * @return 返回其常量引用
      */
-    void update_const(size_t const_address);
+    void collect_parameters_list() const;
 
     /**
-     *  删除常量所涉及的字段
+     * 收集K_INIT_DEC的键值信息并存到节点的K_INIT_DEC中
+     * collect_函数用于收集子节点分散的信息存到该节点的key中
+     * @return 返回其常量引用
      */
-    void delete_const();
+    void collect_init_declarator() const;
 
     /**
-     * 删除所有keys所指向的具体对象, 这本来是析构函数所做的事
-     * 但是因为vector会构造一个临时对象, 而本人觉得没有必要为每个
-     * 节点的每个key都重新new再delete一遍,所以放到整个语法树析构时执行此动作
-     * 该动作delete keys所指向的各个具体对象
+     * 获取指定键值, 如果找不到则抛出异常, 会根据该节点类型和所有孩子节点类型进行向下搜索
+     * @tparam MapType
+     * @param key
      * @return
      */
-    void delete_all_keys();
+    template<typename MapType>
+    MapType &get_field(NodeKey key) const noexcept(false);
 
     /**
-     * 更新节点键值之前动作:
-     * 判断节点的类型是否能更新该键值, 并自动释放即将被覆盖的对象,
-     * @tparam OpType 传入delete的类参数
-     * @param msg 警告信息前缀
-     * @param key_type 更新的键值
-     * @param ... NodeType 能够进行此操作的节点类型 最后一个要写-1
+     * 设置节点的键对应的值
+     * @tparam MapType
+     * @param key 需要设置的键
+     * @param object 需要设置的对象值
+     * @param is_update 通过update调用时可以防止输出警告
+     * @return
      */
-    template<class OpType>
-    void before_update_key(const string &msg, NodeKey key_type, ...);
+    template<typename MapType>
+    void set_field(NodeKey key, const MapType &object, bool is_update = false)
+    noexcept(false);
 };
 
 #endif //NKU_PRACTICE_PARSE_NODE_HPP

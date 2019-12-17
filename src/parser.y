@@ -61,10 +61,11 @@ primary_expression
     tree.set_parent($1, $$);
   }
   | NUMBER {
-    $$ = tree.make_const_node((long long)$1);
+    $$ = tree.make_expression_node(ParseExpression(ParseConstant((long long)$1)));
   }
   | STRING_LITERAL {
-    $$ = tree.make_const_node(string((const char*)$1));
+    $$ = tree.make_expression_node(ParseExpression(ParseConstant(string((const char*)$1))));
+    //$$ = tree.make_const_node();
   }
   | LP expression RP {
     $$ = $2;
@@ -518,7 +519,7 @@ declaration
     $$ = tree.make_declaration_node();
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
-    tree.node($$)->action_declaration(scope_now, tree, ir);
+    tree.node($$)->action_declaration(scope_now, ir);
   }
   ;
 
@@ -564,11 +565,11 @@ declaration_specifiers
 init_declarator_list
   : init_declarator {
     $$ = tree.make_init_declarator_list_node();
-    tree.node($$)->add_init_declarator(tree.node($1)->get_init_declarator(tree));
+    tree.node($$)->add_init_declarator(tree.node($1)->get_init_declarator());
     tree.set_parent($1, $$);
   }
   | init_declarator_list COMMA init_declarator {
-    tree.node($1)->add_init_declarator(tree.node($3)->get_init_declarator(tree));
+    tree.node($1)->add_init_declarator(tree.node($3)->get_init_declarator());
     $$ = $1;
     tree.set_parent($3, $$);
   }
@@ -809,6 +810,7 @@ declarator
 direct_declarator
   : id_delaration {
     $$ = tree.make_direct_declarator_node();
+    tree.node($$)->set_param_list_node(0);
     tree.set_parent($1, $$);
   }
   | LP declarator RP {
@@ -849,6 +851,7 @@ direct_declarator
   }
   | direct_declarator LP RP {
     $$ = tree.make_direct_declarator_node();
+    tree.node($$)->set_param_list(vector<ParseVariable>());
     tree.set_parent($1, $$);
   }
   ;
@@ -887,7 +890,6 @@ type_qualifier_list
 parameter_type_list
   : parameter_list {
     $$ = $1;
-    tree.node($$)->set_param_list_node($$);
   }
   | parameter_list COMMA ELLIPSIS {
     $$ = $1;
@@ -898,6 +900,7 @@ parameter_type_list
 parameter_list
   : parameter_declaration {
     $$ = tree.make_parameter_list_node();
+    tree.node($$)->set_param_list_node($$);
     tree.set_parent($1, $$);
   }
   | parameter_list COMMA parameter_declaration {
@@ -908,15 +911,15 @@ parameter_list
 
 parameter_declaration
   : declaration_specifiers declarator {
-    auto type = tree.node($1)->get_type(&tree);
+    auto type = tree.node($1)->get_type();
     if(tree.node($2)->get_is_pointer()) {
       type = ParseType::get_pointer(type);
     }
-    if(tree.node($2)->get_is_array(&tree)) {
+    if(tree.node($2)->get_is_array()) {
       type = ParseType::get_array(type, (size_t)-1);
       // todo:获取$2的表达式并提取出常量值填入get_array的第二个参数, 如果不能提取出常量值则置-1继续分析,并抛出error
     }
-    $$ = tree.make_parameter_declaration(ParseVariable(type, tree.node($2)->get_symbol(&tree)));
+    $$ = tree.make_parameter_declaration(ParseVariable(type, tree.node($2)->get_symbol()));
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -1330,9 +1333,9 @@ function_definition
     tree.set_parent($4, $$);
   }
   | declaration_specifiers declarator compound_statement {
-    const auto &symbol = tree.node($2)->get_symbol(&tree);
-    const auto &ret_type = tree.node($1)->get_type(&tree);
-    const auto &args = tree.node($2)->get_parameters_list(tree);
+    const auto &symbol = tree.node($2)->get_symbol();
+    const auto &ret_type = tree.node($1)->get_type();
+    const auto &args = tree.node($2)->get_parameters_list();
     $$ = tree.make_function_definition_node(ret_type, symbol, args);
     ParseScope::get_scope(scope_now).declaration(symbol, ParseFunction(ret_type,
       symbol, args));

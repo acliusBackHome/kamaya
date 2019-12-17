@@ -1,7 +1,3 @@
-//
-// Created by LYL232 on 2019/12/6.
-//
-
 #include "ParseTree.hpp"
 #include <iostream>
 
@@ -10,9 +6,6 @@ using namespace std;
 void test_parse_type() {
     typedef ParseType PType;
     PType type1(T_INT), type2 = PType::get_pointer(type1, 1), type3 = PType::get_pointer(type2, 1);
-    cout << type1.get_info() << endl;
-    cout << type2.get_info() << endl;
-    cout << type3.get_info() << endl;
     vector<pair<string, PType> > fields;
     fields.emplace_back("a", type1);
     fields.emplace_back("b", type2);
@@ -31,44 +24,48 @@ void test_parse_type() {
 
 void test_make_node() {
     ParseTree tree("root");
-    size_t node = tree.new_node("asdsd"),
-            node_1 = tree.make_const_node(string("lalala"));
-    tree.set_parent(node_1, node);
-    typedef ParseType PType;
-    PType type1(T_INT), type2 = PType::get_pointer(type1, 1), type3 = PType::get_pointer(type2, 1);
-    node_1 = tree.make_const_node((long double) 0.01);
-    tree.set_parent(node_1, node);
-    node_1 = tree.make_const_node((long long) 10);
-    tree.set_parent(node_1, node);
-    node_1 = tree.make_const_node((unsigned long long) 0.01);
-    tree.set_parent(node_1, node);
-    node_1 = tree.make_const_node((bool) 1);
-    tree.set_parent(node_1, node);
-    node_1 = tree.make_identifier_node("aa");
-    tree.set_parent(node_1, 0);
-    tree.set_parent(node, 0);
-    // node_1 = tree.make_variable_node(type3, "a", 1);
-    //tree.set_parent(node_1, 0);
-    node_1 = tree.make_type_specifier_node(ParseType(T_INT));
-    tree.set_parent(node_1, 0);
-    node_1 = tree.make_declaration_specifier_node();
-    node = tree.make_type_specifier_node(ParseType(T_INT));
-    tree.set_parent(node, node_1);
-    tree.set_parent(node_1, 0);
-    printf("1:%s\n", tree.node(node_1)->get_type(&tree).get_info().c_str());
-    node_1 = tree.make_declarator_node();
-    tree.set_parent(node_1, 0);
-    node_1 = tree.make_direct_declarator_node();
-    node = tree.make_identifier_node("asd");
-    tree.set_parent(node, node_1);
-    tree.set_parent(node_1, 0);
-    printf("2:%s\n", tree.node(node_1)->get_symbol(&tree).c_str());
-    node_1 = tree.make_parameter_list_node();
-    tree.set_parent(node_1, 0);
-    node_1 = tree.make_parameter_declaration(ParseVariable(ParseType(T_INT), "ass"));
-    tree.set_parent(node_1, 0);
-    tree.print();
-    PType::print_all_type();
+    try {
+        size_t node = tree.new_node("asdsd"),
+                node_1 = tree.make_const_node(string("lalala"));
+        tree.set_parent(node_1, node);
+        typedef ParseType PType;
+        PType type1(T_INT), type2 = PType::get_pointer(type1, 1), type3 = PType::get_pointer(type2, 1);
+        node_1 = tree.make_const_node((long double) 0.01);
+        tree.set_parent(node_1, node);
+        node_1 = tree.make_const_node((long long) 10);
+        tree.set_parent(node_1, node);
+        node_1 = tree.make_const_node((unsigned long long) 0.01);
+        tree.set_parent(node_1, node);
+        node_1 = tree.make_const_node((bool) 1);
+        tree.set_parent(node_1, node);
+        node_1 = tree.make_identifier_node("aa");
+        tree.set_parent(node_1, 0);
+        tree.set_parent(node, 0);
+        // node_1 = tree.make_variable_node(type3, "a", 1);
+        //tree.set_parent(node_1, 0);
+        node_1 = tree.make_type_specifier_node(ParseType(T_INT));
+        tree.set_parent(node_1, 0);
+        node_1 = tree.make_declaration_specifier_node();
+        node = tree.make_type_specifier_node(ParseType(T_INT));
+        tree.set_parent(node, node_1);
+        tree.set_parent(node_1, 0);
+        node_1 = tree.make_declarator_node();
+        tree.set_parent(node_1, 0);
+        node_1 = tree.make_direct_declarator_node();
+        node = tree.make_identifier_node("asd");
+        tree.set_parent(node, node_1);
+        tree.set_parent(node_1, 0);
+        node_1 = tree.make_parameter_list_node();
+        tree.set_parent(node_1, 0);
+        node_1 = tree.make_parameter_declaration(ParseVariable(ParseType(T_INT), "ass"));
+        tree.set_parent(node_1, 0);
+        tree.print();
+        PType::print_all_type();
+    } catch (ParseException &exc) {
+        cout << exc.get_info() << endl;
+        tree.print();
+    }
+
 }
 
 void test_make_expression() {
@@ -83,7 +80,7 @@ void test_make_expression() {
     ), n3 = tree.make_expression_node(
             ParseExpression(ParseScope::get_scope(0).get_variable_declaration("b"))
     ), n4 = tree.make_expression_node(
-            tree.node(n3)->get_expression(&tree) + tree.node(n2)->get_expression(&tree)
+            tree.node(n3)->get_expression() + tree.node(n2)->get_expression()
     );
 }
 

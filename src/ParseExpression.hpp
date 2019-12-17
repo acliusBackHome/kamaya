@@ -10,10 +10,6 @@
 
 using namespace std;
 
-class ParseVariable;
-
-class ParseConstant;
-
 /**
  * 用于表示表达式, 并利用全局变量进行DAG优化
  */
