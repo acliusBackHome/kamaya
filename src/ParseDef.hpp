@@ -157,6 +157,15 @@ enum ExpressionType {
     E_POW,// 求幂
     E_VAR,// 变量值
     E_CONST,// 常量
+    E_NOT, //非 !
+    E_LOGIC_OR,//逻辑或 ||
+    E_LOGIC_AND,//逻辑与 &&
+    E_G,//大于 >
+    E_GE, //大于等于>=
+    E_EQUAL,//等于==
+    E_NE,//不等于!=
+    E_L,//小于<
+    E_LE,// 小于等于
 };
 
 enum DeclarationType {

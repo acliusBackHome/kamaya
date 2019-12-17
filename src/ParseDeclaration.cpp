@@ -259,7 +259,7 @@ string ParseConstant::get_info() const {
             return string(buff);
         }
         case C_FLOAT: {
-            sprintf(buff, "const float: %Lf", *(long double *) value);
+            sprintf(buff, "const float: %.6Le", *(long double *) value);
             return string(buff);
         }
         case C_BOOL: {
