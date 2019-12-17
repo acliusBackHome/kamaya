@@ -84,7 +84,7 @@ public:
      * @param expr
      * @return
      */
-    ParseExpression operator+(const ParseExpression &expr);
+    ParseExpression operator+(const ParseExpression &expr) const;
 
 
     /**
@@ -92,28 +92,42 @@ public:
      * @param expr
      * @return
      */
-    ParseExpression operator-(const ParseExpression &expr);
+    ParseExpression operator-(const ParseExpression &expr) const;
 
     /**
      * 获得乘法表达式
      * @param expr
      * @return
      */
-    ParseExpression operator*(const ParseExpression &expr);
+    ParseExpression operator*(const ParseExpression &expr) const;
 
     /**
      * 获得除法表达式
      * @param expr
      * @return
      */
-    ParseExpression operator/(const ParseExpression &expr);
+    ParseExpression operator/(const ParseExpression &expr) const;
 
     /**
      * 获得取模表达式
      * @param expr
      * @return
      */
-    ParseExpression operator%(const ParseExpression &expr);
+    ParseExpression operator%(const ParseExpression &expr) const;
+
+    /**
+     * 获得求幂表达式
+     * @param expr
+     * @return
+     */
+    ParseExpression operator^(const ParseExpression &expr) const;
+
+    /**
+     * 获得非表达式, 即!expression
+     * @param expr
+     * @return
+     */
+    ParseExpression operator!() const;
 
     /**
      * 获取表达式的常量, 如果不存在常量值,则会发出警告,可以在未来成熟后改成异常
@@ -141,6 +155,15 @@ public:
      * 输出所有的表达式
      */
     static void print_all_expression();
+
+    /**
+     * 获得逻辑表达式, 因为operator<被map用了,所以不能用运算符重载来简单调用
+     * 产生逻辑表达式了
+     * @param expr
+     * @return
+     */
+    static ParseExpression get_logic_expression(ExpressionType type,
+                                                const ParseExpression &expr1, const ParseExpression &expr2);
 
 private:
     size_t child[2], // 子表达式id, 有时候是ParseVariable*所以用size_t代替地址,目前只用两个
@@ -191,7 +214,6 @@ private:
      * @param expr
      */
     static void update(const ParseExpression &expr);
-
 };
 
 

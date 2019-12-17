@@ -198,7 +198,10 @@ power_expression
     $$ = $1;
   }
   | cast_expression XOR power_expression {
-    $$ = tree.new_node("expression operator ^");
+    $$ = tree.make_expression_node(
+      tree.node($1)->get_expression() ^
+      tree.node($3)->get_expression()
+    );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -277,22 +280,34 @@ relational_expression
     $$ = $1;
   }
   | relational_expression LT shift_expression {
-    $$ = tree.new_node("expression operator < ");
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_L,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | relational_expression LE shift_expression {
-    $$ = tree.new_node("expression operator <= ");
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LE,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | relational_expression GT shift_expression {
-    $$ = tree.new_node("expression operator > ");
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_G,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | relational_expression GE shift_expression {
-    $$ = tree.new_node("expression operator >= ");
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_GE,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -303,12 +318,18 @@ equality_expression
     $$ = $1;
   }
   | equality_expression EQ relational_expression {
-    $$ = tree.new_node("expression operator == ");
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_EQUAL,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | equality_expression NE relational_expression {
-    $$ = tree.new_node("expression operator != ");
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_NE,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -352,8 +373,11 @@ logic_and_expression
   : inclusive_or_expression {
     $$ = $1;
   }
-  | logic_and_expression LOGICAND M inclusive_or_expression {
-    $$ = tree.new_node("expression operator && ");
+  | logic_and_expression LOGICAND inclusive_or_expression {
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_AND,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
 
@@ -373,8 +397,11 @@ logic_or_expression
   : logic_and_expression {
     $$ = $1;
   }
-  | logic_or_expression LOGICOR M logic_and_expression {
-    $$ = tree.new_node("expression operator || ");
+  | logic_or_expression LOGICOR logic_and_expression {
+    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_OR,
+      tree.node($1)->get_expression(),
+      tree.node($3)->get_expression()
+      ));
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
 
