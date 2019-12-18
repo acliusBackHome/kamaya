@@ -80,7 +80,7 @@ void test_make_expression() {
     ), n3 = tree.make_expression_node(
             ParseExpression(ParseScope::get_scope(0).get_variable_declaration("b"))
     ), n4 = tree.make_expression_node(
-            tree.node(n3)->get_expression() + tree.node(n2)->get_expression()
+            tree.node(n3).get_expression() + tree.node(n2).get_expression()
     );
 }
 

@@ -115,8 +115,8 @@ string ParseNode::get_node_type_name(NodeType type) noexcept {
 }
 
 string ParseNode::get_node_info() const noexcept {
-    if (type == N_NORMAL) {
-        return "";
+    if (type == N_NORMAL || type == N_UNKNOWN) {
+        return tree.node_msg[node_id];
     }
     string info = get_node_type_name(type) + " { ";
     size_t each_key = 1;
