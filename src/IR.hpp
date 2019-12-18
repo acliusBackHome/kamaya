@@ -64,8 +64,8 @@ class IR {
     return vector<size_t>();
   }
   void print();
-  vector<size_t> merge(vector<size_t> *p1, vector<size_t> *p2);
-  void backpatch(vector<size_t> *p, size_t i);
+  vector<size_t> merge(const vector<size_t> &p1, const vector<size_t> &p2);
+  void backpatch(const vector<size_t> &p, size_t i);
   void recordBegin();
   void recordEnd();
 };
