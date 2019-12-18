@@ -521,18 +521,23 @@ vector<ParseFunction> ParseScope::get_function_declaration(const string &symbol)
     auto it = symbol2dec_ptr.find(symbol);
     if (it == symbol2dec_ptr.end()) {
         if (parent_scope == this_scope) {
-            printf("ParseDeclaration::get_function_declaration(const string &symbol): 警告 :未定义符号:"
-                   "%s\n", symbol.c_str());
-            return res;
+            // 找不到变量声明
+            string info = "ParseScope::get_function_declaration(const string &symbol) symbol=" + symbol;
+            throw ParseException(EX_NOT_DECLARED, info);
         }
         return get_scope(parent_scope).get_function_declaration(symbol);
     }
     if (it->second.first != D_FUNCTION) {
-        printf("ParseDeclaration::get_function_declaration(const string &symbol): 警告 :非函数声明"
-               "%s\n", symbol.c_str());
-        return res;
+        // 声明不是函数
+        string info = "ParseScope::get_function_declaration(const string &symbol) symbol=" + symbol;
+        throw ParseException(EX_DECLARATION_NOT_A_FUNCTION, info);
     }
     const vector<size_t> decs = it->second.second;
+    if(decs.empty()) {
+        // 声明了函数但是找不到其记录(BUG)
+        string info = "ParseScope::get_function_declaration(const string &symbol) symbol=" + symbol;
+        throw ParseException(EX_DECLARATION_NOT_FOUND, info);
+    }
     for (const auto &each : decs) {
         res.emplace_back((*(ParseFunction *) each));
     }
@@ -543,22 +548,22 @@ ParseVariable ParseScope::get_variable_declaration(const string &symbol) {
     auto it = symbol2dec_ptr.find(symbol);
     if (it == symbol2dec_ptr.end()) {
         if (parent_scope == this_scope) {
-            printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告 :未定义符号:"
-                   "%s\n", symbol.c_str());
-            return ParseVariable();
+            // 找不到变量声明
+            string info = "ParseScope::get_variable_declaration(const string &symbol) symbol=" + symbol;
+            throw ParseException(EX_NOT_DECLARED, info);
         }
         return get_scope(parent_scope).get_variable_declaration(symbol);
     }
     if (it->second.first != D_VARIABLE) {
-        printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告: 非变量声明"
-               "%s\n", symbol.c_str());
-        return ParseVariable();
+        // 非变量声明
+        string info = "ParseScope::get_variable_declaration(const string &symbol) symbol=" + symbol;
+        throw ParseException(EX_DECLARATION_NOT_A_VARIABLE, info);
     }
     const auto &var_ptr_list = it->second.second;
     if (var_ptr_list.empty()) {
-        printf("ParseDeclaration::get_variable_declaration(const string &symbol): 警告: 数据一致性被破坏,"
-               "请检查实现或者调用\n");
-        return ParseVariable();
+        // 声明了变量但是找不到其记录(BUG)
+        string info = "ParseScope::get_variable_declaration(const string &symbol) symbol=" + symbol;
+        throw ParseException(EX_DECLARATION_NOT_FOUND, info);
     }
     return *((ParseVariable *) var_ptr_list[0]);
 }

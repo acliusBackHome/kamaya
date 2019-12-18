@@ -33,6 +33,8 @@ string ParseException::get_info() const {
 
 string ParseException::get_code_msg(ExceptionCode _code) {
     switch (_code) {
+        case EX_UNKNOWN:
+            break;
         case EX_NODE_KEY_NOT_DEFINED:
             return "NodeKeyNotDefinedException(bug)";
         case EX_NODE_NO_SUCH_KEY:
@@ -43,8 +45,17 @@ string ParseException::get_code_msg(ExceptionCode _code) {
             return "NodeNotAllowedOperationException(bug)";
         case EX_TREE_NOT_INCOMPLETE:
             return "TreeIncompleteException(bug)";
-        case EX_UNKNOWN:
-            break;
+        case EX_TREE_NO_SUCH_NODE:
+            return "TreeHasNoSuchNode(bug)";
+        case EX_NOT_DECLARED:
+            return "NotDeclared";
+        case EX_DECLARATION_NOT_A_VARIABLE:
+            return "DeclarationIsNotVariable";
+        case EX_DECLARATION_NOT_A_FUNCTION:
+            return "DeclarationIsNotFunction";
+        case EX_DECLARATION_NOT_FOUND:
+            return "DeclarationNotFound";
+
     }
     return "UnknownException";
 }

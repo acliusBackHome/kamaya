@@ -212,12 +212,16 @@ enum DeclarationType {
 // 自定义异常代码
 enum ExceptionCode {
     EX_UNKNOWN = 0,//未知异常
-    EX_NODE_KEY_NOT_DEFINED, //NodeKey中未定义指定键
+    EX_NODE_KEY_NOT_DEFINED, //NodeKey中未定义指定键,bug
     EX_NODE_NO_SUCH_KEY,//节点没有指定键值
-    EX_NODE_KEY_DEFINED_NOT_FOUND,// 节点的keys定义了该值,但是没有找见其对象
-    EX_NODE_NOT_ALLOW_OP,//节点未定义的操作但调用之
-    EX_TREE_NOT_INCOMPLETE,//树的结构不完整导致的异常
-    EX_TREE_NO_SUCH_NODE,//树中并没有指定id的节点
+    EX_NODE_KEY_DEFINED_NOT_FOUND,// 节点的keys定义了该值,但是没有找见其对象,bug
+    EX_NODE_NOT_ALLOW_OP,//节点未定义的操作但调用之,bug
+    EX_TREE_NOT_INCOMPLETE,//树的结构不完整导致的异常,bug
+    EX_TREE_NO_SUCH_NODE,//树中并没有指定id的节点,bug
+    EX_NOT_DECLARED,//没有此符号声明
+    EX_DECLARATION_NOT_A_VARIABLE,//符号已声明但不是声明为变量
+    EX_DECLARATION_NOT_A_FUNCTION,//符号已声明但不是声明为函数
+    EX_DECLARATION_NOT_FOUND,//符号已声明但没有找到其记录,bug
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

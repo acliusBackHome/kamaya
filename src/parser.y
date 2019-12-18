@@ -51,13 +51,20 @@ id_delaration
 // 以下是表达式
 primary_expression
   : id_delaration {
-    $$ = tree.make_expression_node(
-      ParseExpression(
-        ParseScope::get_scope(scope_now).get_variable_declaration(
-          tree.node($1).get_symbol()
-        )
-      )
-    );
+    ParseVariable variable;
+    const string &symbol = tree.node($1).get_symbol();
+    try {
+      variable = ParseScope::get_scope(scope_now).get_variable_declaration(symbol);
+    } catch (ParseException &exc) {
+      // 找不到变量声明:声明一个同样符号的变量, 防止重复报错
+      generating_code = false;
+      string error_info = to_string(yylineno) + ": '";
+      error_info += symbol + "' was not declared in this scope";
+      parse_error_strs.emplace_back(error_info);
+      ParseScope::get_scope(scope_now).declaration(symbol, ParseVariable(ParseType(T_UNKNOWN), symbol));
+      variable = ParseScope::get_scope(scope_now).get_variable_declaration(symbol);
+    }
+    $$ = tree.make_expression_node(ParseExpression(variable));
     tree.set_parent($1, $$);
   }
   | NUMBER {

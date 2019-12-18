@@ -17,11 +17,14 @@ extern std::map<int, std::string> nameTable;
 extern std::map<std::string, std::string> symbolTabel;
 extern std::map<std::string, std::string> stringTabel;
 extern std::string before, errorStr, inputFile;
-extern std::vector<std::string> filestrings, errorStrings;
+extern std::vector<std::string> filestrings, 
+                                                errorStrings, // 这个是语法分析时的错误信息
+                                                parse_error_strs; // 这个是语义分析时的错误信息
 extern ParseTree tree;
 extern int yycolumn;
-extern int yylineno;
+extern int yylineno;// 当前语法分析到的行数
 extern int yyleng;
+extern bool generating_code;
 extern char *yytext;
 extern FILE *file;
 extern x86::Assembler assembler;
