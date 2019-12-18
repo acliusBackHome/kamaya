@@ -8,6 +8,7 @@ using namespace std;
 
 map<ParseExpression, size_t> ParseExpression::expr2id;
 vector<ParseExpression> ParseExpression::id2expr;
+vector<size_t> ParseExpression::id2address;
 
 string ParseExpression::get_info() const {
     char buff[64];
@@ -102,7 +103,8 @@ string ParseExpression::get_info() const {
     if (expr_type != E_CONST && is_const()) {
         res += "const_value: " + ((ParseConstant *) const_value)->get_info() + ", ";
     }
-    res += "return_type: " + get_ret_type().get_info() + "}";
+    res += "return_type: " + get_ret_type().get_info() + ", ";
+    res += "address: " + to_string(get_address()) + "}";
     return res;
 }
 
@@ -135,6 +137,7 @@ ParseExpression::ParseExpression(const ParseVariable &variable) {
 
 void ParseExpression::init() {
     id2expr.emplace_back(ParseExpression());
+    id2address.emplace_back(0);
     expr2id[ParseExpression()] = 0;
 }
 
@@ -257,6 +260,7 @@ void ParseExpression::update(const ParseExpression &expr) {
         expr2id[expr] = id2expr.size();
         ((ParseExpression &) expr).expr_id = id2expr.size();
         id2expr.emplace_back(expr);
+        id2address.emplace_back(0);
     } else {
         ((ParseExpression &) expr).expr_id = it->second;
     }
@@ -786,6 +790,14 @@ bool ParseExpression::is_const() const {
         ((ParseExpression *) this)->calculate_const();
     }
     return const_value != (size_t) -1;
+}
+
+size_t ParseExpression::get_address() const {
+    return id2address[get_id()];
+}
+
+void ParseExpression::set_address(size_t expr_address) {
+    id2address[get_id()] = expr_address;
 }
 
 

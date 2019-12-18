@@ -166,6 +166,20 @@ public:
      */
     static ParseExpression get_logic_expression(ExpressionType type,
                                                 const ParseExpression &expr1, const ParseExpression &expr2);
+    /**
+     * 获取表达式的地址,
+     * 如果地址未被赋值过, 会返回0
+     * @return
+     */
+    size_t get_address() const;
+
+    /**
+     * 设置表达式的地址, 如果两个表达式对象结构一样,
+     * 设置其中一个的地址会导致另一个的地址也随之改变, 因为表达式
+     * 会在全局有一份唯一不重复的备份
+     * @param expr_address
+     */
+    void set_address(size_t expr_address);
 
 private:
     size_t child[2], // 子表达式id, 有时候是ParseVariable*所以用size_t代替地址,目前只用两个
@@ -176,6 +190,7 @@ private:
 
     static map<ParseExpression, size_t> expr2id;
     static vector<ParseExpression> id2expr;
+    static vector<size_t> id2address;
 
     /**
      * 计算当前表达式的常数值, 如果不能计算常数值, 则返回默认值
