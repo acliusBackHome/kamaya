@@ -190,13 +190,14 @@ int main(int argc, char** argv) {
   initName();
   try {
     yyparse();
+    // 连接错误结点
+    tree.last_combine();
     tree.print();
   } catch (ParseException &exc) {
     printf("未处理异常:%s\n", exc.get_info().c_str());
     tree.print();
   }
-  // 连接错误结点
-  tree.last_combine();
+  
   fclose(file);
 
   printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
