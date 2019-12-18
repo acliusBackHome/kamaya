@@ -377,7 +377,7 @@ logic_and_expression
   | logic_and_expression LOGICAND M inclusive_or_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_AND,
       tree.node($1).get_expression(),
-      tree.node($3).get_expression()
+      tree.node($4).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
@@ -401,7 +401,7 @@ logic_or_expression
   | logic_or_expression LOGICOR M logic_and_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_OR,
       tree.node($1).get_expression(),
-      tree.node($3).get_expression()
+      tree.node($4).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
@@ -852,6 +852,7 @@ direct_declarator
   | direct_declarator LP RP {
     $$ = tree.make_direct_declarator_node();
     tree.node($$).set_param_list(vector<ParseVariable>());
+    tree.node($$).set_param_list_node(0);
     tree.set_parent($1, $$);
   }
   ;
@@ -1204,7 +1205,8 @@ selection_statement
   : IF LP expression RP M statement {
     $$ = tree.new_node("if statement");
     tree.set_parent($3, $$);
-    tree.set_parent($6, $$); // 标号需要改一下
+    tree.set_parent($5, $$);
+    tree.set_parent($6, $$);
 
     IR_EMIT {
       ParseNode& S = tree.node($$);
