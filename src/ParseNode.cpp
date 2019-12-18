@@ -466,10 +466,18 @@ size_t ParseNode::get_instr() const {
 }
 
 const vector<size_t> &ParseNode::get_true_list() const {
+    // 需求特殊性: 如果没有则先set为空, 再返回之
+    if(!(keys & K_TRUE_LIST)) {
+        ((ParseNode*)this)->set_true_list(vector<size_t>());
+    }
     return get_field<vector<size_t>>(K_TRUE_LIST);
 }
 
 const vector<size_t> &ParseNode::get_false_list() const {
+    // 需求特殊性: 如果没有则先set为空, 再返回之
+    if(!(keys & K_FALSE_LIST)) {
+        ((ParseNode*)this)->set_false_list(vector<size_t>());
+    }
     return get_field<vector<size_t>>(K_FALSE_LIST);
 }
 
@@ -482,6 +490,10 @@ size_t ParseNode::get_false_jump() const {
 }
 
 const vector<size_t> &ParseNode::get_next_list() const {
+    // 需求特殊性: 如果没有则先set为空, 再返回之
+    if(!(keys & K_NEXT_LIST)) {
+        ((ParseNode*)this)->set_next_list(vector<size_t>());
+    }
     return get_field<vector<size_t> >(K_NEXT_LIST);
 }
 
