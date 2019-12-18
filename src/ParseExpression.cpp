@@ -99,7 +99,7 @@ string ParseExpression::get_info() const {
             break;
         }
     }
-    if (expr_type != E_CONST && const_value) {
+    if (expr_type != E_CONST && is_const()) {
         res += "const_value: " + ((ParseConstant *) const_value)->get_info() + ", ";
     }
     res += "return_type: " + get_ret_type().get_info() + "}";
@@ -209,7 +209,7 @@ bool ParseExpression::operator<(const ParseExpression &other) const {
 }
 
 ParseExpression::~ParseExpression() {
-    if (const_value) {
+    if (is_const()) {
         delete (ParseConstant *) const_value;
     }
     switch (expr_type) {
@@ -346,14 +346,14 @@ ParseExpression ParseExpression::generate_expression(
         case E_MOD:
         case E_POW: {
             // 如果其中一个是不可在编译期计算的表达式, 另一个是常量表达式, 则表达式返回值为不可计算表达式的类型
-            if ((!expr1.const_value) && expr2.const_value) {
+            if ((!expr1.is_const()) && expr2.is_const()) {
                 res.ret_type_id = expr1.get_ret_type().get_id();
-            } else if (!(expr2.const_value) && expr1.const_value) {
+            } else if (!(expr2.is_const()) && expr1.is_const()) {
                 res.ret_type_id = expr2.get_ret_type().get_id();
             } else {
                 // 两者都是变量或者两者都是常量
                 res.ret_type_id = ParseType::wider_type(expr1.get_ret_type(), expr2.get_ret_type()).get_id();
-                if (expr1.const_value && expr2.const_value) {
+                if (expr1.is_const() && expr2.is_const()) {
                     res.calculate_const();
                 }
             }
@@ -374,7 +374,7 @@ ParseExpression ParseExpression::generate_expression(
         case E_L:
         case E_LE:
             res.ret_type_id = T_BOOL;
-            if (expr1.const_value && expr2.const_value) {
+            if (expr1.is_const() && expr2.is_const()) {
                 res.calculate_const();
             }
             break;
@@ -391,10 +391,10 @@ ParseExpression ParseExpression::generate_expression(
 void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_expr) {
     expr.expr_id = from_expr.expr_id;
     expr.ret_type_id = from_expr.ret_type_id;
-    if (from_expr.const_value) {
+    if (from_expr.is_const()) {
         expr.const_value = (size_t) new ParseConstant(*(ParseConstant *) from_expr.const_value);
     } else {
-        expr.const_value = 0;
+        expr.const_value = (size_t)-1;
     }
     switch (expr.expr_type = from_expr.expr_type) {
         case E_UNDEFINED:
@@ -431,7 +431,7 @@ void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_
 
 ParseConstant ParseExpression::get_const() const {
     ((ParseExpression *) this)->calculate_const();
-    if (const_value) {
+    if (is_const()) {
         return *(ParseConstant *) const_value;
     }
     printf("ParseExpression::get_const(): 警告 :试图获取非常量表达式%zu的常量值\n", get_id());
@@ -548,6 +548,7 @@ void ParseExpression::calculate_const() {
     if (const_value) {
         return;
     }
+    // 只有const_value等于0时才计算常量
     switch (expr_type) {
         case E_ADD:
         case E_SUB:
@@ -566,63 +567,63 @@ void ParseExpression::calculate_const() {
                         case C_BOOL:
                         case C_SIGNED: {
                             const_value = (size_t) new ParseConstant(const1.get_signed() + const2.get_signed());
-                            break;
+                            return;
                         }
                         case C_UNSIGNED: {
                             const_value = (size_t) new ParseConstant(const1.get_unsigned() + const2.get_unsigned());
-                            break;
+                            return;
                         }
                         case C_FLOAT: {
                             const_value = (size_t) new ParseConstant(const1.get_float() + const2.get_float());
-                            break;
+                            return;
                         }
                         case C_STRING:
                         default:
                             break;
                     }
-                    return;
+                    break;
                 }
                 case E_SUB: {
                     switch (ret_const_type) {
                         case C_BOOL:
                         case C_SIGNED: {
                             const_value = (size_t) new ParseConstant(const1.get_signed() - const2.get_signed());
-                            break;
+                            return;
                         }
                         case C_UNSIGNED: {
                             const_value = (size_t) new ParseConstant(const1.get_unsigned() - const2.get_unsigned());
-                            break;
+                            return;
                         }
                         case C_FLOAT: {
                             const_value = (size_t) new ParseConstant(const1.get_float() - const2.get_float());
-                            break;
+                            return;
                         }
                         case C_STRING:
                         default:
                             break;
                     }
-                    return;
+                    break;
                 }
                 case E_MUL: {
                     switch (ret_const_type) {
                         case C_BOOL:
                         case C_SIGNED: {
                             const_value = (size_t) new ParseConstant(const1.get_signed() * const2.get_signed());
-                            break;
+                            return;
                         }
                         case C_UNSIGNED: {
                             const_value = (size_t) new ParseConstant(const1.get_unsigned() * const2.get_unsigned());
-                            break;
+                            return;
                         }
                         case C_FLOAT: {
                             const_value = (size_t) new ParseConstant(const1.get_float() * const2.get_float());
-                            break;
+                            return;
                         }
                         case C_STRING:
                         default:
                             break;
                     }
-                    return;
+                    break;
                 }
                 case E_DIV: {
                     switch (ret_const_type) {
@@ -634,7 +635,7 @@ void ParseExpression::calculate_const() {
                                 break;
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_signed() / divisor));
-                            break;
+                            return;
                         }
                         case C_UNSIGNED: {
                             auto divisor = const2.get_unsigned();
@@ -643,7 +644,7 @@ void ParseExpression::calculate_const() {
                                 break;
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_unsigned() / divisor));
-                            break;
+                            return;
                         }
                         case C_FLOAT: {
                             auto divisor = const2.get_float();
@@ -652,13 +653,13 @@ void ParseExpression::calculate_const() {
                                 break;
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_float() / divisor));
-                            break;
+                            return;
                         }
                         case C_STRING:
                         default:
                             break;
                     }
-                    return;
+                    break;
                 }
                 case E_MOD: {
                     switch (ret_const_type) {
@@ -670,7 +671,7 @@ void ParseExpression::calculate_const() {
                                 break;
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_signed() % divisor));
-                            break;
+                            return;
                         }
                         case C_UNSIGNED: {
                             auto divisor = const2.get_unsigned();
@@ -679,14 +680,14 @@ void ParseExpression::calculate_const() {
                                 break;
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_unsigned() % divisor));
-                            break;
+                            return;
                         }
                         case C_FLOAT:
                         case C_STRING:
                         default:
                             break;
                     }
-                    return;
+                    break;
                 }
                 default:
                     break;
@@ -700,7 +701,7 @@ void ParseExpression::calculate_const() {
                 break;
             }
             const_value = (size_t) new ParseConstant(powl(const1.get_float(), const2.get_float()));
-            break;
+            return;
         }
         case E_NOT: {
             ParseConstant const1 = get_expression(child[0]).get_const();
@@ -708,7 +709,7 @@ void ParseExpression::calculate_const() {
                 break;
             }
             const_value = (size_t) new ParseConstant(!(const1.get_bool()));
-            break;
+            return;
         }
         case E_LOGIC_OR:
         case E_LOGIC_AND:
@@ -726,28 +727,28 @@ void ParseExpression::calculate_const() {
             switch (expr_type) {
                 case E_LOGIC_OR:
                     const_value = (size_t) new ParseConstant(const1.get_bool() || const2.get_bool());
-                    break;
+                    return;
                 case E_LOGIC_AND:
                     const_value = (size_t) new ParseConstant(const1.get_bool() && const2.get_bool());
-                    break;
+                    return;
                 case E_G:
                     const_value = (size_t) new ParseConstant(const1.get_bool() > const2.get_bool());
-                    break;
+                    return;
                 case E_GE:
                     const_value = (size_t) new ParseConstant(const1.get_bool() >= const2.get_bool());
-                    break;
+                    return;
                 case E_EQUAL:
                     const_value = (size_t) new ParseConstant(const1.get_bool() == const2.get_bool());
-                    break;
+                    return;
                 case E_NE:
                     const_value = (size_t) new ParseConstant(const1.get_bool() != const2.get_bool());
-                    break;
+                    return;
                 case E_L:
                     const_value = (size_t) new ParseConstant(const1.get_bool() < const2.get_bool());
-                    break;
+                    return;
                 case E_LE:
                     const_value = (size_t) new ParseConstant(const1.get_bool() <= const2.get_bool());
-                    break;
+                    return;
                 default:
                     break;
             }
@@ -759,6 +760,18 @@ void ParseExpression::calculate_const() {
             // 变量或者常量, 未定义不会计算常量
             break;
     }
+    // 不是常量
+    const_value = (size_t) -1;
+}
+
+bool ParseExpression::is_const() const {
+    if (const_value == (size_t) -1) {
+        return false;
+    }
+    if (!const_value) {
+        ((ParseExpression *) this)->calculate_const();
+    }
+    return const_value != (size_t) -1;
 }
 
 
