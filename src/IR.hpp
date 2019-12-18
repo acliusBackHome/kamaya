@@ -16,6 +16,8 @@ using namespace std;
 typedef tuple<string, string, string, string> Qua;
 // jnz, j, j<, j>, :=, read, write
 
+class ParseTree;
+
 class IR {
   size_t offset;
   size_t nextinstr;
@@ -70,6 +72,7 @@ class IR {
   void backpatch(const vector<size_t> &p, size_t i);
   void recordBegin();
   void recordEnd();
+  void relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, string relop);
 };
 
 #endif

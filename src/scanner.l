@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
     printf("未处理异常:%s\n", exc.get_info().c_str());
     tree.print();
   }
-  
+
   fclose(file);
 
   printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
@@ -224,9 +224,9 @@ int main(int argc, char** argv) {
     }
   }
   ir.print();
-  assembler.setSectionData(ParseScope::emitData2Nasm());
-  assembler.setSectionText(ParseScope::emitText2Nasm());
-  printf("ParseTree 2 Nasm x86\n");
-  assembler.handleNasm();
+  // assembler.setSectionData(ParseScope::emitData2Nasm());
+  // assembler.setSectionText(ParseScope::emitText2Nasm());
+  // printf("ParseTree 2 Nasm x86\n");
+  // assembler.handleNasm();
   return  0;
 }

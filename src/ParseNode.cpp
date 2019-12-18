@@ -555,17 +555,16 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
                     const ParseConstant &E  = init_expr.get_const();
                     if (E.get_type() == ConstValueType::C_SIGNED) {
                         ir.gen(":=", symbol, "_", to_string(E.get_signed()));
-                    }
+                    } // TODO: MORE TYPE
                 } else {
                     ExpressionType exp_type = init_expr.get_expr_type();
                     string op = "_", arg1 = "_", arg2 = "_", result = "_";
                     if (exp_type == ExpressionType::E_ADD) {
                         op = "+",
-                        // TODO: change to addr
-                        arg1 = init_expr.get_child(0);
-                        arg2 = init_expr.get_child(1);
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
-                    }
+                    } // TODO: MORE TYPE
                     ir.gen(op, arg1, arg2, result);
                 }
             }
