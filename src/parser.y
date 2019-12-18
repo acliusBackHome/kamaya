@@ -312,14 +312,7 @@ relational_expression
     tree.set_parent($3, $$);
 
     IR_EMIT {
-      ParseNode& B = tree.node($$);
-      const ParseNode& E1 = tree.node($1);
-      const ParseNode& E2 = tree.node($3);
-
-      B.set_true_list(ir.makelist(ir.getNextinstr()));
-      B.set_false_list(ir.makelist(ir.getNextinstr()+1));
-      ir.gen("j<", to_string(E1.get_expression().get_id()), to_string(E2.get_expression().get_id()), "_");
-      ir.gen("jmp", "_", "_", "_");
+      ir.relopEmit(tree, $$, $1, $3, "j<");
     }
   }
   | relational_expression LE shift_expression {
@@ -329,6 +322,10 @@ relational_expression
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
+
+    IR_EMIT {
+      ir.relopEmit(tree, $$, $1, $3, "j<=");
+    }
   }
   | relational_expression GT shift_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_G,
@@ -337,6 +334,10 @@ relational_expression
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
+
+    IR_EMIT {
+      ir.relopEmit(tree, $$, $1, $3, "j>");
+    }
   }
   | relational_expression GE shift_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_GE,
@@ -345,6 +346,10 @@ relational_expression
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
+
+    IR_EMIT {
+      ir.relopEmit(tree, $$, $1, $3, "j>=");
+    }
   }
   ;
 
@@ -359,6 +364,10 @@ equality_expression
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
+
+    IR_EMIT {
+      ir.relopEmit(tree, $$, $1, $3, "j==");
+    }
   }
   | equality_expression NE relational_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_NE,
@@ -367,6 +376,10 @@ equality_expression
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
+
+    IR_EMIT {
+      ir.relopEmit(tree, $$, $1, $3, "j!=");
+    }
   }
   | TRUE {
     $$ = tree.make_const_node((bool)true);
