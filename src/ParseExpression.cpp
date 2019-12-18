@@ -429,13 +429,14 @@ void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_
     }
 }
 
-ParseConstant ParseExpression::get_const() const {
+const ParseConstant &ParseExpression::get_const() const {
     ((ParseExpression *) this)->calculate_const();
     if (is_const()) {
         return *(ParseConstant *) const_value;
     }
-    printf("ParseExpression::get_const(): 警告 :试图获取非常量表达式%zu的常量值\n", get_id());
-    return ParseConstant();
+    string info = "ParseExpression::get_const() expr_id=";
+    info += to_string(expr_id);
+    throw ParseException(EX_EXPRESSION_NOT_CONST, info);
 }
 
 const ParseType &ParseExpression::get_ret_type() const {
@@ -555,8 +556,11 @@ void ParseExpression::calculate_const() {
         case E_MUL:
         case E_DIV:
         case E_MOD: {
-            ParseConstant const1 = get_expression(child[0]).get_const(),
-                    const2 = get_expression(child[1]).get_const();
+            if (!get_expression(child[0]).is_const() || !get_expression(child[1]).is_const()) {
+                // 不是常量退出
+                break;
+            }
+            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(child[1]).get_const();
             ConstValueType ret_const_type = ParseConstant::wider_const_type(const1.get_type(), const2.get_type());
             if (ret_const_type == C_UNDEFINED) {
                 break;
@@ -631,8 +635,8 @@ void ParseExpression::calculate_const() {
                         case C_SIGNED: {
                             auto divisor = const2.get_signed();
                             if (divisor == 0) {
-                                printf("ParseExpression::calculate_const(): 警告: 常量计算过程中试图除以0\n");
-                                break;
+                                string info = "ParseExpression::calculate_const() expr_id=" + to_string(get_id());
+                                throw ParseException(EX_EXPRESSION_DIVIDE_ZERO, info);
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_signed() / divisor));
                             return;
@@ -640,8 +644,8 @@ void ParseExpression::calculate_const() {
                         case C_UNSIGNED: {
                             auto divisor = const2.get_unsigned();
                             if (divisor == 0) {
-                                printf("ParseExpression::calculate_const(): 警告: 常量计算过程中试图除以0\n");
-                                break;
+                                string info = "ParseExpression::calculate_const() expr_id=" + to_string(get_id());
+                                throw ParseException(EX_EXPRESSION_DIVIDE_ZERO, info);
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_unsigned() / divisor));
                             return;
@@ -649,8 +653,8 @@ void ParseExpression::calculate_const() {
                         case C_FLOAT: {
                             auto divisor = const2.get_float();
                             if (divisor == 0) {
-                                printf("ParseExpression::calculate_const(): 警告: 常量计算过程中试图除以0\n");
-                                break;
+                                string info = "ParseExpression::calculate_const() expr_id=" + to_string(get_id());
+                                throw ParseException(EX_EXPRESSION_DIVIDE_ZERO, info);
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_float() / divisor));
                             return;
@@ -667,8 +671,8 @@ void ParseExpression::calculate_const() {
                         case C_SIGNED: {
                             auto divisor = const2.get_signed();
                             if (divisor == 0) {
-                                printf("ParseExpression::calculate_const(): 警告: 常量计算过程中试图除以0\n");
-                                break;
+                                string info = "ParseExpression::calculate_const() expr_id=" + to_string(get_id());
+                                throw ParseException(EX_EXPRESSION_DIVIDE_ZERO, info);
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_signed() % divisor));
                             return;
@@ -676,8 +680,8 @@ void ParseExpression::calculate_const() {
                         case C_UNSIGNED: {
                             auto divisor = const2.get_unsigned();
                             if (divisor == 0) {
-                                printf("ParseExpression::calculate_const(): 警告: 常量计算过程中试图除以0\n");
-                                break;
+                                string info = "ParseExpression::calculate_const() expr_id=" + to_string(get_id());
+                                throw ParseException(EX_EXPRESSION_DIVIDE_ZERO, info);
                             }
                             const_value = (size_t) new ParseConstant(ParseConstant(const1.get_unsigned() % divisor));
                             return;
@@ -695,8 +699,11 @@ void ParseExpression::calculate_const() {
             break;
         }
         case E_POW: {
-            ParseConstant const1 = get_expression(child[0]).get_const(),
-                    const2 = get_expression(child[1]).get_const();
+            if (!get_expression(child[0]).is_const() || !get_expression(child[1]).is_const()) {
+                // 不是常量退出
+                break;
+            }
+            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(child[1]).get_const();
             if (const1.get_type() == C_UNDEFINED || const2.get_type() == C_UNDEFINED) {
                 break;
             }
@@ -704,7 +711,11 @@ void ParseExpression::calculate_const() {
             return;
         }
         case E_NOT: {
-            ParseConstant const1 = get_expression(child[0]).get_const();
+            if (!get_expression(child[0]).is_const()) {
+                // 不是常量退出
+                break;
+            }
+            const ParseConstant &const1 = get_expression(child[0]).get_const();
             if (const1.get_type() == C_UNDEFINED) {
                 break;
             }
@@ -719,8 +730,11 @@ void ParseExpression::calculate_const() {
         case E_NE:
         case E_L:
         case E_LE: {
-            ParseConstant const1 = get_expression(child[0]).get_const(),
-                    const2 = get_expression(child[1]).get_const();
+            if (!get_expression(child[0]).is_const() || !get_expression(child[1]).is_const()) {
+                // 不是常量退出
+                break;
+            }
+            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(child[1]).get_const();
             if (const1.get_type() == C_UNDEFINED || const2.get_type() == C_UNDEFINED) {
                 break;
             }

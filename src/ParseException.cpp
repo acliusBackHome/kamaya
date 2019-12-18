@@ -46,16 +46,19 @@ string ParseException::get_code_msg(ExceptionCode _code) {
         case EX_TREE_NOT_INCOMPLETE:
             return "TreeIncompleteException(bug)";
         case EX_TREE_NO_SUCH_NODE:
-            return "TreeHasNoSuchNode(bug)";
+            return "TreeHasNoSuchNodeException(bug)";
         case EX_NOT_DECLARED:
-            return "NotDeclared";
+            return "NotDeclaredException";
         case EX_DECLARATION_NOT_A_VARIABLE:
-            return "DeclarationIsNotVariable";
+            return "DeclarationIsNotVariableException";
         case EX_DECLARATION_NOT_A_FUNCTION:
-            return "DeclarationIsNotFunction";
+            return "DeclarationIsNotFunctionException";
         case EX_DECLARATION_NOT_FOUND:
-            return "DeclarationNotFound";
-
+            return "DeclarationNotFoundException";
+        case EX_EXPRESSION_NOT_CONST:
+            return "ExpressionNotConstantException";
+        case EX_EXPRESSION_DIVIDE_ZERO:
+            return "DivideZeroException";
     }
     return "UnknownException";
 }
