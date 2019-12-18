@@ -18,14 +18,10 @@ ExceptionCode ParseException::get_code() const {
 }
 
 string ParseException::get_info() const {
-    auto &temp_what = (string &) what_str;
-    temp_what = "ParseException {\n  code:";
+    string temp_what = "ParseException {\n  code:";
     temp_what += get_code_msg(code) + ",\n";
-    for (size_t i = trace.size() - 1;; --i) {
-        temp_what += "  " + trace[i] + ",\n";
-        if (!i) {
-            break;
-        }
+    for (const auto &each : trace) {
+        temp_what += "  " + each + ",\n";
     }
     temp_what += "}";
     return temp_what;
@@ -59,6 +55,8 @@ string ParseException::get_code_msg(ExceptionCode _code) {
             return "ExpressionNotConstantException";
         case EX_EXPRESSION_DIVIDE_ZERO:
             return "DivideZeroException";
+        case EX_TYPE_CAN_NOT_CONVERT:
+            return "CanNotConvertType";
     }
     return "UnknownException";
 }

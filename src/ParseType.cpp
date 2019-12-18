@@ -583,10 +583,9 @@ ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) 
         case T_UNKNOWN:
             break;
     }
-    printf("ParseType::wider_type(const ParseType &type1, const ParseType &type2): 警告: 试图获取"
-           "不支持的宽化类型转换(%s, %s)\n", type1.get_info().c_str(),
-           type2.get_info().c_str());
-    return ParseType(T_UNKNOWN);
+    string info = "ParseType::wider_type(const ParseType &type1, const ParseType &type2) type1=";
+    info += type1.get_info() + " type2=" + type2.get_info();
+    throw ParseException(EX_TYPE_CAN_NOT_CONVERT, info);
 }
 
 #pragma clang diagnostic pop
