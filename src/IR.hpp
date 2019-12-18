@@ -1,13 +1,15 @@
 #ifndef __IR_HPP__
 #define __IR_HPP__
 
-#define IR_EMIT ;;; // do no thing now
-
 #include <tuple>
 #include <vector>
 #include <algorithm>
 #include <iostream>
 #include <stack>
+
+extern bool generating_code;
+
+#define IR_EMIT if(generating_code) // do no thing now
 
 using namespace std;
 
@@ -27,13 +29,13 @@ class IR {
   inline size_t getOffset() {
     return offset;
   }
-  inline size_t setOffset(size_t next) {
+  inline void setOffset(size_t next) {
     offset = next;
   }
-  inline size_t addOffset(size_t add) {
+  inline void addOffset(size_t add) {
     offset += add;
   }
-  size_t getNextinstr() {
+  inline size_t getNextinstr() {
     return nextinstr;
   }
   inline void envpush(size_t pos) {

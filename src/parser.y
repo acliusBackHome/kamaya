@@ -51,13 +51,27 @@ id_delaration
 // 以下是表达式
 primary_expression
   : id_delaration {
-    $$ = tree.make_expression_node(
-      ParseExpression(
-        ParseScope::get_scope(scope_now).get_variable_declaration(
-          tree.node($1).get_symbol()
-        )
-      )
-    );
+    ParseVariable variable;
+    const string &symbol = tree.node($1).get_symbol();
+    try {
+      variable = ParseScope::get_scope(scope_now).get_variable_declaration(symbol);
+    } catch (ParseException &exc) {
+      // 找不到变量声明:声明一个同样符号的变量, 防止重复报错
+      generating_code = false;
+      if(exc.get_code() != EX_NOT_DECLARED) {
+      	// 这一层只处理变量未声明的异常
+        string info = "in id_delaration->primary_expression,";
+        exc.push_trace(info);
+      	throw exc;
+      }
+      // 将错误信息记录后声明一个符号为symbol的无效的变量
+      string error_info = to_string(yylineno) + ": '";
+      error_info += symbol + "' was not declared in this scope";
+      parse_error_strs.emplace_back(error_info);
+      ParseScope::get_scope(scope_now).declaration(symbol, ParseVariable(ParseType(T_UNKNOWN), symbol));
+      variable = ParseScope::get_scope(scope_now).get_variable_declaration(symbol);
+    }
+    $$ = tree.make_expression_node(ParseExpression(variable));
     tree.set_parent($1, $$);
   }
   | NUMBER {
@@ -374,7 +388,7 @@ logic_and_expression
   : inclusive_or_expression {
     $$ = $1;
   }
-  | logic_and_expression LOGICAND M inclusive_or_expression {
+  | logic_and_expression LOGICAND backpatch_instr inclusive_or_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_AND,
       tree.node($1).get_expression(),
       tree.node($4).get_expression()
@@ -398,7 +412,7 @@ logic_or_expression
   : logic_and_expression {
     $$ = $1;
   }
-  | logic_or_expression LOGICOR M logic_and_expression {
+  | logic_or_expression LOGICOR backpatch_instr logic_and_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_OR,
       tree.node($1).get_expression(),
       tree.node($4).get_expression()
@@ -1182,8 +1196,8 @@ expression_statement
   }
   ;
 
-M : {
-  $$ = tree.new_node("M");
+backpatch_instr : {
+  $$ = tree.new_node("backpatch_instr");
 
   IR_EMIT {
     tree.node($$).set_instr(ir.getNextinstr());
@@ -1191,8 +1205,8 @@ M : {
   }
 };
 
-N : {
-  $$ = tree.new_node("N");
+backpatch_next_list : {
+  $$ = tree.new_node("backpatch_next_list");
 
   IR_EMIT {
     ParseNode& N = tree.node($$);
@@ -1202,7 +1216,7 @@ N : {
 }
 
 selection_statement
-  : IF LP expression RP M statement {
+  : IF LP expression RP backpatch_instr statement {
     $$ = tree.new_node("if statement");
     tree.set_parent($3, $$);
     tree.set_parent($5, $$);
@@ -1217,7 +1231,7 @@ selection_statement
       S.set_next_list(ir.merge(B.get_false_list(), S1.get_next_list()));
     }
   }
-  | IF LP expression RP M statement N ELSE M statement {
+  | IF LP expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
     $$ = tree.new_node("if else statement");
     tree.set_parent($3, $$);
     tree.set_parent($6, $$);

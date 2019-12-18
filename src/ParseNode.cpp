@@ -530,7 +530,6 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
     for (const auto &each : init_dec_list) {
         const string &symbol = get<0>(each);// 变量符号
         const ParseExpression &init_expr = get<1>(each);// 初始化表达式
-        // TODO: 产生将初始化表达式赋值给变量的代码
         bool is_ptr = get<2>(each);// 是否声明为指针
         const size_t &array_size = get<3>(each),// 数组大小: 如果为0, 则表明不是数组
                 &param_list_node = get<4>(each)// 声明为函数时的参数列表节点, 如果不声明为函数该值为0
@@ -552,10 +551,10 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
             ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, ir.getOffset()));
             IR_EMIT {
                 ir.addOffset(this_type.get_size());
-                ParseConstant E = init_expr.get_const();
-                if (E.get_type() == ConstValueType::C_SIGNED) {
-                    ir.gen(":=", symbol, "_", to_string(E.get_signed()));
-                }
+                // ParseConstant E = init_expr.get_const();
+                // if (E.get_type() == ConstValueType::C_SIGNED) {
+                //     ir.gen(":=", symbol, "_", to_string(E.get_signed()));
+                // }
             }
         }
     }
@@ -606,8 +605,14 @@ void ParseNode::collect_init_declarator() const {
                 const ParseExpression &arr_dec_expr = get_expression();
                 if (arr_dec_expr.is_defined()) {
                     // 数组声明大小必须是可计算的无符号整数
-                    // TODO: 这里会抛出不是常量异常, 需要try catch 捕获后加入轨迹再抛出
-                    arr_size = arr_dec_expr.get_const().get_unsigned();
+                    try {
+                        arr_size = arr_dec_expr.get_const().get_unsigned();
+                    } catch (ParseException &ext) {
+                        // 发现异常不是本层能够处理的
+                        string info = "ParseNode::collect_init_declarator() node_id=" + to_string(node_id);
+                        ext.push_trace(info);
+                        throw ext;
+                    }
                 }
             }
             break;
@@ -623,8 +628,14 @@ void ParseNode::collect_init_declarator() const {
                             const ParseExpression &arr_dec_expr = child.get_expression();
                             if (arr_dec_expr.is_defined()) {
                                 // 数组声明大小必须是可计算的无符号整数
-                                // TODO: 这里会抛出不是常量异常, 需要try catch 捕获后加入轨迹再抛出
-                                arr_size = arr_dec_expr.get_const().get_unsigned();
+                                try {
+                                    arr_size = arr_dec_expr.get_const().get_unsigned();
+                                } catch (ParseException &ext) {
+                                    // 发现异常不是本层能够处理的
+                                    string info = "ParseNode::collect_init_declarator() node_id=" + to_string(node_id);
+                                    ext.push_trace(info);
+                                    throw ext;
+                                }
                             }
                         }
                         break;
