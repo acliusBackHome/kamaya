@@ -267,8 +267,6 @@ public:
      */
     size_t native_root(size_t idx);
 
-    ~ParseTree();
-
 #ifdef PARSE_TREE_DEBUG
     /**
      *  检查子节点生成情况
