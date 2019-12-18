@@ -374,7 +374,7 @@ logic_and_expression
   : inclusive_or_expression {
     $$ = $1;
   }
-  | logic_and_expression LOGICAND M inclusive_or_expression {
+  | logic_and_expression LOGICAND backpatch_instr inclusive_or_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_AND,
       tree.node($1).get_expression(),
       tree.node($4).get_expression()
@@ -398,7 +398,7 @@ logic_or_expression
   : logic_and_expression {
     $$ = $1;
   }
-  | logic_or_expression LOGICOR M logic_and_expression {
+  | logic_or_expression LOGICOR backpatch_instr logic_and_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_OR,
       tree.node($1).get_expression(),
       tree.node($4).get_expression()
@@ -1182,8 +1182,8 @@ expression_statement
   }
   ;
 
-M : {
-  $$ = tree.new_node("M");
+backpatch_instr : {
+  $$ = tree.new_node("backpatch_instr");
 
   IR_EMIT {
     tree.node($$).set_instr(ir.getNextinstr());
@@ -1191,8 +1191,8 @@ M : {
   }
 };
 
-N : {
-  $$ = tree.new_node("N");
+backpatch_next_list : {
+  $$ = tree.new_node("backpatch_next_list");
 
   IR_EMIT {
     ParseNode& N = tree.node($$);
@@ -1202,7 +1202,7 @@ N : {
 }
 
 selection_statement
-  : IF LP expression RP M statement {
+  : IF LP expression RP backpatch_instr statement {
     $$ = tree.new_node("if statement");
     tree.set_parent($3, $$);
     tree.set_parent($5, $$);
@@ -1217,7 +1217,7 @@ selection_statement
       S.set_next_list(ir.merge(B.get_false_list(), S1.get_next_list()));
     }
   }
-  | IF LP expression RP M statement N ELSE M statement {
+  | IF LP expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
     $$ = tree.new_node("if else statement");
     tree.set_parent($3, $$);
     tree.set_parent($6, $$);
