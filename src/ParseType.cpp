@@ -455,10 +455,6 @@ void ParseType::print_all_type() {
     for (size_t i = 0; i < id2type.size(); ++i) {
         printf("%zu: %s\n", i, id2type[i].get_info().c_str());
     }
-//    printf("type2id\n");
-//    for (const auto &each: type2id) {
-//        printf("%s => %zu\n", each.first.get_info().c_str(), each.second);
-//    }
 }
 
 ParseType ParseType::field(const string &key) const {

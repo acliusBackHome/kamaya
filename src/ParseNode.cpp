@@ -551,10 +551,10 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
             ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, ir.getOffset()));
             IR_EMIT {
                 ir.addOffset(this_type.get_size());
-                ParseConstant E = init_expr.get_const();
-                if (E.get_type() == ConstValueType::C_SIGNED) {
-                    ir.gen(":=", symbol, "_", to_string(E.get_signed()));
-                }
+                // ParseConstant E = init_expr.get_const();
+                // if (E.get_type() == ConstValueType::C_SIGNED) {
+                //     ir.gen(":=", symbol, "_", to_string(E.get_signed()));
+                // }
             }
         }
     }
@@ -605,8 +605,14 @@ void ParseNode::collect_init_declarator() const {
                 const ParseExpression &arr_dec_expr = get_expression();
                 if (arr_dec_expr.is_defined()) {
                     // 数组声明大小必须是可计算的无符号整数
-                    // TODO: 这里会抛出不是常量异常, 需要try catch 捕获后加入轨迹再抛出
-                    arr_size = arr_dec_expr.get_const().get_unsigned();
+                    try {
+                        arr_size = arr_dec_expr.get_const().get_unsigned();
+                    } catch (ParseException &ext) {
+                        // 发现异常不是本层能够处理的
+                        string info = "ParseNode::collect_init_declarator() node_id=" + to_string(node_id);
+                        ext.push_trace(info);
+                        throw ext;
+                    }
                 }
             }
             break;
@@ -622,8 +628,14 @@ void ParseNode::collect_init_declarator() const {
                             const ParseExpression &arr_dec_expr = child.get_expression();
                             if (arr_dec_expr.is_defined()) {
                                 // 数组声明大小必须是可计算的无符号整数
-                                // TODO: 这里会抛出不是常量异常, 需要try catch 捕获后加入轨迹再抛出
-                                arr_size = arr_dec_expr.get_const().get_unsigned();
+                                try {
+                                    arr_size = arr_dec_expr.get_const().get_unsigned();
+                                } catch (ParseException &ext) {
+                                    // 发现异常不是本层能够处理的
+                                    string info = "ParseNode::collect_init_declarator() node_id=" + to_string(node_id);
+                                    ext.push_trace(info);
+                                    throw ext;
+                                }
                             }
                         }
                         break;

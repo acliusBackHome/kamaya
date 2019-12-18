@@ -58,6 +58,13 @@ primary_expression
     } catch (ParseException &exc) {
       // 找不到变量声明:声明一个同样符号的变量, 防止重复报错
       generating_code = false;
+      if(exc.get_code() != EX_NOT_DECLARED) {
+      	// 这一层只处理变量未声明的异常
+        string info = "in id_delaration->primary_expression,";
+        exc.push_trace(info);
+      	throw exc;
+      }
+      // 将错误信息记录后声明一个符号为symbol的无效的变量
       string error_info = to_string(yylineno) + ": '";
       error_info += symbol + "' was not declared in this scope";
       parse_error_strs.emplace_back(error_info);

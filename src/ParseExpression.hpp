@@ -129,7 +129,7 @@ public:
      * 获取表达式的常量, 如果不存在常量值,则会发出警告,可以在未来成熟后改成异常
      * @return
      */
-    ParseConstant get_const() const;
+    const ParseConstant &get_const() const;
 
     /**
      * 获取表达式的子表达式id, child参数目前小于2

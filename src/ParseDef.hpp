@@ -222,6 +222,8 @@ enum ExceptionCode {
     EX_DECLARATION_NOT_A_VARIABLE,//符号已声明但不是声明为变量
     EX_DECLARATION_NOT_A_FUNCTION,//符号已声明但不是声明为函数
     EX_DECLARATION_NOT_FOUND,//符号已声明但没有找到其记录,bug
+    EX_EXPRESSION_NOT_CONST,//试图获取不可在编译期获取值的表达式时抛出的异常
+    EX_EXPRESSION_DIVIDE_ZERO,//除0异常
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

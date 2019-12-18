@@ -1,6 +1,8 @@
 #include "ParseTree.hpp"
 #include <iostream>
 
+bool generating_code = true;
+
 using namespace std;
 
 void test_parse_type() {
