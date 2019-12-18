@@ -609,7 +609,7 @@ map<string, ParseFunction> ParseScope::emitText2Nasm() {
     for (const auto &scope: scopes) {
         const auto &symbol2dec = scope.symbol2dec_ptr;
         for (const auto &each : symbol2dec) {
-            if(each.first.empty()) {
+            if (each.first.empty()) {
                 continue;
             }
             DeclarationType dec_type = each.second.first;
@@ -636,7 +636,7 @@ map<string, ParseVariable> ParseScope::emitData2Nasm() {
         const auto &symbol2dec = scope.symbol2dec_ptr;
         string scope_str = to_string(scope.this_scope) + "@";
         for (const auto &each : symbol2dec) {
-            if(each.first.empty()) {
+            if (each.first.empty()) {
                 continue;
             }
             DeclarationType dec_type = each.second.first;
