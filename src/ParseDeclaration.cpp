@@ -570,9 +570,9 @@ size_t ParseScope::get_parent_scope_id() const {
 void ParseScope::print_all_declaration() {
     for (const auto &scope: scopes) {
         const auto &symbol2dec = scope.symbol2dec_ptr;
-        printf("scope: %zu(%zu):\n",  scope.this_scope, scope.parent_scope);
+        printf("scope: %zu(%zu):\n", scope.this_scope, scope.parent_scope);
         for (const auto &each : symbol2dec) {
-            if(each.first.empty()) {
+            if (each.first.empty()) {
                 continue;
             }
             printf("%s: ", each.first.c_str());

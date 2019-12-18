@@ -25,7 +25,7 @@ ParseType::ParseType(BaseType b_type, int spe) {
     }
     fields = nullptr;
     type_id = (size_t) -1;
-    if(!specifier) {
+    if (!specifier) {
         type_id = b_type;
     }
     base_type = b_type;

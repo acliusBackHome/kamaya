@@ -668,9 +668,9 @@ MapType &ParseNode::get_field(NodeKey key) const {
     } else {
         // 当前节点没有该记录
         // 有些节点是需要收集子树的信息来生成自身节点的信息, 所以需要先做一些动作进行收集信息
-        switch(type) {
+        switch (type) {
             case N_PARAM_LIST: {
-                if(key == K_PARAM_LIST) {
+                if (key == K_PARAM_LIST) {
                     collect_parameters_list();
                     return the_map.find(node_id)->second;
                 }
@@ -678,7 +678,7 @@ MapType &ParseNode::get_field(NodeKey key) const {
             }
             case N_DECLARATOR:
             case N_INIT_DECLARATOR: {
-                if(key == K_INIT_DEC) {
+                if (key == K_INIT_DEC) {
                     collect_init_declarator();
                     return the_map.find(node_id)->second;
                 }

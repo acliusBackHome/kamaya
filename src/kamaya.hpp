@@ -28,8 +28,11 @@ extern x86::Assembler assembler;
 extern IR ir;
 
 void initName();
+
 std::string getName(int);
+
 void yyerror(const char *);
+
 void yyUserActon();
 
 #endif
