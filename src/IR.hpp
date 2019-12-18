@@ -27,13 +27,13 @@ class IR {
   inline size_t getOffset() {
     return offset;
   }
-  inline size_t setOffset(size_t next) {
+  inline void setOffset(size_t next) {
     offset = next;
   }
-  inline size_t addOffset(size_t add) {
+  inline void addOffset(size_t add) {
     offset += add;
   }
-  size_t getNextinstr() {
+  inline size_t getNextinstr() {
     return nextinstr;
   }
   inline void envpush(size_t pos) {
