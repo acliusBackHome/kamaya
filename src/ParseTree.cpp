@@ -122,35 +122,10 @@ void ParseTree::print_node(size_t node_id, vector<size_t> &has_next_children,
             printf(" |-");
         }
     }
-    switch (nodes[node_id].type) {
-        case N_IDENTIFIER:
-        case N_CONST:
-        case N_TYPE_SPE:
-        case N_DECLARATION_SPE:
-        case N_DECLARATOR:
-        case N_DIRECT_DEC:
-        case N_PARAM_LIST:
-        case N_PARAM_DECLARATION:
-        case N_FUNCTION_DEFINITION:
-        case N_INIT_DECLARATOR:
-        case N_INIT_DECLARATOR_LIST:
-        case N_INITIALIZER:
-        case N_DECLARATION:
-        case N_EXPRESSION:
-        case N_BLOCK_ITEM_LIST:
-        case N_COMP_STMT:
-        case N_FOR_STMT:
-            try {
-                printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
-            } catch (ParseException &ext) {
-                printf("exception-node %zu:%s\n", node_id, ParseNode::get_node_type_name(nodes[node_id].type).c_str());
-            }
-            break;
-        case N_NORMAL:
-        case N_UNKNOWN:
-            printf("%zu:%s\n", node_id, node_msg[node_id].c_str());
-            break;
-
+    try {
+        printf("%zu:%s\n", node_id, nodes[node_id].get_node_info().c_str());
+    } catch (ParseException &ext) {
+        printf("!ExceptionNode %zu:%s\n", node_id, ParseNode::get_node_type_name(nodes[node_id].type).c_str());
     }
     vis[node_id] = true;
     string pre_fix;
@@ -186,11 +161,13 @@ bool ParseTree::check_node(size_t node_id) const {
     return true;
 }
 
-ParseNode *ParseTree::node(size_t node_id) {
+ParseNode &ParseTree::node(size_t node_id) {
     if (check_node(node_id)) {
-        return &nodes[node_id];
+        return nodes[node_id];
     }
-    return nullptr;
+    string info = "ParseTree::node(size_t node_id) node_id=";
+    info += to_string(node_id);
+    throw ParseException(EX_TREE_NO_SUCH_NODE, info);
 }
 
 //===========================make_系列============================

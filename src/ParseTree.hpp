@@ -256,11 +256,11 @@ public:
     void last_combine();
 
     /**
-     * 对节点操作的接口, 如果节点不存在则返回nullptr
+     * 对节点操作的接口, 如果节点不存在则会抛出异常: 树中没有此节点
      * @param node_id
      * @return
      */
-    ParseNode *node(size_t node_id);
+    ParseNode &node(size_t node_id);
 
     /**
      *  获取局部根节点

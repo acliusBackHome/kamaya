@@ -54,7 +54,7 @@ primary_expression
     $$ = tree.make_expression_node(
       ParseExpression(
         ParseScope::get_scope(scope_now).get_variable_declaration(
-          tree.node($1)->get_symbol()
+          tree.node($1).get_symbol()
         )
       )
     );
@@ -200,8 +200,8 @@ power_expression
   }
   | cast_expression XOR power_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() ^
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression() ^
+      tree.node($3).get_expression()
     );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -214,24 +214,24 @@ multiplicative_expression
   }
   | multiplicative_expression MUL power_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() *
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression() *
+      tree.node($3).get_expression()
     );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | multiplicative_expression DIV power_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() /
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression() /
+      tree.node($3).get_expression()
     );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | multiplicative_expression MOD power_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() %
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression() %
+      tree.node($3).get_expression()
     );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -244,16 +244,16 @@ additive_expression
   }
   | additive_expression ADD multiplicative_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() +
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression() +
+      tree.node($3).get_expression()
     );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | additive_expression SUB multiplicative_expression {
     $$ = tree.make_expression_node(
-      tree.node($1)->get_expression() -
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression() -
+      tree.node($3).get_expression()
     );
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -282,32 +282,32 @@ relational_expression
   }
   | relational_expression LT shift_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_L,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | relational_expression LE shift_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LE,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | relational_expression GT shift_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_G,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | relational_expression GE shift_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_GE,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -320,16 +320,16 @@ equality_expression
   }
   | equality_expression EQ relational_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_EQUAL,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | equality_expression NE relational_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_NE,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
@@ -376,8 +376,8 @@ logic_and_expression
   }
   | logic_and_expression LOGICAND inclusive_or_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_AND,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
@@ -400,8 +400,8 @@ logic_or_expression
   }
   | logic_or_expression LOGICOR logic_and_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_OR,
-      tree.node($1)->get_expression(),
-      tree.node($3)->get_expression()
+      tree.node($1).get_expression(),
+      tree.node($3).get_expression()
       ));
     tree.set_parent($1, $$);
     tree.set_parent($4, $$);
@@ -565,11 +565,11 @@ declaration_specifiers
 init_declarator_list
   : init_declarator {
     $$ = tree.make_init_declarator_list_node();
-    tree.node($$)->add_init_declarator(tree.node($1)->get_init_declarator());
+    tree.node($$).add_init_declarator(tree.node($1).get_init_declarator());
     tree.set_parent($1, $$);
   }
   | init_declarator_list COMMA init_declarator {
-    tree.node($1)->add_init_declarator(tree.node($3)->get_init_declarator());
+    tree.node($1).add_init_declarator(tree.node($3).get_init_declarator());
     $$ = $1;
     tree.set_parent($3, $$);
   }
@@ -810,7 +810,7 @@ declarator
 direct_declarator
   : id_delaration {
     $$ = tree.make_direct_declarator_node();
-    tree.node($$)->set_param_list_node(0);
+    tree.node($$).set_param_list_node(0);
     tree.set_parent($1, $$);
   }
   | LP declarator RP {
@@ -835,8 +835,8 @@ direct_declarator
   //| direct_declarator ML type_qualifier_list MUL MR
   //| direct_declarator ML MUL MR
   | direct_declarator ML MR {
-    tree.node($1)->update_is_array(true);
-    tree.node($1)->set_expression(ParseExpression());
+    tree.node($1).update_is_array(true);
+    tree.node($1).set_expression(ParseExpression());
     $$ = $1;
   }
   | direct_declarator LP parameter_type_list RP {
@@ -851,7 +851,7 @@ direct_declarator
   }
   | direct_declarator LP RP {
     $$ = tree.make_direct_declarator_node();
-    tree.node($$)->set_param_list(vector<ParseVariable>());
+    tree.node($$).set_param_list(vector<ParseVariable>());
     tree.set_parent($1, $$);
   }
   ;
@@ -900,7 +900,7 @@ parameter_type_list
 parameter_list
   : parameter_declaration {
     $$ = tree.make_parameter_list_node();
-    tree.node($$)->set_param_list_node($$);
+    tree.node($$).set_param_list_node($$);
     tree.set_parent($1, $$);
   }
   | parameter_list COMMA parameter_declaration {
@@ -911,15 +911,15 @@ parameter_list
 
 parameter_declaration
   : declaration_specifiers declarator {
-    auto type = tree.node($1)->get_type();
-    if(tree.node($2)->get_is_pointer()) {
+    auto type = tree.node($1).get_type();
+    if(tree.node($2).get_is_pointer()) {
       type = ParseType::get_pointer(type);
     }
-    if(tree.node($2)->get_is_array()) {
+    if(tree.node($2).get_is_array()) {
       type = ParseType::get_array(type, (size_t)-1);
       // todo:获取$2的表达式并提取出常量值填入get_array的第二个参数, 如果不能提取出常量值则置-1继续分析,并抛出error
     }
-    $$ = tree.make_parameter_declaration(ParseVariable(type, tree.node($2)->get_symbol()));
+    $$ = tree.make_parameter_declaration(ParseVariable(type, tree.node($2).get_symbol()));
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -1137,7 +1137,7 @@ compound_statement
     ir.recordBegin();
   } block_item_list RB {
     $$ = tree.make_compound_statement_node();
-    tree.node($$)->set_scope_id(scope_now);
+    tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
     tree.set_parent($3, $$);
     ir.recordEnd();
@@ -1264,7 +1264,7 @@ iteration_statement
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($6, $$);
-    tree.node($$)->set_scope_id(scope_now);
+    tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
   | for LP expression_statement expression_statement expression RP statement {
@@ -1273,7 +1273,7 @@ iteration_statement
     tree.set_parent($4, $$);
     tree.set_parent($5, $$);
     tree.set_parent($7, $$);
-    tree.node($$)->set_scope_id(scope_now);
+    tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
   | for LP declaration expression_statement RP statement {
@@ -1281,7 +1281,7 @@ iteration_statement
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($6, $$);
-    tree.node($$)->set_scope_id(scope_now);
+    tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
   | for LP declaration expression_statement expression RP statement {
@@ -1290,7 +1290,7 @@ iteration_statement
     tree.set_parent($4, $$);
     tree.set_parent($5, $$);
     tree.set_parent($7, $$);
-    tree.node($$)->set_scope_id(scope_now);
+    tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
   ;
@@ -1333,9 +1333,9 @@ function_definition
     tree.set_parent($4, $$);
   }
   | declaration_specifiers declarator compound_statement {
-    const auto &symbol = tree.node($2)->get_symbol();
-    const auto &ret_type = tree.node($1)->get_type();
-    const auto &args = tree.node($2)->get_parameters_list();
+    const auto &symbol = tree.node($2).get_symbol();
+    const auto &ret_type = tree.node($1).get_type();
+    const auto &args = tree.node($2).get_parameters_list();
     $$ = tree.make_function_definition_node(ret_type, symbol, args);
     ParseScope::get_scope(scope_now).declaration(symbol, ParseFunction(ret_type,
       symbol, args));

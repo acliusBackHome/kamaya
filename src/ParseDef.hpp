@@ -217,6 +217,7 @@ enum ExceptionCode {
     EX_NODE_KEY_DEFINED_NOT_FOUND,// 节点的keys定义了该值,但是没有找见其对象
     EX_NODE_NOT_ALLOW_OP,//节点未定义的操作但调用之
     EX_TREE_NOT_INCOMPLETE,//树的结构不完整导致的异常
+    EX_TREE_NO_SUCH_NODE,//树中并没有指定id的节点
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H
