@@ -40,49 +40,7 @@ string ParseExpression::get_info() const {
                     &expr2 = get_expression(child[1]);
             sprintf(buff, "{ Expr-%zu ", child[0]);
             res += buff;
-            switch (expr_type) {
-                case E_ADD:
-                    res += "+";
-                    break;
-                case E_SUB:
-                    res += "-";
-                    break;
-                case E_MUL:
-                    res += "*";
-                    break;
-                case E_DIV:
-                    res += "/";
-                    break;
-                case E_POW:
-                    res += "^";
-                    break;
-                case E_LOGIC_OR:
-                    res += "||";
-                    break;
-                case E_LOGIC_AND:
-                    res += "&&";
-                    break;
-                case E_G:
-                    res += ">";
-                    break;
-                case E_GE:
-                    res += ">=";
-                    break;
-                case E_EQUAL:
-                    res += "==";
-                    break;
-                case E_NE:
-                    res += "!=";
-                    break;
-                case E_L:
-                    res += "<";
-                    break;
-                case E_LE:
-                    res += "<=";
-                    break;
-                default:
-                    break;
-            }
+            res += get_expr_type_name(expr_type);
             sprintf(buff, " Expr-%zu }, ", child[1]);
             res += buff;
             break;
@@ -108,8 +66,42 @@ string ParseExpression::get_info() const {
     return res;
 }
 
+string ParseExpression::get_expr_type_name(ExpressionType type) {
+    switch (type) {
+        case E_ADD:
+            return "+";
+        case E_SUB:
+            return "-";
+        case E_MUL:
+            return "*";
+        case E_DIV:
+            return "/";
+        case E_POW:
+            return "^";
+        case E_LOGIC_OR:
+            return "||";
+        case E_LOGIC_AND:
+            return "&&";
+        case E_G:
+            return ">";
+        case E_GE:
+            return ">=";
+        case E_EQUAL:
+            return "==";
+        case E_NE:
+            return "!=";
+        case E_L:
+            return "<";
+        case E_LE:
+            return "<=";
+        default:
+            break;
+    }
+    return "unknwon";
+}
+
 ParseExpression::ParseExpression() {
-    ret_type_id = T_UNKNOWN;
+    ret_type_id = (size_t) -1;
     child[0] = child[1] = expr_id = 0;
     const_value = 0;
     expr_type = E_UNDEFINED;
@@ -356,7 +348,18 @@ ParseExpression ParseExpression::generate_expression(
                 res.ret_type_id = expr2.get_ret_type().get_id();
             } else {
                 // 两者都是变量或者两者都是常量
-                res.ret_type_id = ParseType::wider_type(expr1.get_ret_type(), expr2.get_ret_type()).get_id();
+                try {
+                    res.ret_type_id = ParseType::wider_type(expr1.get_ret_type(), expr2.get_ret_type()).get_id();
+                } catch (ParseException &exc) {
+                    string info = "in ParseExpression::generate_expression("
+                                  "ExpressionType type, "
+                                  "const ParseExpression &expr1, "
+                                  "const ParseExpression &expr2)";
+                    info += " expr1=" + to_string(expr1.get_id());
+                    info += " expr2=" + to_string(expr2.get_id());
+                    exc.push_trace(info);
+                    throw exc;
+                }
                 if (expr1.is_const() && expr2.is_const()) {
                     res.calculate_const();
                 }
@@ -398,7 +401,7 @@ void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_
     if (from_expr.is_const()) {
         expr.const_value = (size_t) new ParseConstant(*(ParseConstant *) from_expr.const_value);
     } else {
-        expr.const_value = (size_t)-1;
+        expr.const_value = (size_t) -1;
     }
     switch (expr.expr_type = from_expr.expr_type) {
         case E_UNDEFINED:
@@ -444,9 +447,10 @@ const ParseConstant &ParseExpression::get_const() const {
 }
 
 const ParseType &ParseExpression::get_ret_type() const {
-    if (ret_type_id) {
+    if (ret_type_id != (size_t) -1) {
         return ParseType::get_type(ret_type_id);
     }
+    // -1表示未经过计算
     switch (expr_type) {
         case E_ADD:
         case E_SUB:
@@ -455,9 +459,16 @@ const ParseType &ParseExpression::get_ret_type() const {
         case E_MOD:
         case E_POW: {
             size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
-            ret_cache = ParseType::wider_type(
-                    get_expression(child[0]).get_ret_type(), get_expression(child[1]).get_ret_type()
-            ).get_id();
+            try {
+                ret_cache = ParseType::wider_type(
+                        get_expression(child[0]).get_ret_type(), get_expression(child[1]).get_ret_type()
+                ).get_id();
+            } catch (ParseException &exc) {
+                string info = "in ParseExpression::get_ret_type()";
+                info += " expr=" + to_string(get_id());
+                exc.push_trace(info);
+                throw exc;
+            }
             return ParseType::get_type(ret_cache);
         }
         case E_CONST: {
@@ -490,6 +501,7 @@ const ParseType &ParseExpression::get_ret_type() const {
         case E_UNDEFINED:
             break;
     }
+    ((ParseExpression *) this)->ret_type_id = 0;
     return ParseType::get_type(T_UNKNOWN);
 }
 
@@ -564,7 +576,8 @@ void ParseExpression::calculate_const() {
                 // 不是常量退出
                 break;
             }
-            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(child[1]).get_const();
+            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(
+                    child[1]).get_const();
             ConstValueType ret_const_type = ParseConstant::wider_const_type(const1.get_type(), const2.get_type());
             if (ret_const_type == C_UNDEFINED) {
                 break;
@@ -707,7 +720,8 @@ void ParseExpression::calculate_const() {
                 // 不是常量退出
                 break;
             }
-            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(child[1]).get_const();
+            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(
+                    child[1]).get_const();
             if (const1.get_type() == C_UNDEFINED || const2.get_type() == C_UNDEFINED) {
                 break;
             }
@@ -738,7 +752,8 @@ void ParseExpression::calculate_const() {
                 // 不是常量退出
                 break;
             }
-            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(child[1]).get_const();
+            const ParseConstant &const1 = get_expression(child[0]).get_const(), &const2 = get_expression(
+                    child[1]).get_const();
             if (const1.get_type() == C_UNDEFINED || const2.get_type() == C_UNDEFINED) {
                 break;
             }

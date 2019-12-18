@@ -131,7 +131,8 @@ public:
     static const ParseType &get_type(size_t type_id);
 
     /**
-     * 获取进行基本运算后自动类型转化后的类型
+     * 获取进行基本运算后自动类型转化后的类型, 如果不能够自动类型转化
+     * 抛出异常
      * @param type1
      * @param type2
      */

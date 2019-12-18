@@ -61,7 +61,6 @@ public:
 private:
     ExceptionCode code;// 异常代码
     vector<string> trace;// 异常信息栈
-    string what_str;// 用于存储抛出异常时的字符串
 };
 
 

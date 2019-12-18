@@ -62,6 +62,13 @@ public:
     static const ParseExpression &get_expression(size_t expr_id);
 
     /**
+     * 获取表达式类型的名字
+     * @param type
+     * @return
+     */
+    static string get_expr_type_name(ExpressionType type);
+
+    /**
      * 生成一个只有变量的表达式, 自动注册其id
      * @param variable
      * @return

@@ -224,6 +224,7 @@ enum ExceptionCode {
     EX_DECLARATION_NOT_FOUND,//符号已声明但没有找到其记录,bug
     EX_EXPRESSION_NOT_CONST,//试图获取不可在编译期获取值的表达式时抛出的异常
     EX_EXPRESSION_DIVIDE_ZERO,//除0异常
+    EX_TYPE_CAN_NOT_CONVERT,//不能进行类型转化异常
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

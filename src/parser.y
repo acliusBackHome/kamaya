@@ -1,12 +1,75 @@
 %locations
 %define parse.error verbose
 %{
-  #include "kamaya.hpp"
-  using namespace std;
-  int yylex(void);
-  char buff[1024];
-  // 当前全局语句块空间, 用于声明的时候
-  size_t scope_now = 0;
+#include "kamaya.hpp"
+using namespace std;
+int yylex(void);
+char buff[1024];
+// 当前全局语句块空间, 用于声明的时候
+size_t scope_now = 0;
+
+/**
+ * 处理规约表达式中的双目表达式的处理方式抽取
+ * @param expr_1
+ * @param expr_2
+ * @param expr_type 表达式操作符
+ * @param where 用于标识位置信息
+ * @param op 操作符字符串
+ */
+size_t handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionType expr_type) {
+    const ParseExpression &expr1 = tree.node(expr_1).get_expression(),
+            &expr2 = tree.node(expr_2).get_expression();
+    try {
+        switch (expr_type) {
+            case E_ADD:
+                return tree.make_expression_node(expr1 + expr2);
+            case E_SUB:
+                return tree.make_expression_node(expr1 - expr2);
+            case E_MUL:
+                return tree.make_expression_node(expr1 * expr2);
+            case E_DIV:
+                return tree.make_expression_node(expr1 / expr2);
+            case E_MOD:
+                return tree.make_expression_node(expr1 % expr2);
+            case E_POW:
+                return tree.make_expression_node(expr1 ^ expr2);
+            case E_LOGIC_OR:
+            case E_LOGIC_AND:
+            case E_G:
+            case E_GE:
+            case E_EQUAL:
+            case E_NE:
+            case E_L:
+            case E_LE:
+                return tree.make_expression_node(
+                        ParseExpression::get_logic_expression(expr_type, expr1, expr2)
+                );
+            default:
+                // 保证调用不到
+                break;
+        }
+    } catch (ParseException &exc) {
+        generating_code = false;
+        if (exc.get_code() != EX_TYPE_CAN_NOT_CONVERT) {
+            // 这一层只处理不能进行自动类型转化的表达式
+            string info = "in handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionType expr_type)";
+            info += " expr1=" + to_string(expr1.get_id());
+            info += " expr2=" + to_string(expr2.get_id());
+            info += " expr_type=" + ParseExpression::get_expr_type_name(expr_type);
+            exc.push_trace(info);
+            throw exc;
+        }
+        const ParseType &type1 = expr1.get_ret_type(), &type2 = expr2.get_ret_type();
+        if (type1.get_id() != T_UNKNOWN && type2.get_id() != T_UNKNOWN) {
+            string error_info = to_string(yylineno) + ": error : no match operator ";
+            error_info += ParseExpression::get_expr_type_name(expr_type);
+            error_info += " between " + type1.get_info() + " and " + type2.get_info();
+            parse_error_strs.emplace_back(error_info);
+        }
+        return tree.make_expression_node(ParseExpression());
+    }
+}
+
 %}
 
 %token MAIN RETURN
@@ -60,12 +123,12 @@ primary_expression
       generating_code = false;
       if(exc.get_code() != EX_NOT_DECLARED) {
       	// 这一层只处理变量未声明的异常
-        string info = "in id_delaration->primary_expression,";
+        string info = "in id_delaration->primary_expression";
         exc.push_trace(info);
       	throw exc;
       }
       // 将错误信息记录后声明一个符号为symbol的无效的变量
-      string error_info = to_string(yylineno) + ": '";
+      string error_info = to_string(yylineno) + ": error :'";
       error_info += symbol + "' was not declared in this scope";
       parse_error_strs.emplace_back(error_info);
       ParseScope::get_scope(scope_now).declaration(symbol, ParseVariable(ParseType(T_UNKNOWN), symbol));
@@ -222,10 +285,7 @@ power_expression
     $$ = $1;
   }
   | cast_expression XOR power_expression {
-    $$ = tree.make_expression_node(
-      tree.node($1).get_expression() ^
-      tree.node($3).get_expression()
-    );
+    $$ = handle_expression($1, $3, E_POW);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -236,26 +296,17 @@ multiplicative_expression
     $$ = $1;
   }
   | multiplicative_expression MUL power_expression {
-    $$ = tree.make_expression_node(
-      tree.node($1).get_expression() *
-      tree.node($3).get_expression()
-    );
+    $$ = handle_expression($1, $3, E_MUL);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | multiplicative_expression DIV power_expression {
-    $$ = tree.make_expression_node(
-      tree.node($1).get_expression() /
-      tree.node($3).get_expression()
-    );
+    $$ = handle_expression($1, $3, E_DIV);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | multiplicative_expression MOD power_expression {
-    $$ = tree.make_expression_node(
-      tree.node($1).get_expression() %
-      tree.node($3).get_expression()
-    );
+    $$ = handle_expression($1, $3, E_MOD);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -266,18 +317,12 @@ additive_expression
     $$ = $1;
   }
   | additive_expression ADD multiplicative_expression {
-    $$ = tree.make_expression_node(
-      tree.node($1).get_expression() +
-      tree.node($3).get_expression()
-    );
+    $$ = handle_expression($1, $3, E_ADD);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
   | additive_expression SUB multiplicative_expression {
-    $$ = tree.make_expression_node(
-      tree.node($1).get_expression() -
-      tree.node($3).get_expression()
-    );
+    $$ = handle_expression($1, $3, E_SUB);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -304,10 +349,7 @@ relational_expression
     $$ = $1;
   }
   | relational_expression LT shift_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_L,
-      tree.node($1).get_expression(),
-      tree.node($3).get_expression()
-      ));
+    $$ = handle_expression($1, $3, E_L);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
@@ -316,10 +358,7 @@ relational_expression
     }
   }
   | relational_expression LE shift_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LE,
-      tree.node($1).get_expression(),
-      tree.node($3).get_expression()
-      ));
+    $$ = handle_expression($1, $3, E_LE);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
@@ -328,10 +367,7 @@ relational_expression
     }
   }
   | relational_expression GT shift_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_G,
-      tree.node($1).get_expression(),
-      tree.node($3).get_expression()
-      ));
+    $$ = handle_expression($1, $3, E_G);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
@@ -340,10 +376,7 @@ relational_expression
     }
   }
   | relational_expression GE shift_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_GE,
-      tree.node($1).get_expression(),
-      tree.node($3).get_expression()
-      ));
+    $$ = handle_expression($1, $3, E_GE);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
@@ -358,10 +391,7 @@ equality_expression
     $$ = $1;
   }
   | equality_expression EQ relational_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_EQUAL,
-      tree.node($1).get_expression(),
-      tree.node($3).get_expression()
-      ));
+    $$ = handle_expression($1, $3, E_EQUAL);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
@@ -370,10 +400,7 @@ equality_expression
     }
   }
   | equality_expression NE relational_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_NE,
-      tree.node($1).get_expression(),
-      tree.node($3).get_expression()
-      ));
+    $$ = handle_expression($1, $3, E_NE);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
@@ -422,10 +449,7 @@ logic_and_expression
     $$ = $1;
   }
   | logic_and_expression LOGICAND backpatch_instr inclusive_or_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_AND,
-      tree.node($1).get_expression(),
-      tree.node($4).get_expression()
-      ));
+    $$ = handle_expression($1, $4, E_LOGIC_AND);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
@@ -447,10 +471,7 @@ logic_or_expression
     $$ = $1;
   }
   | logic_or_expression LOGICOR backpatch_instr logic_and_expression {
-    $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LOGIC_OR,
-      tree.node($1).get_expression(),
-      tree.node($4).get_expression()
-      ));
+    $$ = handle_expression($1, $4, E_LOGIC_OR);
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
@@ -1269,7 +1290,10 @@ selection_statement
   | IF LP expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
     $$ = tree.new_node("if else statement");
     tree.set_parent($3, $$);
+    tree.set_parent($5, $$);
     tree.set_parent($6, $$);
+    tree.set_parent($7, $$);
+    tree.set_parent($9, $$);
     tree.set_parent($10, $$);
 
     IR_EMIT {
