@@ -1,7 +1,5 @@
 int main() {
-  if (true) {
-    int a = 0;
-    int b = 1 + 1;
+  if (1<2) {
   }
   return 0;
 }

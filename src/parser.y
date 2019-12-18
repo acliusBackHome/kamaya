@@ -83,6 +83,10 @@ primary_expression
   }
   | LP expression RP {
     $$ = $2;
+
+    IR_EMIT {
+      // 已经向上传递 truelist falselist
+    }
   }
   ;
 
@@ -161,6 +165,11 @@ unary_expression
     $$ = tree.new_node("prefix expression");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
+
+    IR_EMIT {
+      ParseNode& testNode = tree.node($1);
+      // TODO
+    }
   }
   | SIZEOF LP unary_expression RP {
     $$ = tree.new_node("sizeof");
@@ -301,6 +310,17 @@ relational_expression
       ));
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
+
+    IR_EMIT {
+      ParseNode& B = tree.node($$);
+      const ParseNode& E1 = tree.node($1);
+      const ParseNode& E2 = tree.node($3);
+
+      B.set_true_list(ir.makelist(ir.getNextinstr()));
+      B.set_false_list(ir.makelist(ir.getNextinstr()+1));
+      ir.gen("j<", to_string(E1.get_expression().get_id()), to_string(E2.get_expression().get_id()), "_");
+      ir.gen("jmp", "_", "_", "_");
+    }
   }
   | relational_expression LE shift_expression {
     $$ = tree.make_expression_node(ParseExpression::get_logic_expression(E_LE,
@@ -394,6 +414,7 @@ logic_and_expression
       tree.node($4).get_expression()
       ));
     tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
     tree.set_parent($4, $$);
 
     IR_EMIT {
@@ -418,6 +439,7 @@ logic_or_expression
       tree.node($4).get_expression()
       ));
     tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
     tree.set_parent($4, $$);
 
     IR_EMIT {
