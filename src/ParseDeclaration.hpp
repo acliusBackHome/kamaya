@@ -6,6 +6,7 @@
 
 #include "ParseDef.hpp"
 #include "ParseType.hpp"
+#include "ParseException.hpp"
 
 /**
  * 用于表示变量记录
@@ -309,14 +310,14 @@ public:
     void declaration(const string &symbol, const ParseFunction &function);
 
     /**
-    * 获取声明的函数, 如果没有对应记录, 警告并返回无效声明
+    * 获取声明的函数, 如果没有对应记录, 会抛出异常
     * @param symbol
     * @return
     */
     vector<ParseFunction> get_function_declaration(const string &symbol);
 
     /**
-     *获取声明的变量, 如果没有对应记录, 警告并返回无效声明
+     *获取声明的变量, 如果没有对应记录, 会抛出异常
      * @param symbol
      * @return
      */

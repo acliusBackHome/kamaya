@@ -9,10 +9,11 @@ using namespace x86;
 map<int, string> nameTable;
 map<string, string> symbolTabel;
 map<string, string> stringTabel;
-vector<string> filestrings, errorStrings;
+vector<string> filestrings, errorStrings, parse_error_strs;
 ParseTree tree("program");
 string before;
 int yycolumn = 0;
+bool generating_code = true;
 FILE* file;
 Assembler assembler(cout);
 IR ir;
@@ -208,13 +209,18 @@ int main(int argc, char** argv) {
   printf("所有语句块空间声明:\n");
   ParseScope::print_all_declaration();
   int sz = tree.error_cnt();
-  if (sz) {
+  if (sz || !parse_error_strs.empty()) {
     cout << "错误报告" << endl;
+    // 语法错误
     for(int i = 0; i < sz; i++) {
       size_t eid = tree.get_error(i);
       size_t pid = tree.get_parent(eid);
       cout << inputFile + ": In " << to_string(pid) << ": " << tree.get_msg(pid) << endl;
       cout << errorStrings[i] << endl;
+    }
+    // 语义错误
+    for(const auto &each : parse_error_strs) {
+      cout << inputFile << ":" << each << endl;
     }
   }
   ir.print();

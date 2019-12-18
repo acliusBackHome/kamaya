@@ -530,7 +530,6 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
     for (const auto &each : init_dec_list) {
         const string &symbol = get<0>(each);// 变量符号
         const ParseExpression &init_expr = get<1>(each);// 初始化表达式
-        // TODO: 产生将初始化表达式赋值给变量的代码
         bool is_ptr = get<2>(each);// 是否声明为指针
         const size_t &array_size = get<3>(each),// 数组大小: 如果为0, 则表明不是数组
                 &param_list_node = get<4>(each)// 声明为函数时的参数列表节点, 如果不声明为函数该值为0
