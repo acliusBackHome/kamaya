@@ -1,4 +1,5 @@
 #include "kamaya.hpp"
+
 using namespace std;
 
 void initName(){
@@ -66,10 +67,10 @@ void initName(){
 }
 
 string getName(int token) {
-  if (nameTable.find(token) != nameTable.end()) {
-    return nameTable[token];
-  }
-  return string("unknown");
+    if (nameTable.find(token) != nameTable.end()) {
+        return nameTable[token];
+    }
+    return string("unknown");
 }
 
 void yyUserActon() {

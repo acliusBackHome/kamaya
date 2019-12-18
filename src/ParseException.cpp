@@ -7,7 +7,7 @@
 ParseException::ParseException() : code(EX_UNKNOWN) {}
 
 ParseException::ParseException(ExceptionCode _code, const string &msg) : code(_code) {
-    if(msg.empty()) {
+    if (msg.empty()) {
         return;
     }
     trace.emplace_back(msg);
@@ -21,9 +21,9 @@ string ParseException::get_info() const {
     auto &temp_what = (string &) what_str;
     temp_what = "ParseException {\n  code:";
     temp_what += get_code_msg(code) + ",\n";
-    for (size_t i = trace.size() - 1; ; --i) {
-        temp_what += "  "+ trace[i] + ",\n";
-        if(!i) {
+    for (size_t i = trace.size() - 1;; --i) {
+        temp_what += "  " + trace[i] + ",\n";
+        if (!i) {
             break;
         }
     }
@@ -54,8 +54,8 @@ void ParseException::push_trace(const string &_trace) {
 }
 
 const char *ParseException::what() const noexcept {
-    const string& info = get_info();
-    char* temp = new char[get_info().length() + 1];
+    const string &info = get_info();
+    char *temp = new char[get_info().length() + 1];
     strcpy(temp, get_info().c_str());
     return temp;
 }

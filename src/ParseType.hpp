@@ -16,11 +16,11 @@ class ParseType {
 
 public:
 
-     /**
-      * 通过基本类型构造Type
-      * @param b_type 基本类型
-      * @param spe 修饰符
-      */
+    /**
+     * 通过基本类型构造Type
+     * @param b_type 基本类型
+     * @param spe 修饰符
+     */
     explicit ParseType(BaseType b_type, int spe = 0);
 
     /**
