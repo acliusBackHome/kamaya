@@ -191,14 +191,30 @@ int main(int argc, char** argv) {
   initName();
   try {
     yyparse();
+    int sz = tree.error_cnt();
+    if (sz || !parse_error_strs.empty()) {
+      cout << "错误报告:" << endl;
+      // 语法错误
+      for(int i = 0; i < sz; i++) {
+        size_t eid = tree.get_error(i);
+        size_t pid = tree.get_parent(eid);
+        cout << inputFile + ": In " << to_string(pid) << ": " << tree.get_msg(pid) << endl;
+        cout << errorStrings[i] << endl;
+      }
+      // 语义错误
+      for(const auto &each : parse_error_strs) {
+        cout << inputFile << ":" << each << endl;
+      }
+    }
     // 连接错误结点
+    printf("语法分析树:\n");
     tree.last_combine();
     tree.print();
   } catch (ParseException &exc) {
     printf("未处理异常:%s\n", exc.get_info().c_str());
+    printf("语法分析树:\n");
     tree.print();
   }
-
   fclose(file);
 
   printf("节点数%lu\n已扫描的行数 %d \n", tree.get_node_num(), yylineno);
@@ -206,23 +222,9 @@ int main(int argc, char** argv) {
   ParseType::print_all_type();
   printf("所有表达式:\n");
   ParseExpression::print_all_expression();
-  printf("所有语句块空间声明:\n");
+  printf("所有作用域声明:\n");
   ParseScope::print_all_declaration();
-  int sz = tree.error_cnt();
-  if (sz || !parse_error_strs.empty()) {
-    cout << "错误报告" << endl;
-    // 语法错误
-    for(int i = 0; i < sz; i++) {
-      size_t eid = tree.get_error(i);
-      size_t pid = tree.get_parent(eid);
-      cout << inputFile + ": In " << to_string(pid) << ": " << tree.get_msg(pid) << endl;
-      cout << errorStrings[i] << endl;
-    }
-    // 语义错误
-    for(const auto &each : parse_error_strs) {
-      cout << inputFile << ":" << each << endl;
-    }
-  }
+  
   ir.print();
   // assembler.setSectionData(ParseScope::emitData2Nasm());
   // assembler.setSectionText(ParseScope::emitText2Nasm());
