@@ -1,4 +1,6 @@
 #include "IR.hpp"
+#include "ParseTree.hpp"
+#include "ParseNode.hpp"
 
 void IR::print() {
   cout << "quas" << endl;
@@ -30,4 +32,14 @@ void IR::recordBegin() {
 
 void IR::recordEnd() {
   offset = stkpop();
+}
+
+void IR::relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, string relop) {
+  ParseNode& B = tree.node(p0);
+  const ParseNode& E1 = tree.node(p1);
+  const ParseNode& E2 = tree.node(p3);
+  B.set_true_list(makelist(getNextinstr()));
+  B.set_false_list(makelist(getNextinstr()+1));
+  gen(relop, to_string(E1.get_expression().get_address()), to_string(E2.get_expression().get_address()), "_");
+  gen("jmp", "_", "_", "_");
 }
