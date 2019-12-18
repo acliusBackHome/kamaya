@@ -145,6 +145,12 @@ public:
      */
     bool is_defined() const;
 
+    /**
+     * 判断该表达式是否是常量
+     * @return
+     */
+    bool is_const() const;
+
     ParseExpression();
 
     /**
