@@ -198,6 +198,10 @@ size_t ParseType::get_size() const {
     return type_size;
 }
 
+size_t ParseType::get_array_size() const {
+    return array_size;
+}
+
 void ParseType::assign(ParseType &type, const ParseType &from_type) {
     delete type.fields;
     if (from_type.fields) {
@@ -636,6 +640,5 @@ bool ParseType::cmp_wider_type(size_t t1_id, size_t t2_id) {
         }
     }
 }
-
 
 #pragma clang diagnostic pop
