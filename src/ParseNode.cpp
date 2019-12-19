@@ -118,6 +118,10 @@ string ParseNode::get_node_type_name(NodeType type) noexcept {
             return "back_patch_instr";
         case N_BP_NEXT_LIST:
             return "back_patch_next_list";
+        case N_IF_STMT:
+            return "if_statement";
+        case N_BI_LIST:
+            return "block_item_list";
     }
     return "unknown";
 }

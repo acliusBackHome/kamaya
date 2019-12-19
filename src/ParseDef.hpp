@@ -132,6 +132,10 @@ enum NodeType {
             N_BP_INST = 20,
     //回填next_list
             N_BP_NEXT_LIST = 21,
+    // if语句
+            N_IF_STMT = 22,
+    // 语句列表
+            N_BI_LIST = 23
 };
 
 // 用64位整数表示该节点所拥有的键值
