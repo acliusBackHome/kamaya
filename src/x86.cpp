@@ -1,39 +1,44 @@
 #include "x86.hpp"
-#define TAB of<<T
+#define TAB of << T
 namespace x86 {
-  const string Assembler::T = "\t";
-  const string Assembler::N = "\n";
-  const string Assembler::C = ",";
-  const string Assembler::L = ":";
-  string Assembler::getWideStr(size_t size) {
-    /*
-      db 1
-      dw 2
-      dd 4
-      dq 8
-      */
-    switch(size) {
-      case 1: return "db";
-      case 2: return "dw";
-      case 4: return "dd";
-      case 8: return "dq";
-    }
-    cerr << "IN getWide: ERROR SIZE " << to_string(size) << N;
-    exit(1);
+const string Assembler::T = "\t";
+const string Assembler::N = "\n";
+const string Assembler::C = ",";
+const string Assembler::L = ":";
+string Assembler::getWideStr(size_t size) {
+  /*
+    db 1
+    dw 2
+    dd 4
+    dq 8
+    */
+  switch (size) {
+  case 1:
+    return "db";
+  case 2:
+    return "dw";
+  case 4:
+    return "dd";
+  case 8:
+    return "dq";
   }
-  void Assembler::handleData(){
-    for (auto i : sectionData) {
-      of << i.first << L << T << Assembler::getWideStr(i.second.get_type().get_size()) << T << "0" << N;
-    }
-  }
-  void Assembler::setSectionData(map<string, ParseVariable> data) {
-    sectionData = data;
-  }
-  void Assembler::setSectionText(map<string, ParseFunction> text) {
-    sectionText = text;
+  cerr << "IN getWide: ERROR SIZE " << to_string(size) << N;
+  exit(1);
+}
+void Assembler::handleData() {
+  for (auto i : sectionData) {
+    of << i.first << L << T
+       << Assembler::getWideStr(i.second.get_type().get_size()) << T << "0"
+       << N;
   }
 }
-void x86::Assembler::handleNasm() {
+void Assembler::setSectionData(map<string, ParseVariable> data) {
+  sectionData = data;
+}
+void Assembler::setSectionText(map<string, ParseFunction> text) {
+  sectionText = text;
+}
+void Assembler::handleNasm() {
   handleProgram();
   of << T << "section" << T << ".text" << N;
   // handleFunction();
@@ -43,10 +48,8 @@ void x86::Assembler::handleNasm() {
   of << T << "section" << T << ".data" << N;
   handleData();
 }
-void x86::Assembler::handleProgram() {
-  of << T << "global main" << N;
-}
-void x86::Assembler::handleFunction(ParseFunction func) {
+void Assembler::handleProgram() { of << T << "global main" << N; }
+void Assembler::handleFunction(ParseFunction func) {
   of << func.get_symbol() << L << N;
   TAB; push("ebp");
   TAB; mov("ebp", "esp");
@@ -67,3 +70,4 @@ void x86::Assembler::handleFunction(ParseFunction func) {
   TAB; of << "leave" << N;
   TAB; of << "ret" << N;
 }
+} // namespace x86

@@ -1282,7 +1282,6 @@ backpatch_instr : {
 
   IR_EMIT {
     tree.node($$).set_instr(ir.getNextinstr());
-    cout << tree.node($$).get_instr() << endl;
   }
 };
 
