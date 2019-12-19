@@ -34,21 +34,9 @@ void IR::recordBegin() {
 
 void IR::recordEnd() { offset = stkpop(); }
 
-void IR::relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3,
-                   string relop) {
-  ParseNode &B = tree.node(p0);
-  const ParseNode &E1 = tree.node(p1);
-  const ParseNode &E2 = tree.node(p3);
-  B.set_true_list(makelist(getNextinstr()));
-  B.set_false_list(makelist(getNextinstr() + 1));
-  gen(relop, to_string(E1.get_expression().get_address()),
-      to_string(E2.get_expression().get_address()), "_");
-  gen("jmp", "_", "_", "_");
-}
-
 // 也许没用
 void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
-                  const string &symbol, ParseTree &tree) {
+                  const string &symbol, ParseTree &tree, size_t node_id) {
   addOffset(this_type.get_size());
   if (init_expr.is_const()) {
     const ParseConstant &E = init_expr.get_const();
@@ -71,7 +59,7 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       cout << "other constant type" << endl;
       break;
     }
-    gen(":=", arg1, "_", symbol);
+    gen(":=", arg1, "_", symbol, node_id);
   } else {
     ExpressionType exp_type = init_expr.get_expr_type();
     string op = "_", arg1 = "_", arg2 = "_", result = "_";
@@ -147,7 +135,18 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
     // result = to_string(init_expr.get_id());
     result = symbol;
     if (op != "_") {
-      gen(op, arg1, arg2, result);
+      gen(op, arg1, arg2, result, node_id);
     }
   }
+}
+
+
+void IR::relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, const string &relop, size_t node_id) {
+  ParseNode& B = tree.node(p0);
+  const ParseNode& E1 = tree.node(p1);
+  const ParseNode& E2 = tree.node(p3);
+  B.set_true_list(makelist(getNextinstr()));
+  B.set_false_list(makelist(getNextinstr()+1));
+  gen(relop, to_string(E1.get_expression().get_address()), to_string(E2.get_expression().get_address()), "_", node_id);
+  gen("jmp", "_", "_", "_", node_id);
 }

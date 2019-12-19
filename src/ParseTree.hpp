@@ -329,6 +329,7 @@ private:
     map<size_t, vector<size_t> > node_next_list;
     map<size_t, vector<ParseVariable> > node_param_list;
     map<size_t, InitDeclarator> node_init_dec;
+    map<size_t, size_t> node_begin_code;
 
     // 建立NodeKey枚举到相应的map地址的映射在Node类里用来
     // 用模板将类型强制转换回来, 减少代码量

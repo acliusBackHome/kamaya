@@ -7,9 +7,13 @@
 #include <iostream>
 #include <stack>
 
+class ParseTree;
+
 extern bool generating_code;
 
-#define IR_EMIT if(generating_code) // do no thing now
+void set_node_begen_code(size_t node_id, size_t code_id);
+
+#define IR_EMIT if(generating_code)
 
 using namespace std;
 
@@ -56,8 +60,13 @@ class IR {
     size_t ret = stk.top(); stk.pop();
     return ret;
   }
-  inline void gen(string op, string arg1, string arg2, string result) {
+  inline void gen(const string &op, const string &arg1,
+                  const string &arg2, const string &result, size_t node_id) {
     quas.push_back(make_tuple(op, arg1, arg2, result));
+    if(node_id) {
+      // 设置该节点的第一条指令编号
+      set_node_begen_code(node_id, nextinstr);
+    }
     nextinstr++;
   }
   inline void label(size_t *addr) {
@@ -74,8 +83,8 @@ class IR {
   void backpatch(const vector<size_t> &p, size_t i);
   void recordBegin();
   void recordEnd();
-  void relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, string relop);
-  void exprEmit(const ParseExpression &init_expr, const ParseType &this_type, const string &symbol, ParseTree &tree);
+  void exprEmit(const ParseExpression &init_expr, const ParseType &this_type, const string &symbol, ParseTree &tree, size_t node_id);
+  void relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, const string &relop, size_t node_id);
 };
 
 #endif

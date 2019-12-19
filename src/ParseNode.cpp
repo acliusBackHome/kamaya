@@ -66,6 +66,8 @@ string ParseNode::get_key_name(NodeKey type) noexcept {
             return "parameters_list";
         case K_INIT_DEC:
             return "init_declarator";
+        case K_BEGIN_CODE:
+            return "begin_code";
     }
     return "unknown";
 }
@@ -253,6 +255,9 @@ string ParseNode::get_node_info() const noexcept {
                             " }, ";
                     break;
                 }
+                case K_BEGIN_CODE:
+                    info += "begin_code: " + to_string(get_begin_code()) + ", ";
+                    break;
             }
         }
         each_key <<= 1;
@@ -262,6 +267,10 @@ string ParseNode::get_node_info() const noexcept {
 
 NodeType ParseNode::get_node_type() const {
     return type;
+}
+
+bool ParseNode::has_key(NodeKey key) {
+    return (keys & key) != 0;
 }
 
 //=========================set_key系列===========================
@@ -378,6 +387,11 @@ void ParseNode::set_init_dec(const InitDeclarator &init_dec) {
     set_field<InitDeclarator>(K_INIT_DEC, init_dec);
 }
 
+void ParseNode::set_begin_code(size_t begin_code) {
+    set_field<size_t>(K_BEGIN_CODE, begin_code);
+}
+
+
 void ParseNode::add_init_declarator(const InitDeclarator &init_declarator) {
     try {
         // 暂时转变为非常量引用
@@ -493,6 +507,10 @@ size_t ParseNode::get_false_jump() const {
     return get_field<size_t>(K_FALSE_JUMP);
 }
 
+size_t ParseNode::get_begin_code() const {
+    return get_field<size_t>(K_BEGIN_CODE);
+}
+
 const vector<size_t> &ParseNode::get_next_list() const {
     // 需求特殊性: 如果没有则先set为空, 再返回之
     if (!(keys & K_NEXT_LIST)) {
@@ -567,7 +585,7 @@ void ParseNode::action_variable_declaration_code_generate(
     if (init_expr.is_const()) {
         const ParseConstant &E = init_expr.get_const();
         if (E.get_type() == ConstValueType::C_SIGNED) {
-            ir.gen(":=", symbol, "_", to_string(E.get_signed()));
+            ir.gen(":=", symbol, "_", to_string(E.get_signed()), node_id);
         } // TODO: MORE TYPE
     } else {
         ExpressionType exp_type = init_expr.get_expr_type();
@@ -606,7 +624,7 @@ void ParseNode::action_variable_declaration_code_generate(
             default:
                 break;
         }
-        ir.gen(op, arg1, arg2, result);
+        ir.gen(op, arg1, arg2, result, node_id);
     }
 }
 
@@ -801,5 +819,6 @@ void ParseNode::set_field(NodeKey key, const MapType &object, bool is_update) {
     }
     the_map.insert(pair<size_t, MapType>(node_id, object));
 }
+
 
 #pragma clang diagnostic pop

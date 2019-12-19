@@ -28,6 +28,13 @@ public:
     ParseNode(const ParseNode &other);
 
     /**
+     * 判断节点是否有某个键的记录
+     * @param key
+     * @return
+     */
+    bool has_key(NodeKey key);
+
+    /**
      * 获取节点的K_SYMBOL键对应的值
      * get_系列函数都会抛出ParseException异常
      */
@@ -160,9 +167,16 @@ public:
     size_t get_true_jump() const;
 
     /**
+     * 获取节点的K_FALSE_JUMP键值
      * get_系列函数都会抛出ParseException异常
      */
     size_t get_false_jump() const;
+
+    /**
+     * 获取节点的K_BEGIN_CODE键值
+     * get_系列函数都会抛出ParseException异常
+     */
+    size_t get_begin_code() const;
 
     /**
      * 获取节点的K_NEXT_LIST键值
@@ -346,6 +360,12 @@ public:
      * @param init_dec
      */
     void set_init_dec(const InitDeclarator &init_dec);
+
+    /**
+     * 设置节点的K_BEGIN_CODE
+     * @param code
+     */
+    void set_begin_code(size_t begin_code);
 
     /**
      * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator

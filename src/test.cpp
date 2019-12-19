@@ -10,6 +10,10 @@ void expr_call_back(const ParseExpression& expression) {
 
 }
 
+void set_node_begen_code(size_t node_id, size_t code_id) {
+
+}
+
 using namespace std;
 
 void test_parse_type() {

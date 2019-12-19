@@ -32,6 +32,7 @@ ParseTree::ParseTree(const string &msg) {
     node_key2map[K_NEXT_LIST] = (size_t) &node_next_list;
     node_key2map[K_PARAM_LIST] = (size_t) &node_param_list;
     node_key2map[K_INIT_DEC] = (size_t) &node_init_dec;
+    node_key2map[K_BEGIN_CODE] = (size_t) &node_begin_code;
     // 初始化可搜索节点
     search_able.insert(HasNodeKey(K_SYMBOL, N_DIRECT_DEC, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_SYMBOL, N_DIRECT_DEC, N_IDENTIFIER));
@@ -80,6 +81,12 @@ void ParseTree::set_parent(size_t node_id, size_t parent) {
     }
     if (node_parent[node_id] == (size_t) (-1)) {
         node_parent[node_id] = parent;
+        if(nodes[parent].has_key(K_BEGIN_CODE) && nodes[node_id].has_key(K_BEGIN_CODE)) {
+            // 如果父节点没有K_BEGIN_CODE键值且孩子
+            // 拥有键值K_BEGIN_CODE, 那么其K_BEGIN_CODE将
+            // 传到其父节点也就是该节点上 
+            nodes[parent].set_begin_code(nodes[node_id].get_begin_code());
+        }
         node_children[parent].push_back(node_id);
     } else {
         printf("该节点%zu已经有了父节点%zu, 不能再设父节点为%zu\n", node_id, node_parent[node_id], parent);
