@@ -49,6 +49,12 @@ public:
     size_t get_size() const;
 
     /**
+     * 获取数组大小, 如果不是数组,该值为0
+     * @return
+     */
+    size_t get_array_size() const;
+
+    /**
      * 获取结构体中字段名对应的类型,如果不存在或者不是结构体
      * 返回无效类型
      * @param key
