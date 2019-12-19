@@ -1,7 +1,7 @@
 #ifndef NKU_PRACTICE_PARSE_DEF_H
 #define NKU_PRACTICE_PARSE_DEF_H
 
-#include<string>
+#include <string>
 #include <tuple>
 
 using namespace std;
@@ -23,6 +23,8 @@ class ParseException;
 
 // 表示语法树的数据结构
 class ParseTree;
+
+class IR;
 
 //类型声明所需信息<符号, 初始化赋值表达式, 声明的指针级数(如果不是指针为0), 数组大小(如果不是数组则是0,
 // 没有声明大小为(size_t)-1, 参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
@@ -181,8 +183,10 @@ enum NodeKey {
             K_PARAM_LIST = 1 << 20,
     // 初始化声明器 InitDeclarator
             K_INIT_DEC = 1 << 21,
+    // 节点的第一条代码编号
+            K_BEGIN_CODE = 1 << 22,
 };
-#define NUM_OF_NODE_KEY_TYPE 22
+#define NUM_OF_NODE_KEY_TYPE 23
 #define MAX_NODE_KEY_TYPE ((1 << (NUM_OF_NODE_KEY_TYPE - 1)) + 1)
 
 // 用于表示参数2所表示的节点中是否存在它的子节点中是否有参数1类型的唯一的key,
@@ -221,35 +225,6 @@ enum ExpressionType {
 // type1 和 type2分别表示ParseType的全局id
 // 如果是单目运算符参数T2无效,为03
 typedef tuple<ExpressionType, size_t, size_t> OpAble;
-//struct OpAble {
-//    ExpressionType expr_type;
-//    size_t type1, type2;
-//
-//    OpAble(ExpressionType e_type, size_t t1, size_t t2) {
-//        expr_type = e_type;
-//        type1 = t1;
-//        type2 = t2;
-//    }
-//
-//    bool operator<(const OpAble &other) const {
-//        if (expr_type < other.expr_type) {
-//            return true;
-//        } else if (expr_type > other.expr_type) {
-//            return false;
-//        }
-//        if (type1 < other.type1) {
-//            return true;
-//        } else if (type1 > other.type1) {
-//            return false;
-//        }
-//        if (type2 < other.type2) {
-//            return true;
-//        } else if (type2 > other.type2) {
-//            return false;
-//        }
-//        return false;
-//    }
-//};
 
 enum DeclarationType {
     D_UNKNOWN, //未知,可以占位
@@ -278,6 +253,6 @@ enum ExceptionCode {
     EX_EXPRESSION_CAN_NOT_ACCESS,//获取了获取的不该获取到的表达式ID, bug
 };
 
-void expr_call_back(const ParseExpression& expr);
+void expr_call_back(const ParseExpression &expr);
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

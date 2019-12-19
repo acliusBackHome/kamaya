@@ -71,7 +71,13 @@ size_t handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionTyp
 }
 
 void expr_call_back(const ParseExpression& expr) {
-} 
+}
+
+void set_node_begen_code(size_t node_id, size_t code_id) {
+  if(!(tree.node(node_id).has_key(K_BEGIN_CODE))) {
+    tree.node(node_id).set_begin_code(code_id);
+  }
+}
 
 %}
 
@@ -357,7 +363,7 @@ relational_expression
     tree.set_parent($3, $$);
 
     IR_EMIT {
-      ir.relopEmit(tree, $$, $1, $3, "j<");
+      ir.relopEmit(tree, $$, $1, $3, "j<", $$);
     }
   }
   | relational_expression LE shift_expression {
@@ -366,7 +372,7 @@ relational_expression
     tree.set_parent($3, $$);
 
     IR_EMIT {
-      ir.relopEmit(tree, $$, $1, $3, "j<=");
+      ir.relopEmit(tree, $$, $1, $3, "j<=", $$);
     }
   }
   | relational_expression GT shift_expression {
@@ -375,7 +381,7 @@ relational_expression
     tree.set_parent($3, $$);
 
     IR_EMIT {
-      ir.relopEmit(tree, $$, $1, $3, "j>");
+      ir.relopEmit(tree, $$, $1, $3, "j>", $$);
     }
   }
   | relational_expression GE shift_expression {
@@ -384,7 +390,7 @@ relational_expression
     tree.set_parent($3, $$);
 
     IR_EMIT {
-      ir.relopEmit(tree, $$, $1, $3, "j>=");
+      ir.relopEmit(tree, $$, $1, $3, "j>=", $$);
     }
   }
   ;
@@ -399,7 +405,7 @@ equality_expression
     tree.set_parent($3, $$);
 
     IR_EMIT {
-      ir.relopEmit(tree, $$, $1, $3, "j==");
+      ir.relopEmit(tree, $$, $1, $3, "j==", $$);
     }
   }
   | equality_expression NE relational_expression {
@@ -408,7 +414,7 @@ equality_expression
     tree.set_parent($3, $$);
 
     IR_EMIT {
-      ir.relopEmit(tree, $$, $1, $3, "j!=");
+      ir.relopEmit(tree, $$, $1, $3, "j!=", $$);
     }
   }
   | TRUE {
@@ -417,7 +423,7 @@ equality_expression
     IR_EMIT {
       ParseNode& B = tree.node($$);
       B.set_false_list(ir.makelist(ir.getNextinstr()));
-      ir.gen("jmp", "_", "_", "_");
+      ir.gen("jmp", "_", "_", "_", $$);
     }
   }
   | FALSE {
@@ -426,7 +432,7 @@ equality_expression
     IR_EMIT {
       ParseNode& B = tree.node($$);
       B.set_true_list(ir.makelist(ir.getNextinstr()));
-      ir.gen("jmp", "_", "_", "_");
+      ir.gen("jmp", "_", "_", "_", $$);
     }
   }
   ;
@@ -1291,7 +1297,7 @@ backpatch_next_list : {
   IR_EMIT {
     ParseNode& N = tree.node($$);
     N.set_next_list(ir.makelist(ir.getNextinstr()));
-    ir.gen("jmp", "_", "_", "_");
+    ir.gen("jmp", "_", "_", "_", $$);
   }
 }
 
@@ -1370,9 +1376,7 @@ iteration_statement
       ir.backpatch(B.get_true_list(), M2.get_instr());
       ir.backpatch(S1.get_next_list(), M1.get_instr());
       S.set_next_list(B.get_false_list());
-      ir.gen("jmp", "_", "_", to_string(M1.get_instr()));
-      
-
+      ir.gen("jmp", "_", "_", to_string(M1.get_instr()), $$);
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
