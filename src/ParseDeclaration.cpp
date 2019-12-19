@@ -670,6 +670,7 @@ void ParseScope::init() {
     ParseScope &static_scope = scopes[0];
     vector<size_t> ptr;
     ptr.emplace_back(0);
+    // 默认
     static_scope.symbol2dec_ptr[string()] = pair<DeclarationType, vector<size_t> >(D_UNKNOWN, ptr);
 }
 

@@ -1,6 +1,9 @@
 #include "ParseTree.hpp"
 #include <iostream>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 bool generating_code = true;
 
 using namespace std;
@@ -98,11 +101,30 @@ void test_scope() {
     ParseScope::print_all_declaration();
 }
 
+void test_expression() {
+    try {
+        ParseVariable a(ParseType(T_INT, S_LONG), "a"), b(ParseType(T_LONG, S_LONG), "b");
+        ParseExpression
+//                e1(ParseConstant((long long) 1)),
+//                e2(ParseConstant((long long) 2)),
+//                e3(ParseExpression::get_logic_expression(E_GE, e1, e2)),
+                e4(a), e5(b), e6(e4 + e5),
+        e7(ParseExpression::get_assign_expression(e4, e5));
+        ParseExpression::print_all_expression();
+    } catch (ParseException &exc) {
+        cout << exc.get_info() << endl;
+        ParseExpression::print_all_expression();
+    }
+}
+
 
 int main() {
-    test_parse_type();
-    test_make_node();
-    test_make_expression();
-    test_scope();
+    //test_parse_type();
+    //test_make_node();
+    //test_make_expression();
+    //test_scope();
+    test_expression();
     return 0;
 }
+
+#pragma clang diagnostic pop

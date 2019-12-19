@@ -2,6 +2,7 @@
 #define NKU_PRACTICE_PARSE_DEF_H
 
 #include<string>
+#include <tuple>
 
 using namespace std;
 
@@ -23,20 +24,20 @@ class ParseException;
 // 表示语法树的数据结构
 class ParseTree;
 
-//类型声明所需信息<符号, 初始化赋值表达式, 是否声明为指针, 数组大小(如果不是数组则是0,
+//类型声明所需信息<符号, 初始化赋值表达式, 声明的指针级数(如果不是指针为0), 数组大小(如果不是数组则是0,
 // 没有声明大小为(size_t)-1, 参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
-typedef tuple<string, ParseExpression, bool, size_t, size_t> InitDeclarator;
+typedef tuple<string, ParseExpression, size_t, size_t, size_t> InitDeclarator;
 
 // 基本类型的枚举
 enum BaseType {
     T_UNKNOWN = 0,
-    T_SHORT = 1,// 因为所占空间一样, 所以unsigned 没必要在这标出
-    T_INT = 2,
-    T_LONG = 3,// 其实就是long long 和unsigned long long的表示
-    T_FLOAT = 4,
-    T_DOUBLE = 5,
-    T_BOOL = 6,
-    T_CHAR = 7,
+    T_BOOL = 1,
+    T_CHAR = 2,
+    T_SHORT = 3,// 因为所占空间一样, 所以unsigned 没必要在这标出
+    T_INT = 4,
+    T_LONG = 5,// 其实就是long long 和unsigned long long的表示
+    T_FLOAT = 6,
+    T_DOUBLE = 7,
     T_ENUM = 8,
     T_VOID = 9,
     T_BASE = 9 //当type_id小于等于这个值时,说明是基本类型
@@ -122,6 +123,9 @@ enum NodeType {
     // for语句
     // 目前没有直接键值
             N_FOR_STMT = 18,
+    //指针标识节点
+    // ptr_lv 指针等级, 表示声明了多少级指针
+            N_POINTER = 19
 };
 
 // 用64位整数表示该节点所拥有的键值
@@ -137,7 +141,7 @@ enum NodeKey {
     // 类型, 用于类型声明中, ParseExpression
             K_TYPE = 1 << 3,
     // 是否声明为指针标记, bool
-            K_IS_PTR = 1 << 4,
+            K_PTR_LV = 1 << 4,
     // 函数记录, ParseFunction
             K_FUNCTION = 1 << 5,
     // 表达式记录, ParseExpression
@@ -183,14 +187,17 @@ typedef tuple<NodeKey, NodeType, NodeType> HasNodeKey;
 
 enum ExpressionType {
     E_UNDEFINED = 0,
+    E_VAR,// 变量值
+    E_CONST,// 常量
     E_ADD, //加
     E_SUB,// 减
     E_MUL,// 乘
     E_DIV,// 除
     E_MOD,// 取余
     E_POW,// 求幂
-    E_VAR,// 变量值
-    E_CONST,// 常量
+
+    // 逻辑运算
+
     E_NOT, //非 !
     E_LOGIC_OR,//逻辑或 ||
     E_LOGIC_AND,//逻辑与 &&
@@ -200,7 +207,45 @@ enum ExpressionType {
     E_NE,//不等于!=
     E_L,//小于<
     E_LE,// 小于等于
+
+    // 赋值运算符
+
+    E_ASSIGN, //等于
 };
+
+// 表示是否可以进行ExpressionType的运算符运算的记录
+// type1 和 type2分别表示ParseType的全局id
+// 如果是单目运算符参数T2无效,为03
+typedef tuple<ExpressionType, size_t, size_t> OpAble;
+//struct OpAble {
+//    ExpressionType expr_type;
+//    size_t type1, type2;
+//
+//    OpAble(ExpressionType e_type, size_t t1, size_t t2) {
+//        expr_type = e_type;
+//        type1 = t1;
+//        type2 = t2;
+//    }
+//
+//    bool operator<(const OpAble &other) const {
+//        if (expr_type < other.expr_type) {
+//            return true;
+//        } else if (expr_type > other.expr_type) {
+//            return false;
+//        }
+//        if (type1 < other.type1) {
+//            return true;
+//        } else if (type1 > other.type1) {
+//            return false;
+//        }
+//        if (type2 < other.type2) {
+//            return true;
+//        } else if (type2 > other.type2) {
+//            return false;
+//        }
+//        return false;
+//    }
+//};
 
 enum DeclarationType {
     D_UNKNOWN, //未知,可以占位
@@ -225,6 +270,8 @@ enum ExceptionCode {
     EX_EXPRESSION_NOT_CONST,//试图获取不可在编译期获取值的表达式时抛出的异常
     EX_EXPRESSION_DIVIDE_ZERO,//除0异常
     EX_TYPE_CAN_NOT_CONVERT,//不能进行类型转化异常
+    EX_EXPRESSION_CAN_NOT_GENERATE,//产生了错误的表达式, bug
+    EX_EXPRESSION_CAN_NOT_ACCESS,//获取了获取的不该获取到的表达式ID, bug
 };
 
 #endif //NKU_PRACTICE_PARSE_DEF_H

@@ -413,7 +413,7 @@ equality_expression
 
     IR_EMIT {
       ParseNode& B = tree.node($$);
-      B.set_true_list(ir.makelist(ir.getNextinstr()));
+      B.set_false_list(ir.makelist(ir.getNextinstr()));
       ir.gen("jmp", "_", "_", "_");
     }
   }
@@ -505,7 +505,27 @@ assignment_expression
     $$ = $1;
   }
   | unary_expression ASSIGN assignment_expression {
-    $$ = tree.new_node("expression operator = ");
+    const ParseExpression &u_expr = tree.node($1).get_expression(),
+                                          &a_expr = tree.node($3).get_expression();
+    try {
+      $$ = tree.make_expression_node(ParseExpression::get_assign_expression(u_expr, a_expr));
+    } catch (ParseException &exc) {
+        generating_code = false;
+        if (exc.get_code() != EX_TYPE_CAN_NOT_CONVERT) {
+            // 这一层只处理不能进行自动类型转化的表达式
+            string info = "in unary_expression ASSIGN assignment_expression->assignment_expression";
+            exc.push_trace(info);
+            throw exc;
+        }
+        const ParseType &u_type = u_expr.get_ret_type(), &a_type = a_expr.get_ret_type();
+        if (u_type.get_id() != T_UNKNOWN && a_type.get_id() != T_UNKNOWN) {
+            string error_info = to_string(yylineno) + ": error : can not convert ";
+            error_info += a_type.get_info() + " to ";
+            error_info += u_type.get_info();
+            parse_error_strs.emplace_back(error_info);
+        }
+        $$ =  tree.make_expression_node(ParseExpression());
+    }
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -866,8 +886,7 @@ function_specifier
 
 declarator
   : pointer direct_declarator {
-    $$ = tree.make_declarator_node(true);
-    // todo: 这里要将变量的类型更新为指针
+    $$ = tree.make_declarator_node(tree.node($1).get_ptr_lv());
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -929,15 +948,15 @@ direct_declarator
 
 pointer
   : MUL {
-    $$ = tree.new_node("pointer");
+    $$ = tree.make_pointer_node();
   }
   | MUL type_qualifier_list {
     $$ = tree.new_node("pointer");
     tree.set_parent($2, $$);
   }
   | MUL pointer {
-    $$ = tree.new_node("pointer");
-    tree.set_parent($1, $$);
+    $$ = $2;
+    tree.node($$).update_ptr_lv(tree.node($$).get_ptr_lv() + 1);
   }
   | MUL type_qualifier_list pointer {
     $$ = tree.new_node("pointer");
@@ -983,8 +1002,9 @@ parameter_list
 parameter_declaration
   : declaration_specifiers declarator {
     auto type = tree.node($1).get_type();
-    if(tree.node($2).get_is_pointer()) {
-      type = ParseType::get_pointer(type);
+    size_t ptr_lv = tree.node($2).get_ptr_lv();
+    if(ptr_lv) {
+      type = ParseType::get_pointer(type, ptr_lv);
     }
     if(tree.node($2).get_is_array()) {
       type = ParseType::get_array(type, (size_t)-1);
@@ -1285,6 +1305,8 @@ selection_statement
       ParseNode& S1 = tree.node($6);
       ir.backpatch(B.get_true_list(), M.get_instr());
       S.set_next_list(ir.merge(B.get_false_list(), S1.get_next_list()));
+
+      ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
   | IF LP expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
@@ -1308,6 +1330,8 @@ selection_statement
       ir.backpatch(B.get_false_list(), M2.get_instr());
       vector<size_t> temp = ir.merge(S1.get_next_list(), N.get_next_list());
       S.set_next_list(ir.merge(temp, S2.get_next_list()));
+
+      ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
   | SWITCH LP expression RP statement {

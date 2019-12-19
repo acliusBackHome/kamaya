@@ -14,7 +14,7 @@ ParseTree::ParseTree(const string &msg) {
     node_key2map[K_CONST] = (size_t) &node_const;
     node_key2map[K_VARIABLE] = (size_t) &node_variable;
     node_key2map[K_TYPE] = (size_t) &node_type;
-    node_key2map[K_IS_PTR] = (size_t) &node_is_ptr;
+    node_key2map[K_PTR_LV] = (size_t) &node_ptr_lv;
     node_key2map[K_FUNCTION] = (size_t) &node_function;
     node_key2map[K_EXPRESSION] = (size_t) &node_expression;
     node_key2map[K_IS_ARRAY] = (size_t) &node_is_array;
@@ -38,8 +38,8 @@ ParseTree::ParseTree(const string &msg) {
     search_able.insert(HasNodeKey(K_SYMBOL, N_DECLARATOR, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_SYMBOL, N_INIT_DECLARATOR, N_DECLARATOR));
     search_able.insert(HasNodeKey(K_TYPE, N_DECLARATION_SPE, N_TYPE_SPE));
-    search_able.insert(HasNodeKey(K_IS_PTR, N_INIT_DECLARATOR, N_DECLARATOR));
-    search_able.insert(HasNodeKey(K_IS_PTR, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_PTR_LV, N_INIT_DECLARATOR, N_DECLARATOR));
+    search_able.insert(HasNodeKey(K_PTR_LV, N_DECLARATOR, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_PARAM_LIST_NODE, N_DIRECT_DEC, N_PARAM_LIST));
     search_able.insert(HasNodeKey(K_PARAM_LIST_NODE, N_DECLARATOR, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_PARAM_LIST_NODE, N_INIT_DECLARATOR, N_DECLARATOR));
@@ -49,7 +49,6 @@ ParseTree::ParseTree(const string &msg) {
     search_able.insert(HasNodeKey(K_CONST, N_INITIALIZER, N_CONST));
     search_able.insert(HasNodeKey(K_EXPRESSION, N_DECLARATOR, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_EXPRESSION));
-    search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_CONST));
     search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_CONST));
 }
 
@@ -239,9 +238,9 @@ size_t ParseTree::make_declaration_specifier_node() {
     return new_node(N_DECLARATION_SPE);
 }
 
-size_t ParseTree::make_declarator_node(bool is_pointer) {
+size_t ParseTree::make_declarator_node(size_t ptr_lv) {
     size_t new_one = new_node(N_DECLARATOR);
-    nodes[new_one].set_is_pointer(is_pointer);
+    nodes[new_one].set_ptr_lv(ptr_lv);
     return new_one;
 }
 
@@ -313,5 +312,10 @@ size_t ParseTree::make_for_statement_node() {
     return new_node(N_FOR_STMT);
 }
 
+size_t ParseTree::make_pointer_node(size_t ptr_lv) {
+    size_t new_one = new_node(N_POINTER);
+    nodes[new_one].set_ptr_lv(ptr_lv);
+    return new_one;
+}
 
 #pragma clang diagnostic pop

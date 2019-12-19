@@ -15,6 +15,8 @@ using namespace std;
  */
 class ParseExpression {
 public:
+    ParseExpression();
+
     explicit ParseExpression(const ParseVariable &variable);
 
     ParseExpression(const ParseExpression &exp);
@@ -87,7 +89,7 @@ public:
      * @param expr
      * @return
      */
-    ParseExpression operator+(const ParseExpression &expr) const;
+    const ParseExpression &operator+(const ParseExpression &expr) const;
 
 
     /**
@@ -95,45 +97,45 @@ public:
      * @param expr
      * @return
      */
-    ParseExpression operator-(const ParseExpression &expr) const;
+    const ParseExpression &operator-(const ParseExpression &expr) const;
 
     /**
      * 获得乘法表达式
      * @param expr
      * @return
      */
-    ParseExpression operator*(const ParseExpression &expr) const;
+    const ParseExpression &operator*(const ParseExpression &expr) const;
 
     /**
      * 获得除法表达式
      * @param expr
      * @return
      */
-    ParseExpression operator/(const ParseExpression &expr) const;
+    const ParseExpression &operator/(const ParseExpression &expr) const;
 
     /**
      * 获得取模表达式
      * @param expr
      * @return
      */
-    ParseExpression operator%(const ParseExpression &expr) const;
+    const ParseExpression &operator%(const ParseExpression &expr) const;
 
     /**
      * 获得求幂表达式
      * @param expr
      * @return
      */
-    ParseExpression operator^(const ParseExpression &expr) const;
+    const ParseExpression &operator^(const ParseExpression &expr) const;
 
     /**
      * 获得非表达式, 即!expression
      * @param expr
      * @return
      */
-    ParseExpression operator!() const;
+    const ParseExpression &operator!() const;
 
     /**
-     * 获取表达式的常量, 如果不存在常量值,则会发出警告,可以在未来成熟后改成异常
+     * 获取表达式的常量, 如果不存在常量值,则会抛出异常
      * @return
      */
     const ParseConstant &get_const() const;
@@ -158,8 +160,6 @@ public:
      */
     bool is_const() const;
 
-    ParseExpression();
-
     /**
      * 输出所有的表达式
      */
@@ -171,8 +171,19 @@ public:
      * @param expr
      * @return
      */
-    static ParseExpression get_logic_expression(ExpressionType type,
-                                                const ParseExpression &expr1, const ParseExpression &expr2);
+    static const ParseExpression &get_logic_expression(ExpressionType type,
+                                                       const ParseExpression &expr1, const ParseExpression &expr2);
+
+    /**
+     * 获取赋值语句
+     * @param variable
+     * @param expr
+     * @return
+     */
+    static const ParseExpression &get_assign_expression(
+            const ParseExpression &unary_expr, const ParseExpression &expr
+    );
+
     /**
      * 获取表达式的地址,
      * 如果地址未被赋值过, 会返回0
@@ -206,13 +217,124 @@ private:
     void calculate_const();
 
     /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_add(ConstValueType cal_type,
+                             const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_sub(ConstValueType cal_type,
+                             const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_mul(ConstValueType cal_type,
+                             const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_div(ConstValueType cal_type,
+                             const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_mod(ConstValueType cal_type,
+                             const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_g(ConstValueType cal_type,
+                           const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_ge(ConstValueType cal_type,
+                            const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_eq(ConstValueType cal_type,
+                            const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_ne(ConstValueType cal_type,
+                            const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_l(ConstValueType cal_type,
+                           const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_le(ConstValueType cal_type,
+                            const ParseConstant &const1, const ParseConstant &const2
+    );
+
+    /**
     * 生成表达式统一处理函数
     * @param expr1
     * @param expr2
     * @return
     */
-    static ParseExpression generate_expression(ExpressionType type,
-                                               const ParseExpression &expr1, const ParseExpression &expr2);
+    static const ParseExpression &
+    generate_expression(ExpressionType type,
+                        const ParseExpression &expr1, const ParseExpression &expr2);
 
     /**
      * 初始化

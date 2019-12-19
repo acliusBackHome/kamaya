@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "ParseDef.hpp"
 
 using namespace std;
@@ -131,12 +132,35 @@ public:
     static const ParseType &get_type(size_t type_id);
 
     /**
-     * 获取进行基本运算后自动类型转化后的类型, 如果不能够自动类型转化
-     * 抛出异常
+     * 获得两个类型进行指定运算之后的返回值类型id
+     * 如果是单目运算, type2的id一定要是0,否则无法找到
+     * 如果无法进行自动类型转换, 抛出异常
+     * @param op_type
      * @param type1
      * @param type2
+     * @return
      */
-    static ParseType wider_type(const ParseType &type1, const ParseType &type2);
+    static size_t convert(ExpressionType op_type,
+                          const ParseType &type1, const ParseType &type2);
+
+    /**
+     * 试图自动转换类型from成to
+     * 返回是否成功, 实际上只会返回true
+     * 因为转换失败会抛出异常
+     * @param from
+     * @param to
+     * @return
+     */
+    static bool convert(const ParseType &from, const ParseType &to);
+
+    /**
+     * 比较两个typeid所对应的type的表示范围大小
+     * 返回 t1 >= t2
+     * @param t1_id
+     * @param t2_id
+     * @return
+     */
+    static bool cmp_wider_type(size_t t1_id, size_t t2_id);
 
 private:
     // 如果是基础类型, 则是非T_UNKNOWN, 否则是T_UNKNOWN, 该字段无效
@@ -168,6 +192,26 @@ private:
     // 为了减少字符串运算, 增加一点冗余信息, 记录每个节点的get_info结果
     // 要求不能修改已经有id的类型的信息, 否则会造成信息不一致的情况
     static vector<string> id2info;
+
+    // 进行类型自动转换的时候的记录表
+    // 有缓存机制: 在进行搜索时会将有效的运算符转化记录插入
+    // 下次可以直接查询到
+    // 映射对象size_t可以是一个指针, 在成熟后可以用来表示一个
+    // 编译器内部的函数(这个函数就是运算符函数)id
+    // 这个函数的运算符和参数就是OpAble记录
+    // 在此, 因为时间不足原因, 先只记录返回值的id
+    static map<OpAble, size_t> op_able;
+    // 在DFS中记录正在搜索的OpAble, 防止搜索死循环
+    static set<OpAble> op_trying;
+
+    /**
+     * dfs搜索是否某个OpAble记录能够成功应用, 传进来的参数不一定能够成功
+     * 是尝试, 所以是try, 如果返回非(size_t)-1,说明尝试成功, 返回值就是OpAble对应的返回值类型id
+     * 如果返回(size_t)-1说明尝试失败, 标记传入参数的记录为不可转化
+     * @param op_try
+     * @return
+     */
+    static size_t dfs_convert(const OpAble &op_try);
 
     /**
      * 实现方便的构造函数,只是简单的赋值
