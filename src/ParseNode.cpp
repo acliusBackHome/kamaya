@@ -561,8 +561,8 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
                     string op = "_", arg1 = "_", arg2 = "_", result = "_";
                     if (exp_type == ExpressionType::E_ADD) {
                         op = "+",
-                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
-                        arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                        arg1 = to_string(tree.node(init_expr.get_child_expression(0)).get_expression().get_address());
+                        arg2 = to_string(tree.node(init_expr.get_child_expression(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
                     } 
                     else if (exp_type == ExpressionType::E_SUB) {
