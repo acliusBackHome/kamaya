@@ -4,10 +4,13 @@
 #include "ParseType.hpp"
 #include "ParseTree.hpp"
 #include <set>
+#include <queue>
 
 map<ParseType, size_t> ParseType::type2id;
 vector<ParseType> ParseType::id2type;
 vector<string> ParseType::id2info;
+set<OpAble> ParseType::op_trying;
+map<OpAble, size_t> ParseType::op_able;
 
 ParseType::ParseType(const ParseType &other) {
     fields = nullptr;
@@ -82,6 +85,15 @@ ParseType::ParseType(BaseType b_type, int spe) {
             specifier &= (~((int) S_LONG));
             type_size = sizeof(int);
             break;
+    }
+    if (base_type <= T_DOUBLE && base_type >= T_BOOL) {
+        // 注册能够自动转换的类型
+        // undefined表示可以直接自动类型转换
+        size_t this_type_id = get_id();
+        op_able.insert(pair<OpAble, size_t>(OpAble(E_UNDEFINED, this_type_id, this_type_id), this_type_id));
+        for (size_t i = T_BOOL; i <= T_DOUBLE; ++i) {
+            op_able.insert(pair<OpAble, size_t>(OpAble(E_UNDEFINED, this_type_id, i), i));
+        }
     }
 }
 
@@ -414,30 +426,52 @@ const ParseType &ParseType::get_type(size_t type_id) {
 
 void ParseType::init() {
 //    T_UNKNOWN = 0,
-//    T_SHORT = 1,
-//    T_INT = 2,
-//    T_LONG = 3,
-//    T_FLOAT = 4,
-//    T_DOUBLE = 5,
-//    T_BOOL = 6,
-//    T_CHAR = 7,
+//    T_BOOL = 1,
+//    T_CHAR = 2,
+//    T_SHORT = 3,
+//    T_INT = 4,
+//    T_LONG = 5,
+//    T_FLOAT = 6,
+//    T_DOUBLE = 7,
 //    T_ENUM = 8,
 //    T_VOID = 9,
     vector<ParseType> bases;
     bases.emplace_back(T_UNKNOWN);
+    bases.emplace_back(T_BOOL);
+    bases.emplace_back(T_CHAR);
     bases.emplace_back(T_SHORT);
     bases.emplace_back(T_INT);
     bases.emplace_back(T_LONG);
     bases.emplace_back(T_FLOAT);
     bases.emplace_back(T_DOUBLE);
-    bases.emplace_back(T_BOOL);
-    bases.emplace_back(T_CHAR);
     bases.emplace_back(T_ENUM);
     bases.emplace_back(T_VOID);
     for (const auto &each : bases) {
         type2id[each] = id2type.size();
         id2info.emplace_back(get_base_type_name((BaseType) id2type.size(), 0));
         id2type.emplace_back(each);
+    }
+
+    // 初始化可进行的自动类型转换
+    // 普通运算
+    for (size_t i = T_BOOL; i <= T_DOUBLE; ++i) {
+        // 单目运算符
+        //!非运算
+        op_able.insert(pair<OpAble, size_t>(OpAble(E_NOT, i, 0), i));
+        // 赋值运算符赋值后的返回值是i
+        op_able.insert(pair<OpAble, size_t>(OpAble(E_ASSIGN, i, 0), i));
+        // 双目运算符, 只有相同类型的运算, 不同类型的运算可以通过搜索得知
+        for (size_t j = E_ADD; j <= E_POW; ++j) {
+            op_able.insert(pair<OpAble, size_t>(OpAble((ExpressionType) j, i, i), i));
+        }
+        // undefined表示可以直接自动类型转换
+        for (size_t j = T_BOOL; j <= T_DOUBLE; ++j) {
+            op_able.insert(pair<OpAble, size_t>(OpAble(E_UNDEFINED, i, j), j));
+        }
+    }
+    // 逻辑运算符运算
+    for (size_t i = E_NOT; i <= E_LE; ++i) {
+        op_able.insert(pair<OpAble, size_t>(OpAble((ExpressionType) i, T_BOOL, T_BOOL), T_BOOL));
     }
 }
 
@@ -483,109 +517,121 @@ size_t ParseType::get_specifier() const {
     return lower_type;
 }
 
-ParseType ParseType::wider_type(const ParseType &type1, const ParseType &type2) {
-    BaseType b_type1 = type1.base_type, b_type2 = type2.base_type;
-    int ret_spe = 0, spe1 = type1.specifier, spe2 = type2.specifier;
-    if ((spe1 | spe2) & S_LONG) {
-        ret_spe |= S_LONG;
+size_t ParseType::convert(ExpressionType op_type, const ParseType &type1, const ParseType &type2) {
+    size_t type1_id = type1.get_id(), type2_id = type2.get_id();
+    auto iter = op_able.find(OpAble(op_type, type1_id, type2_id));
+    if (iter != op_able.end()) {
+        // 找到记录, 返回
+        if (iter->second != (size_t) -1) {
+            // 有效记录
+            return iter->second;
+        }
+        // 已经搜索过且被标记为不可转化(-1)抛出异常
+    } else {
+        // 进行DFS
+        op_trying.clear();
+        OpAble op_try(op_type, type1_id, type2_id);
+        size_t res = dfs_convert(op_try);
+        // 插入记录 缓存
+        op_able[op_try] = res;
+        if (res != (size_t) -1) {
+            return res;
+        }
     }
-    if ((spe1 | spe2) & S_UNSIGNED) {
-        ret_spe |= S_UNSIGNED;
-    }
-    switch (b_type1) {
-        case T_BOOL:
-        case T_CHAR:
-        case T_SHORT:
-        case T_INT:
-            switch (b_type2) {
-                case T_BOOL:
-                case T_CHAR:
-                case T_SHORT:
-                case T_INT:
-                    return ParseType(T_INT, ret_spe);
-                case T_LONG:
-                    return ParseType(T_LONG, ret_spe);
-                case T_FLOAT:
-                    ret_spe &= ~((int) S_LONG);
-                    ret_spe &= ~((int) S_UNSIGNED);
-                    return ParseType(T_FLOAT, ret_spe);
-                case T_DOUBLE:
-                    ret_spe &= ~((int) S_UNSIGNED);
-                    return ParseType(T_DOUBLE, ret_spe);
-                case T_ENUM:
-                case T_VOID:
-                case T_UNKNOWN:
-                    break;
-            }
-            break;
-        case T_LONG:
-            switch (b_type2) {
-                case T_BOOL:
-                case T_CHAR:
-                case T_SHORT:
-                case T_INT:
-                case T_LONG:
-                    return ParseType(T_LONG, ret_spe);
-                case T_FLOAT:
-                    ret_spe &= ~((int) S_LONG);
-                    ret_spe &= ~((int) S_UNSIGNED);
-                    return ParseType(T_FLOAT, ret_spe);
-                case T_DOUBLE:
-                    ret_spe &= ~((int) S_UNSIGNED);
-                    return ParseType(T_DOUBLE, ret_spe);
-                case T_ENUM:
-                case T_VOID:
-                case T_UNKNOWN:
-                    break;
-            }
-            break;
-        case T_FLOAT:
-            switch (b_type2) {
-                case T_BOOL:
-                case T_CHAR:
-                case T_SHORT:
-                case T_INT:
-                case T_LONG:
-                case T_FLOAT:
-                    ret_spe &= ~((int) S_LONG);
-                    ret_spe &= ~((int) S_UNSIGNED);
-                    return ParseType(T_FLOAT, ret_spe);
-                case T_DOUBLE:
-                    ret_spe &= ~((int) S_LONG);
-                    return ParseType(T_DOUBLE, ret_spe);
-                case T_ENUM:
-                    break;
-                case T_VOID:
-                    break;
-                case T_UNKNOWN:
-                    break;
-            }
-            break;
-        case T_DOUBLE:
-            switch (b_type2) {
-                case T_BOOL:
-                case T_CHAR:
-                case T_SHORT:
-                case T_INT:
-                case T_LONG:
-                case T_FLOAT:
-                case T_DOUBLE:
-                    ret_spe &= ~((int) S_LONG);
-                    return ParseType(T_DOUBLE, ret_spe);
-                case T_ENUM:
-                case T_VOID:
-                case T_UNKNOWN:
-                    break;
-            }
-            break;
-        case T_ENUM:
-        case T_VOID:
-        case T_UNKNOWN:
-            break;
-    }
-    string info = "ParseType::wider_type(const ParseType &type1, const ParseType &type2) type1=";
-    info += type1.get_info() + " type2=" + type2.get_info();
+    string info = "ParseType::convert(ExpressionType op_type, const ParseType &type1, const ParseType &type2)";
+    info += " type1=" + type1.get_info();
+    info += " type2=" + type2.get_info();
     throw ParseException(EX_TYPE_CAN_NOT_CONVERT, info);
 }
+
+size_t ParseType::dfs_convert(const OpAble &op_try) {
+    const auto record = op_able.find(op_try);
+    if (record != op_able.end()) {
+        return record->second;
+    }
+    ExpressionType op_type = get<0>(op_try);
+    size_t type1_id = get<1>(op_try), type2_id = get<2>(op_try);
+    if(type1_id == type2_id) {
+        // 完全一致
+        op_able[op_try] = type1_id;
+        return type1_id;
+    }
+    const ParseType &type1 = get_type(type1_id), &type2 = get_type(type2_id);
+    if (type1.base_type != T_UNKNOWN && type2.base_type != T_UNKNOWN) {
+        // 发现是基础类型的派生
+        if (type1.base_type > type2.base_type) {
+            op_able[op_try] = type1_id;
+            return type1_id;
+        }
+        if (type1.base_type < type2.base_type) {
+            op_able[op_try] = type2_id;
+            return type2_id;
+        }
+        // base_type一致, 比较声明符号
+        if (type1.specifier > type2.specifier) {
+            op_able[op_try] = type1_id;
+            return type1_id;
+        }
+        if (type1.specifier < type2.specifier) {
+            op_able[op_try] = type2_id;
+            return type2_id;
+        }
+        //完全一致
+        op_able[op_try] = type1_id;
+        return type1_id;
+    }
+    // 向下一层搜索
+    op_trying.insert(op_try);
+    // 拿到所有type1和type2能够无条件转化的类型
+    vector<size_t> type1_to, type2_to;
+    for (const auto &each : op_able) {
+        // 遍历目前记录表能够拿到的所有记录
+        // 这个可以用多层map进行优化, 但是...现在还没必要...
+        const auto &op = each.first;
+        if (get<0>(each.first) == E_UNDEFINED) {
+            if (get<1>(each.first) == type1_id) {
+                type1_to.emplace_back(each.second);
+            } else if (get<1>(each.first) == type2_id) {
+                type2_to.emplace_back(each.second);
+            }
+        }
+    }
+    for (size_t type1_convert_id : type1_to) {
+        for (size_t type2_convert_id : type2_to) {
+            OpAble op_try_next(op_type, type1_convert_id, type2_convert_id);
+            if (op_trying.find(op_try_next) != op_trying.end()) {
+                //这个已经有在之前搜索了, 跳过
+                // 防止DFS环
+                continue;
+            }
+            size_t try_res = dfs_convert(op_try_next);// op_try_next已经在下一层标记了
+            if (try_res != (size_t) -1) {
+                // 结果有效
+                op_able[op_try] = try_res;
+                return try_res;
+            }
+            // 无效继续搜索
+        }
+    }
+    // 搜索完毕, type1和type2怎么转化都无法得到表达式op_type的返回值
+    op_able[op_try] = (size_t) -1;
+    return (size_t) -1;
+}
+
+bool ParseType::cmp_wider_type(size_t t1_id, size_t t2_id) {
+    if (t1_id <= T_BASE && t2_id <= T_BASE) {
+        return t1_id >= t2_id;
+    } else {
+        const ParseType &t1 = ParseType::get_type(t1_id),
+                &t2 = ParseType::get_type(t2_id);
+        if (t1.base_type == t2.base_type && t1.base_type != T_UNKNOWN) {
+            // 是基础类型的特殊声明 long unsigned等
+            return t1.specifier >= t2.specifier;
+        } else {
+            return t1_id >= t2_id;
+        }
+    }
+}
+
 
 #pragma clang diagnostic pop

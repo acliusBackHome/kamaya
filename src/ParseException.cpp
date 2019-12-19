@@ -56,7 +56,11 @@ string ParseException::get_code_msg(ExceptionCode _code) {
         case EX_EXPRESSION_DIVIDE_ZERO:
             return "DivideZeroException";
         case EX_TYPE_CAN_NOT_CONVERT:
-            return "CanNotConvertType";
+            return "CanNotConvertTypeException";
+        case EX_EXPRESSION_CAN_NOT_GENERATE:
+            return "CanNotGenerateExpressionException(bug)";
+        case EX_EXPRESSION_CAN_NOT_ACCESS:
+            return "CanNotAccessExpression(bug)";
     }
     return "UnknownException";
 }
