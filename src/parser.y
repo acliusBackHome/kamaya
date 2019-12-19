@@ -1348,15 +1348,47 @@ for
   ;
 
 iteration_statement
-  : WHILE LP expression RP statement {
+  : WHILE LP backpatch_instr expression RP backpatch_instr statement {
     $$ = tree.new_node("while statement");
     tree.set_parent($3, $$);
-    tree.set_parent($5, $$);
+    tree.set_parent($4, $$);
+    tree.set_parent($6, $$);
+    tree.set_parent($7, $$);
+
+    IR_EMIT {
+      ParseNode& S = tree.node($$);
+      ParseNode& M1 = tree.node($3);
+      ParseNode& B = tree.node($4);
+      ParseNode& M2 = tree.node($6);
+      ParseNode& S1 = tree.node($7);
+      ir.backpatch(B.get_true_list(), M2.get_instr());
+      ir.backpatch(S1.get_next_list(), M1.get_instr());
+      S.set_next_list(B.get_false_list());
+      ir.gen("jmp", "_", "_", to_string(M1.get_instr()));
+
+      ir.backpatch(S.get_next_list(), ir.getNextinstr());
+    }
   }
-  | DO statement WHILE LP expression RP SEMICOLON {
+  | DO backpatch_instr statement WHILE LP backpatch_instr expression RP SEMICOLON {
     $$ = tree.new_node("do while statement");
     tree.set_parent($2, $$);
-    tree.set_parent($5, $$);
+    tree.set_parent($3, $$);
+    tree.set_parent($6, $$);
+    tree.set_parent($7, $$);
+
+    IR_EMIT {
+      ParseNode& S = tree.node($$);
+      ParseNode& M1 = tree.node($3);
+      ParseNode& S1 = tree.node($4);
+      ParseNode& M2 = tree.node($6);
+      ParseNode& B = tree.node($7);
+      ir.backpatch(B.get_true_list(), M1.get_instr());
+      ir.backpatch(S.get_next_list(), M2.get_instr());
+      S.set_next_list(B.get_false_list());
+      ir.gen("jmp", "_", "_", to_string(M2.get_instr()));
+
+      ir.backpatch(S.get_next_list(), ir.getNextinstr());
+    }
   }
   | for LP expression_statement expression_statement RP statement {
     $$ = tree.make_for_statement_node();
