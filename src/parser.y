@@ -1378,14 +1378,13 @@ iteration_statement
 
     IR_EMIT {
       ParseNode& S = tree.node($$);
-      ParseNode& M1 = tree.node($3);
-      ParseNode& S1 = tree.node($4);
+      ParseNode& M1 = tree.node($2);
+      ParseNode& S1 = tree.node($3);
       ParseNode& M2 = tree.node($6);
       ParseNode& B = tree.node($7);
       ir.backpatch(B.get_true_list(), M1.get_instr());
-      ir.backpatch(S.get_next_list(), M2.get_instr());
+      ir.backpatch(S1.get_next_list(), M2.get_instr());
       S.set_next_list(B.get_false_list());
-      ir.gen("jmp", "_", "_", to_string(M2.get_instr()));
 
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
