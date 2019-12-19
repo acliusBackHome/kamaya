@@ -53,25 +53,25 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
   if (init_expr.is_const()) {
     const ParseConstant &E = init_expr.get_const();
     ConstValueType con_type = E.get_type();
-    string result;
+    string arg1;
     switch (con_type) {
     case ConstValueType::C_SIGNED:
-      result = to_string(E.get_signed());
+      arg1 = to_string(E.get_signed());
       break;
     case ConstValueType::C_UNSIGNED:
-      result = to_string(E.get_unsigned());
+      arg1 = to_string(E.get_unsigned());
       break;
     case ConstValueType::C_FLOAT:
-      result = to_string(E.get_float());
+      arg1 = to_string(E.get_float());
       break;
     case ConstValueType::C_BOOL:
-      result = to_string((int)E.get_bool());
+      arg1 = to_string((int)E.get_bool());
       break;
     default:
       cout << "other constant type" << endl;
       break;
     }
-    gen(":=", symbol, "_", result);
+    gen(":=", arg1, "_", symbol);
   } else {
     ExpressionType exp_type = init_expr.get_expr_type();
     string op = "_", arg1 = "_", arg2 = "_", result = "_";
@@ -120,7 +120,6 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       op = "<=";
       break;
     default:
-      cout << "other exp type" << endl;
       break;
     }
     if (op != "_") {
@@ -138,13 +137,17 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       op = ":=";
       break;
     default:
+      cout << "other exp type" << endl;
       break;
     }
     if (op != "_") {
       arg1 = to_string(
           tree.node(init_expr.get_child(0)).get_expression().get_address());
     }
-    result = to_string(init_expr.get_id());
-    gen(op, arg1, arg2, result);
+    // result = to_string(init_expr.get_id());
+    result = symbol;
+    if (op != "_") {
+      gen(op, arg1, arg2, result);
+    }
   }
 }
