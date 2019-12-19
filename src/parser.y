@@ -60,7 +60,7 @@ size_t handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionTyp
             throw exc;
         }
         const ParseType &type1 = expr1.get_ret_type(), &type2 = expr2.get_ret_type();
-        if (type1.get_id() != T_UNKNOWN && type2.get_id() != T_UNKNOWN) {
+        if (type1.get_id() != T_UNKNOWN || type2.get_id() != T_UNKNOWN) {
             string error_info = to_string(yylineno) + ": error : no match operator ";
             error_info += ParseExpression::get_expr_type_name(expr_type);
             error_info += " between " + type1.get_info() + " and " + type2.get_info();
@@ -518,7 +518,7 @@ assignment_expression
             throw exc;
         }
         const ParseType &u_type = u_expr.get_ret_type(), &a_type = a_expr.get_ret_type();
-        if (u_type.get_id() != T_UNKNOWN && a_type.get_id() != T_UNKNOWN) {
+        if (u_type.get_id() != T_UNKNOWN || a_type.get_id() != T_UNKNOWN) {
             string error_info = to_string(yylineno) + ": error : can not convert ";
             error_info += a_type.get_info() + " to ";
             error_info += u_type.get_info();
@@ -1273,7 +1273,7 @@ expression_statement
   ;
 
 backpatch_instr : {
-  $$ = tree.new_node("backpatch_instr");
+  $$ = tree.new_node(N_BP_INST);
 
   IR_EMIT {
     tree.node($$).set_instr(ir.getNextinstr());
@@ -1282,7 +1282,7 @@ backpatch_instr : {
 };
 
 backpatch_next_list : {
-  $$ = tree.new_node("backpatch_next_list");
+  $$ = tree.new_node(N_BP_NEXT_LIST);
 
   IR_EMIT {
     ParseNode& N = tree.node($$);
