@@ -1252,7 +1252,7 @@ compound_statement
 
 block_item_list
   : block_item {
-    $$ = tree.new_node("block item list");
+    $$ = tree.new_node(N_BI_LIST);
     tree.set_parent($1, $$);
   }
   | block_item_list block_item {
@@ -1303,7 +1303,7 @@ backpatch_next_list : {
 
 selection_statement
   : IF LP expression RP backpatch_instr statement {
-    $$ = tree.new_node("if statement");
+    $$ = tree.new_node(N_IF_STMT);
     tree.set_parent($3, $$);
     tree.set_parent($5, $$);
     tree.set_parent($6, $$);
@@ -1321,7 +1321,7 @@ selection_statement
     }
   }
   | IF LP expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
-    $$ = tree.new_node("if else statement");
+    $$ = tree.new_node(N_IF_STMT);
     tree.set_parent($3, $$);
     tree.set_parent($5, $$);
     tree.set_parent($6, $$);
