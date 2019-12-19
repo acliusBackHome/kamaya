@@ -103,12 +103,13 @@ void test_scope() {
 
 void test_expression() {
     try {
-        ParseVariable a(ParseType(T_DOUBLE, S_LONG), "a"), b(ParseType(T_LONG, S_LONG), "b");
+        ParseVariable a(ParseType(T_INT, S_LONG), "a"), b(ParseType(T_LONG, S_LONG), "b");
         ParseExpression
 //                e1(ParseConstant((long long) 1)),
 //                e2(ParseConstant((long long) 2)),
 //                e3(ParseExpression::get_logic_expression(E_GE, e1, e2)),
-                e4(a), e5(b), e6(e4 + e5);
+                e4(a), e5(b), e6(e4 + e5),
+        e7(ParseExpression::get_assign_expression(e4, e5));
         ParseExpression::print_all_expression();
     } catch (ParseException &exc) {
         cout << exc.get_info() << endl;

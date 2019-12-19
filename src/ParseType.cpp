@@ -456,10 +456,8 @@ void ParseType::init() {
     // 普通运算
     for (size_t i = T_BOOL; i <= T_DOUBLE; ++i) {
         // 单目运算符
-        //!非运算
+        // !非运算
         op_able.insert(pair<OpAble, size_t>(OpAble(E_NOT, i, 0), i));
-        // 赋值运算符赋值后的返回值是i
-        op_able.insert(pair<OpAble, size_t>(OpAble(E_ASSIGN, i, 0), i));
         // 双目运算符, 只有相同类型的运算, 不同类型的运算可以通过搜索得知
         for (size_t j = E_ADD; j <= E_POW; ++j) {
             op_able.insert(pair<OpAble, size_t>(OpAble((ExpressionType) j, i, i), i));
@@ -467,6 +465,8 @@ void ParseType::init() {
         // undefined表示可以直接自动类型转换
         for (size_t j = T_BOOL; j <= T_DOUBLE; ++j) {
             op_able.insert(pair<OpAble, size_t>(OpAble(E_UNDEFINED, i, j), j));
+            // 赋值运算符赋值后的返回值是i
+            op_able.insert(pair<OpAble, size_t>(OpAble(E_ASSIGN, i, j), i));
         }
     }
     // 逻辑运算符运算
@@ -544,6 +544,10 @@ size_t ParseType::convert(ExpressionType op_type, const ParseType &type1, const 
     throw ParseException(EX_TYPE_CAN_NOT_CONVERT, info);
 }
 
+bool ParseType::convert(const ParseType &from, const ParseType &to) {
+    return convert(E_ASSIGN, to, from) != (size_t) -1;
+}
+
 size_t ParseType::dfs_convert(const OpAble &op_try) {
     const auto record = op_able.find(op_try);
     if (record != op_able.end()) {
@@ -551,7 +555,7 @@ size_t ParseType::dfs_convert(const OpAble &op_try) {
     }
     ExpressionType op_type = get<0>(op_try);
     size_t type1_id = get<1>(op_try), type2_id = get<2>(op_try);
-    if(type1_id == type2_id) {
+    if (type1_id == type2_id) {
         // 完全一致
         op_able[op_try] = type1_id;
         return type1_id;

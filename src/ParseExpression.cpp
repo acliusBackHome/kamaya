@@ -35,6 +35,7 @@ string ParseExpression::get_info() const {
         case E_NE:
         case E_L:
         case E_LE:
+        case E_ASSIGN:
         case E_DIV: {
             const ParseExpression &expr1 = get_expression(child[0]),
                     &expr2 = get_expression(child[1]);
@@ -55,12 +56,6 @@ string ParseExpression::get_info() const {
         }
         case E_CONST: {
             res += "constant: " + ((ParseConstant *) child[0])->get_info() + ", ";
-            break;
-        }
-        case E_ASSIGN: {
-            res += "assign: " + ((ParseVariable *) child[0])->get_info() + ", ";
-            sprintf(buff, "to { Expr-%zu }", child[1]);
-            res += buff;
             break;
         }
     }
@@ -188,6 +183,7 @@ bool ParseExpression::operator<(const ParseExpression &other) const {
         case E_NE:
         case E_L:
         case E_LE:
+        case E_ASSIGN:
         case E_DIV: {
             for (size_t i = 0; i < 2; ++i) {
                 if (child[i] < other.child[i]) {
@@ -202,21 +198,6 @@ bool ParseExpression::operator<(const ParseExpression &other) const {
             if (child[0] < other.child[0]) {
                 return true;
             } else if (child[0] > other.child[0]) {
-                return false;
-            }
-            break;
-        }
-        case E_ASSIGN: {
-            ParseVariable &this_var = *(ParseVariable *) child[0],
-                    &that_var = *(ParseVariable *) (other.child[0]);
-            if (this_var < that_var) {
-                return true;
-            } else if (that_var < this_var) {
-                return false;
-            }
-            if (child[1] < other.child[1]) {
-                return true;
-            } else if (child[1] < other.child[1]) {
                 return false;
             }
             break;
@@ -240,7 +221,6 @@ ParseExpression::~ParseExpression() {
         delete (ParseConstant *) const_value;
     }
     switch (expr_type) {
-        case E_ASSIGN:
         case E_VAR:
             delete (ParseVariable *) child[0];
             break;
@@ -265,6 +245,7 @@ ParseExpression::~ParseExpression() {
         case E_NE:
         case E_L:
         case E_LE:
+        case E_ASSIGN:
             return;
     }
 }
@@ -460,12 +441,23 @@ const ParseExpression &ParseExpression::generate_expression(
 }
 
 const ParseExpression &ParseExpression::get_assign_expression(
-        const ParseVariable &variable, const ParseExpression &expr) {
+        const ParseExpression &unary_expr, const ParseExpression &expr) {
     ParseExpression res;
-    res.expr_type = E_ASSIGN;
-    res.ret_type_id = variable.get_type().get_id();
-    res.child[0] = (size_t) new ParseVariable(variable);
-    res.child[1] = get_expr_id(expr);
+    try {
+        if (ParseType::convert(unary_expr.get_ret_type(), expr.get_ret_type())) {
+            res.expr_type = E_ASSIGN;
+            res.child[0] = get_expr_id(unary_expr);
+            res.child[1] = get_expr_id(expr);
+            res.ret_type_id = unary_expr.get_ret_type().get_id();
+        }
+    } catch (ParseException &exc) {
+        string info = "in ParseExpression::get_assign_expression("
+                      "const ParseExpression &unary_expr, const ParseExpression &expr)";
+        info += " unary_expr: " + to_string(unary_expr.get_id());
+        info += " expr: " + to_string(expr.get_id());
+        exc.push_trace(info);
+        throw exc;
+    }
     update(res);
     return get_expression(res.get_id());
 }
@@ -512,8 +504,7 @@ void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_
                     new ParseConstant(*(ParseConstant *) from_expr.child[0]);
             break;
         case E_ASSIGN:
-            expr.child[0] = (size_t)
-                    new ParseVariable(*(ParseVariable *) from_expr.child[0]);
+            expr.child[0] = from_expr.child[0];
             expr.child[1] = from_expr.child[1];
             break;
     }
@@ -560,7 +551,6 @@ const ParseType &ParseExpression::get_ret_type() const {
             ret_cache = ParseType(*((ParseConstant *) child[0])).get_id();
             return ParseType::get_type(ret_cache);
         }
-        case E_ASSIGN:
         case E_VAR: {
             size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
             ret_cache = ((ParseVariable *) child[0])->get_type().get_id();
@@ -581,6 +571,13 @@ const ParseType &ParseExpression::get_ret_type() const {
         case E_LE: {
             size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
             ret_cache = T_BOOL;
+            return ParseType::get_type(ret_cache);
+        }
+        case E_ASSIGN: {
+            size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
+            ret_cache = ParseType::convert(E_ASSIGN,
+                                           get_expression(child[0]).get_ret_type(),
+                                           get_expression(child[1]).get_ret_type());
             return ParseType::get_type(ret_cache);
         }
         case E_UNDEFINED:
@@ -612,6 +609,7 @@ size_t ParseExpression::get_child_expression(size_t _child) const {
         case E_NE:
         case E_L:
         case E_LE:
+        case E_ASSIGN:
             return child[_child];
         case E_NOT:
             // 只有一个子表达式
@@ -622,13 +620,6 @@ size_t ParseExpression::get_child_expression(size_t _child) const {
                 throw ParseException(EX_EXPRESSION_CAN_NOT_ACCESS, info);
             }
             return child[_child];
-        case E_ASSIGN: {
-            // child[0]是变量指针
-            if (_child == 0) {
-                return child[1];
-            }
-            // 不写break到接下来的语句
-        }
         case E_VAR:
         case E_CONST:
         case E_UNDEFINED: {
