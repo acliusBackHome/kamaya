@@ -564,7 +564,31 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
                         arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
-                    } // TODO: MORE TYPE
+                    } 
+                    else if (exp_type == ExpressionType::E_SUB) {
+                        op = "-",
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                        result = to_string(init_expr.get_id());
+                    } 
+                    else if (exp_type == ExpressionType::E_MUL) {
+                        op = "*",
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                        result = to_string(init_expr.get_id());
+                    } 
+                    else if (exp_type == ExpressionType::E_DIV) {
+                        op = "/",
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                        result = to_string(init_expr.get_id());
+                    } 
+                    else if (exp_type == ExpressionType::E_MOD) {
+                        op = "%",
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                        result = to_string(init_expr.get_id());
+                    }
                     ir.gen(op, arg1, arg2, result);
                 }
             }
