@@ -30,8 +30,8 @@ string ParseNode::get_key_name(NodeKey type) noexcept {
             return "variable";
         case K_TYPE:
             return "type";
-        case K_IS_PTR:
-            return "is_pointer";
+        case K_PTR_LV:
+            return "pointer_level";
         case K_FUNCTION:
             return "function";
         case K_EXPRESSION:
@@ -110,6 +110,8 @@ string ParseNode::get_node_type_name(NodeType type) noexcept {
             return "compound_statement";
         case N_FOR_STMT:
             return "for statement";
+        case N_POINTER:
+            return "pointer";
     }
     return "unknown";
 }
@@ -139,14 +141,8 @@ string ParseNode::get_node_info() const noexcept {
                 case K_FUNCTION:
                     info += "function: " + get_function().get_info() + ", ";
                     break;
-                case K_IS_PTR:
-                    info += "is_pointer: ";
-                    if (get_is_pointer()) {
-                        info += "true";
-                    } else {
-                        info += "false";
-                    }
-                    info += ", ";
+                case K_PTR_LV:
+                    info += "pointer_level: " + to_string(get_ptr_lv()) + ", ";
                     break;
                 case K_PARAM_LIST_NODE: {
                     info += "param_list_node: " + to_string(get_param_list_node());
@@ -302,8 +298,8 @@ void ParseNode::set_variable(const ParseVariable &variable) {
     set_field<ParseVariable>(K_VARIABLE, variable);
 }
 
-void ParseNode::set_is_pointer(bool is_pointer) {
-    set_field<bool>(K_IS_PTR, is_pointer);
+void ParseNode::set_ptr_lv(size_t ptr_lv) {
+    set_field<size_t>(K_PTR_LV, ptr_lv);
 }
 
 void ParseNode::set_param_list_node(size_t param_list_node) {
@@ -366,6 +362,10 @@ void ParseNode::update_is_array(bool is_array) {
     set_field<bool>(K_IS_ARRAY, is_array, true);
 }
 
+void ParseNode::update_ptr_lv(size_t ptr_lv) {
+    set_field<size_t>(K_PTR_LV, ptr_lv, true);
+}
+
 void ParseNode::set_param_list(const vector<ParseVariable> &param_list) {
     set_field<vector<ParseVariable> >(K_PARAM_LIST, param_list);
 }
@@ -405,8 +405,8 @@ const ParseType &ParseNode::get_type() const {
     return get_field<ParseType>(K_TYPE);
 }
 
-bool ParseNode::get_is_pointer() const {
-    return get_field<bool>(K_IS_PTR);
+size_t ParseNode::get_ptr_lv() const {
+    return get_field<size_t>(K_PTR_LV);
 }
 
 size_t ParseNode::get_param_list_node() const {
@@ -467,16 +467,16 @@ size_t ParseNode::get_instr() const {
 
 const vector<size_t> &ParseNode::get_true_list() const {
     // 需求特殊性: 如果没有则先set为空, 再返回之
-    if(!(keys & K_TRUE_LIST)) {
-        ((ParseNode*)this)->set_true_list(vector<size_t>());
+    if (!(keys & K_TRUE_LIST)) {
+        ((ParseNode *) this)->set_true_list(vector<size_t>());
     }
     return get_field<vector<size_t>>(K_TRUE_LIST);
 }
 
 const vector<size_t> &ParseNode::get_false_list() const {
     // 需求特殊性: 如果没有则先set为空, 再返回之
-    if(!(keys & K_FALSE_LIST)) {
-        ((ParseNode*)this)->set_false_list(vector<size_t>());
+    if (!(keys & K_FALSE_LIST)) {
+        ((ParseNode *) this)->set_false_list(vector<size_t>());
     }
     return get_field<vector<size_t>>(K_FALSE_LIST);
 }
@@ -491,8 +491,8 @@ size_t ParseNode::get_false_jump() const {
 
 const vector<size_t> &ParseNode::get_next_list() const {
     // 需求特殊性: 如果没有则先set为空, 再返回之
-    if(!(keys & K_NEXT_LIST)) {
-        ((ParseNode*)this)->set_next_list(vector<size_t>());
+    if (!(keys & K_NEXT_LIST)) {
+        ((ParseNode *) this)->set_next_list(vector<size_t>());
     }
     return get_field<vector<size_t> >(K_NEXT_LIST);
 }
@@ -530,13 +530,13 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
     for (const auto &each : init_dec_list) {
         const string &symbol = get<0>(each);// 变量符号
         const ParseExpression &init_expr = get<1>(each);// 初始化表达式
-        bool is_ptr = get<2>(each);// 是否声明为指针
+        size_t ptr_level = get<2>(each);// 指针级数
         const size_t &array_size = get<3>(each),// 数组大小: 如果为0, 则表明不是数组
                 &param_list_node = get<4>(each)// 声明为函数时的参数列表节点, 如果不声明为函数该值为0
         ;
         ParseType this_type(dec_type);
-        if (is_ptr) {
-            this_type = ParseType::get_pointer(this_type);
+        if (ptr_level) {
+            this_type = ParseType::get_pointer(this_type, ptr_level);
         }
         if (array_size) {
             this_type = ParseType::get_array(this_type, array_size);
@@ -552,7 +552,7 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
             IR_EMIT {
                 ir.addOffset(this_type.get_size());
                 if (init_expr.is_const()) {
-                    const ParseConstant &E  = init_expr.get_const();
+                    const ParseConstant &E = init_expr.get_const();
                     if (E.get_type() == ConstValueType::C_SIGNED) {
                         ir.gen(":=", symbol, "_", to_string(E.get_signed()));
                     } // TODO: MORE TYPE
@@ -561,31 +561,27 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
                     string op = "_", arg1 = "_", arg2 = "_", result = "_";
                     if (exp_type == ExpressionType::E_ADD) {
                         op = "+",
-                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
-                    } 
-                    else if (exp_type == ExpressionType::E_SUB) {
+                    } else if (exp_type == ExpressionType::E_SUB) {
                         op = "-",
-                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
-                    } 
-                    else if (exp_type == ExpressionType::E_MUL) {
+                    } else if (exp_type == ExpressionType::E_MUL) {
                         op = "*",
-                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
-                    } 
-                    else if (exp_type == ExpressionType::E_DIV) {
+                    } else if (exp_type == ExpressionType::E_DIV) {
                         op = "/",
-                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
-                    } 
-                    else if (exp_type == ExpressionType::E_MOD) {
+                    } else if (exp_type == ExpressionType::E_MOD) {
                         op = "%",
-                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
                     }
@@ -627,7 +623,7 @@ void ParseNode::collect_parameters_list() const {
 
 void ParseNode::collect_init_declarator() const {
     auto &the_map = tree.node_init_dec;
-    InitDeclarator res(get_symbol(), ParseExpression(), get_is_pointer(), 0, get_param_list_node());
+    InitDeclarator res(get_symbol(), ParseExpression(), get_ptr_lv(), 0, get_param_list_node());
     // 获取元祖引用以便修改其值
     // 初始化表达式可能会有变动
     ParseExpression &init_expression = get<1>(res);
@@ -777,9 +773,12 @@ void ParseNode::set_field(NodeKey key, const MapType &object, bool is_update) {
     map<size_t, MapType> &the_map = *((map<size_t, MapType> *) (key_iter->second));
     typedef typename map<size_t, MapType>::iterator MapIter;
     const MapIter &iter = the_map.find(node_id);
-    if (iter != the_map.end() && !is_update) {
-        printf("ParseNode::set_field(NodeKey key, const MapType &object):"
-               "警告:试图覆盖节点%zu的%s键\n", node_id, get_key_name(key).c_str());
+    if (iter != the_map.end()) {
+        the_map.erase(iter);
+        if(!is_update) {
+            printf("ParseNode::set_field(NodeKey key, const MapType &object):"
+                        "警告:试图覆盖节点%zu的%s键\n", node_id, get_key_name(key).c_str());
+        }
     }
     the_map.insert(pair<size_t, MapType>(node_id, object));
 }

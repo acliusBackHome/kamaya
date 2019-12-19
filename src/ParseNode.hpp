@@ -55,11 +55,11 @@ public:
     const ParseType &get_type() const;
 
     /**
-    * 获取节点的K_IS_PTR键对应的布尔值
+    * 获取节点的K_PTR_LV键对应的级数
     * get_系列函数都会抛出ParseException异常
     * @return
     */
-    bool get_is_pointer() const;
+    size_t get_ptr_lv() const;
 
     /**
     * 获取节点的K_PARAM_LIST_NODE键对应的值
@@ -239,11 +239,11 @@ public:
     void set_type(const ParseType &p_type);
 
     /**
-     * 设置节点的K_IS_PTR键对应的值
-     * 设置是否声明为指针
-     * @param is_pointer
+     * 设置节点的K_PTR_LV键对应的值
+     * 设置声明指针的级数
+     * @param ptr_lv
      */
-    void set_is_pointer(bool is_pointer = false);
+    void set_ptr_lv(size_t ptr_lv);
 
     /**
      * 设置节点的K_PARAM_LIST_NODE键值
@@ -359,6 +359,13 @@ public:
      * @param is_array
      */
     void update_is_array(bool is_array);
+
+    /**
+     * 没有警告地更新K_PTR_LV键值
+     * 更新指针级数
+     * @param ptr_lv
+     */
+    void update_ptr_lv(size_t ptr_lv);
 
     /**
      * 节点动作: 注册声明, 根据节点和子节点的信息声明变量等

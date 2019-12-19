@@ -886,8 +886,7 @@ function_specifier
 
 declarator
   : pointer direct_declarator {
-    $$ = tree.make_declarator_node(true);
-    // todo: 这里要将变量的类型更新为指针
+    $$ = tree.make_declarator_node(tree.node($1).get_ptr_lv());
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -949,15 +948,15 @@ direct_declarator
 
 pointer
   : MUL {
-    $$ = tree.new_node("pointer");
+    $$ = tree.make_pointer_node();
   }
   | MUL type_qualifier_list {
     $$ = tree.new_node("pointer");
     tree.set_parent($2, $$);
   }
   | MUL pointer {
-    $$ = tree.new_node("pointer");
-    tree.set_parent($1, $$);
+    $$ = $2;
+    tree.node($$).update_ptr_lv(tree.node($$).get_ptr_lv() + 1);
   }
   | MUL type_qualifier_list pointer {
     $$ = tree.new_node("pointer");
@@ -1003,8 +1002,9 @@ parameter_list
 parameter_declaration
   : declaration_specifiers declarator {
     auto type = tree.node($1).get_type();
-    if(tree.node($2).get_is_pointer()) {
-      type = ParseType::get_pointer(type);
+    size_t ptr_lv = tree.node($2).get_ptr_lv();
+    if(ptr_lv) {
+      type = ParseType::get_pointer(type, ptr_lv);
     }
     if(tree.node($2).get_is_array()) {
       type = ParseType::get_array(type, (size_t)-1);

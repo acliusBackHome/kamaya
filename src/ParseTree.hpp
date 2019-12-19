@@ -112,7 +112,7 @@ public:
      * 生成一个声明器节点
      * @return
      */
-    size_t make_declarator_node(bool is_pointer = false);
+    size_t make_declarator_node(size_t ptr_lv = 0);
 
     /**
      * 生成一个直接声明器节点
@@ -195,6 +195,13 @@ public:
      * @return
      */
     size_t make_for_statement_node();
+
+    /**
+     * 生成一个指针声明节点
+     * @param ptr_lv
+     * @return
+     */
+    size_t make_pointer_node(size_t ptr_lv = 1);
 
     /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
@@ -304,7 +311,7 @@ private:
     map<size_t, ParseConstant> node_const;
     map<size_t, ParseVariable> node_variable;
     map<size_t, ParseType> node_type;
-    map<size_t, bool> node_is_ptr;
+    map<size_t, size_t> node_ptr_lv;
     map<size_t, ParseFunction> node_function;
     map<size_t, ParseExpression> node_expression;
     map<size_t, bool> node_is_array;

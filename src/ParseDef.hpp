@@ -24,9 +24,9 @@ class ParseException;
 // 表示语法树的数据结构
 class ParseTree;
 
-//类型声明所需信息<符号, 初始化赋值表达式, 是否声明为指针, 数组大小(如果不是数组则是0,
+//类型声明所需信息<符号, 初始化赋值表达式, 声明的指针级数(如果不是指针为0), 数组大小(如果不是数组则是0,
 // 没有声明大小为(size_t)-1, 参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
-typedef tuple<string, ParseExpression, bool, size_t, size_t> InitDeclarator;
+typedef tuple<string, ParseExpression, size_t, size_t, size_t> InitDeclarator;
 
 // 基本类型的枚举
 enum BaseType {
@@ -123,6 +123,9 @@ enum NodeType {
     // for语句
     // 目前没有直接键值
             N_FOR_STMT = 18,
+    //指针标识节点
+    // ptr_lv 指针等级, 表示声明了多少级指针
+            N_POINTER = 19
 };
 
 // 用64位整数表示该节点所拥有的键值
@@ -138,7 +141,7 @@ enum NodeKey {
     // 类型, 用于类型声明中, ParseExpression
             K_TYPE = 1 << 3,
     // 是否声明为指针标记, bool
-            K_IS_PTR = 1 << 4,
+            K_PTR_LV = 1 << 4,
     // 函数记录, ParseFunction
             K_FUNCTION = 1 << 5,
     // 表达式记录, ParseExpression
