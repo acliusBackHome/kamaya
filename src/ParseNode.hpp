@@ -375,6 +375,13 @@ public:
     void action_declaration(size_t scope_id, IR &ir) const;
 
     /**
+     * 产生变量声明时的代码
+     */
+    void action_variable_declaration_code_generate(
+            IR &ir, const ParseExpression &init_expr, const ParseType &this_type,
+            const string &symbol) const;
+
+    /**
      * 获取节点信息
      * @return
      */

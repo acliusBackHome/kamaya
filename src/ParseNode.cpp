@@ -554,12 +554,61 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
             // 这里是变量声明
             ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, ir.getOffset()));
             IR_EMIT {
-                ir.exprEmit(init_expr, this_type, symbol, tree);
+                action_variable_declaration_code_generate(ir, init_expr, this_type, symbol);
             }
         }
     }
 }
 
+void ParseNode::action_variable_declaration_code_generate(
+        IR &ir, const ParseExpression &init_expr, const ParseType &this_type,
+        const string &symbol) const {
+    ir.addOffset(this_type.get_size());
+    if (init_expr.is_const()) {
+        const ParseConstant &E = init_expr.get_const();
+        if (E.get_type() == ConstValueType::C_SIGNED) {
+            ir.gen(":=", symbol, "_", to_string(E.get_signed()));
+        } // TODO: MORE TYPE
+    } else {
+        ExpressionType exp_type = init_expr.get_expr_type();
+        string op = "_", arg1 = "_", arg2 = "_", result = "_";
+        switch (exp_type) {
+            case E_ADD:
+                op = "+";
+                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                result = to_string(init_expr.get_id());
+                break;
+            case E_SUB:
+                op = "-";
+                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                result = to_string(init_expr.get_id());
+                break;
+            case E_MUL:
+                op = "*";
+                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                result = to_string(init_expr.get_id());
+                break;
+            case E_DIV:
+                op = "/";
+                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                result = to_string(init_expr.get_id());
+                break;
+            case E_MOD:
+                op = "%";
+                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
+                result = to_string(init_expr.get_id());
+                break;
+            default:
+                break;
+        }
+        ir.gen(op, arg1, arg2, result);
+    }
+}
 
 
 void ParseNode::collect_parameters_list() const {
@@ -745,9 +794,9 @@ void ParseNode::set_field(NodeKey key, const MapType &object, bool is_update) {
     const MapIter &iter = the_map.find(node_id);
     if (iter != the_map.end()) {
         the_map.erase(iter);
-        if(!is_update) {
+        if (!is_update) {
             printf("ParseNode::set_field(NodeKey key, const MapType &object):"
-                        "警告:试图覆盖节点%zu的%s键\n", node_id, get_key_name(key).c_str());
+                   "警告:试图覆盖节点%zu的%s键\n", node_id, get_key_name(key).c_str());
         }
     }
     the_map.insert(pair<size_t, MapType>(node_id, object));

@@ -6,6 +6,10 @@
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 bool generating_code = true;
 
+void expr_call_back(const ParseExpression& expression) {
+
+}
+
 using namespace std;
 
 void test_parse_type() {
