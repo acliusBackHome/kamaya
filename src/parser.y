@@ -413,7 +413,7 @@ equality_expression
 
     IR_EMIT {
       ParseNode& B = tree.node($$);
-      B.set_true_list(ir.makelist(ir.getNextinstr()));
+      B.set_false_list(ir.makelist(ir.getNextinstr()));
       ir.gen("jmp", "_", "_", "_");
     }
   }
@@ -1285,6 +1285,8 @@ selection_statement
       ParseNode& S1 = tree.node($6);
       ir.backpatch(B.get_true_list(), M.get_instr());
       S.set_next_list(ir.merge(B.get_false_list(), S1.get_next_list()));
+
+      ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
   | IF LP expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
@@ -1308,6 +1310,8 @@ selection_statement
       ir.backpatch(B.get_false_list(), M2.get_instr());
       vector<size_t> temp = ir.merge(S1.get_next_list(), N.get_next_list());
       S.set_next_list(ir.merge(temp, S2.get_next_list()));
+
+      ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
   | SWITCH LP expression RP statement {
