@@ -17,6 +17,8 @@ typedef tuple<string, string, string, string> Qua;
 // jnz, j, j<, j>, :=, read, write
 
 class ParseTree;
+class ParseType;
+class ParseExpression;
 
 class IR {
   size_t offset;
@@ -73,6 +75,7 @@ class IR {
   void recordBegin();
   void recordEnd();
   void relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, string relop);
+  void exprEmit(const ParseExpression &init_expr, const ParseType &this_type, const string &symbol, ParseTree &tree);
 };
 
 #endif
