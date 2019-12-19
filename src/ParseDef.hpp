@@ -278,4 +278,6 @@ enum ExceptionCode {
     EX_EXPRESSION_CAN_NOT_ACCESS,//获取了获取的不该获取到的表达式ID, bug
 };
 
+void expr_call_back(const ParseExpression& expr);
+
 #endif //NKU_PRACTICE_PARSE_DEF_H

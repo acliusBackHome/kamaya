@@ -70,6 +70,11 @@ size_t handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionTyp
     }
 }
 
+void expr_call_back(const ParseExpression& expr) {
+  expr.set_address(10);
+  cout << expr.get_info() << endl;
+} 
+
 %}
 
 %token MAIN RETURN
@@ -460,6 +465,7 @@ logic_and_expression
       ParseNode& M = tree.node($3);
       ParseNode& B2 = tree.node($4);
       ir.backpatch(B1.get_true_list(), M.get_instr());
+      
       B.set_true_list(B2.get_true_list());
       B.set_false_list(ir.merge(B1.get_false_list(), B2.get_false_list()));
     }
@@ -482,6 +488,7 @@ logic_or_expression
       ParseNode& M = tree.node($3);
       ParseNode& B2 = tree.node($4);
       ir.backpatch(B1.get_false_list(), M.get_instr());
+      
       B.set_true_list(ir.merge(B1.get_true_list(), B2.get_true_list()));
       B.set_false_list(B2.get_false_list());
     }
@@ -1304,6 +1311,7 @@ selection_statement
       ParseNode& M = tree.node($5);
       ParseNode& S1 = tree.node($6);
       ir.backpatch(B.get_true_list(), M.get_instr());
+      
       S.set_next_list(ir.merge(B.get_false_list(), S1.get_next_list()));
 
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
@@ -1328,6 +1336,7 @@ selection_statement
       ParseNode& S2 = tree.node($10);
       ir.backpatch(B.get_true_list(), M1.get_instr());
       ir.backpatch(B.get_false_list(), M2.get_instr());
+      
       vector<size_t> temp = ir.merge(S1.get_next_list(), N.get_next_list());
       S.set_next_list(ir.merge(temp, S2.get_next_list()));
 
@@ -1365,6 +1374,7 @@ iteration_statement
       ir.backpatch(S1.get_next_list(), M1.get_instr());
       S.set_next_list(B.get_false_list());
       ir.gen("jmp", "_", "_", to_string(M1.get_instr()));
+      
 
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
@@ -1384,6 +1394,7 @@ iteration_statement
       ParseNode& B = tree.node($7);
       ir.backpatch(B.get_true_list(), M1.get_instr());
       ir.backpatch(S1.get_next_list(), M2.get_instr());
+      
       S.set_next_list(B.get_false_list());
 
       ir.backpatch(S.get_next_list(), ir.getNextinstr());

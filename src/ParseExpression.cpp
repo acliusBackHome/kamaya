@@ -288,6 +288,7 @@ void ParseExpression::update(const ParseExpression &expr) {
         ((ParseExpression &) expr).expr_id = id2expr.size();
         id2expr.emplace_back(expr);
         id2address.emplace_back(0);
+        expr_call_back(id2expr[id2expr.size() - 1]);
     } else {
         ((ParseExpression &) expr).expr_id = it->second;
     }
@@ -1132,7 +1133,7 @@ size_t ParseExpression::get_address() const {
     return id2address[get_id()];
 }
 
-void ParseExpression::set_address(size_t expr_address) {
+void ParseExpression::set_address(size_t expr_address) const {
     id2address[get_id()] = expr_address;
 }
 

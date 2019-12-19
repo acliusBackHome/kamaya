@@ -564,28 +564,28 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
                     ExpressionType exp_type = init_expr.get_expr_type();
                     string op = "_", arg1 = "_", arg2 = "_", result = "_";
                     if (exp_type == ExpressionType::E_ADD) {
-                        op = "+",
-                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        op = "+";
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
                     } else if (exp_type == ExpressionType::E_SUB) {
-                        op = "-",
-                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        op = "-";
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
                     } else if (exp_type == ExpressionType::E_MUL) {
-                        op = "*",
-                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        op = "*";
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
                     } else if (exp_type == ExpressionType::E_DIV) {
-                        op = "/",
-                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        op = "/";
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
                     } else if (exp_type == ExpressionType::E_MOD) {
-                        op = "%",
-                                arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
+                        op = "%";
+                        arg1 = to_string(tree.node(init_expr.get_child(0)).get_expression().get_address());
                         arg2 = to_string(tree.node(init_expr.get_child(1)).get_expression().get_address());
                         result = to_string(init_expr.get_id());
                     }
@@ -595,6 +595,8 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
         }
     }
 }
+
+
 
 void ParseNode::collect_parameters_list() const {
     auto &the_map = tree.node_param_list;
