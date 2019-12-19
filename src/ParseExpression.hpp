@@ -197,7 +197,7 @@ public:
      * 会在全局有一份唯一不重复的备份
      * @param expr_address
      */
-    void set_address(size_t expr_address);
+    void set_address(size_t expr_address) const;
 
 private:
     size_t child[2], // 子表达式id, 有时候是ParseVariable*所以用size_t代替地址,目前只用两个
