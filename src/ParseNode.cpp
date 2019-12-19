@@ -109,9 +109,13 @@ string ParseNode::get_node_type_name(NodeType type) noexcept {
         case N_COMP_STMT:
             return "compound_statement";
         case N_FOR_STMT:
-            return "for statement";
+            return "for_statement";
         case N_POINTER:
             return "pointer";
+        case N_BP_INST:
+            return "back_patch_instr";
+        case N_BP_NEXT_LIST:
+            return "back_patch_next_list";
     }
     return "unknown";
 }

@@ -125,7 +125,11 @@ enum NodeType {
             N_FOR_STMT = 18,
     //指针标识节点
     // ptr_lv 指针等级, 表示声明了多少级指针
-            N_POINTER = 19
+            N_POINTER = 19,
+    // 回填instr节点
+            N_BP_INST = 20,
+    //回填next_list
+            N_BP_NEXT_LIST = 21,
 };
 
 // 用64位整数表示该节点所拥有的键值
