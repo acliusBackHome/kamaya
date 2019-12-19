@@ -146,7 +146,7 @@ public:
      * @param child
      * @return
      */
-    size_t get_child_expression(size_t child) const;
+    size_t get_child(size_t child) const;
 
     /**
      * 判断该表达式是否定义

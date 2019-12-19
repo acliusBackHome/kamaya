@@ -587,9 +587,9 @@ const ParseType &ParseExpression::get_ret_type() const {
     return ParseType::get_type(T_UNKNOWN);
 }
 
-size_t ParseExpression::get_child_expression(size_t _child) const {
+size_t ParseExpression::get_child(size_t _child) const {
     if (_child >= 2) {
-        string info = "ParseExpression::get_child_expression(size_t _child) expr_id=";
+        string info = "ParseExpression::get_child(size_t _child) expr_id=";
         info += to_string(expr_id);
         info += " _child=" + to_string(_child);
         throw ParseException(EX_EXPRESSION_CAN_NOT_ACCESS, info);
