@@ -71,8 +71,11 @@ size_t handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionTyp
 }
 
 void expr_call_back(const ParseExpression& expr) {
+<<<<<<< HEAD
   expr.set_address(10);
   cout << expr.get_info() << endl;
+=======
+>>>>>>> expression call back
 } 
 
 %}
