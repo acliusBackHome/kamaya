@@ -181,7 +181,7 @@ public:
      * @return
      */
     static const ParseExpression &get_assign_expression(
-            const ParseVariable &variable, const ParseExpression &expr
+            const ParseExpression &unary_expr, const ParseExpression &expr
     );
 
     /**
@@ -273,7 +273,7 @@ private:
      * @param const2
      */
     void calculate_const_g(ConstValueType cal_type,
-                             const ParseConstant &const1, const ParseConstant &const2
+                           const ParseConstant &const1, const ParseConstant &const2
     );
 
     /**
@@ -283,7 +283,7 @@ private:
      * @param const2
      */
     void calculate_const_ge(ConstValueType cal_type,
-                           const ParseConstant &const1, const ParseConstant &const2
+                            const ParseConstant &const1, const ParseConstant &const2
     );
 
     /**
@@ -293,7 +293,7 @@ private:
      * @param const2
      */
     void calculate_const_eq(ConstValueType cal_type,
-                           const ParseConstant &const1, const ParseConstant &const2
+                            const ParseConstant &const1, const ParseConstant &const2
     );
 
     /**
@@ -323,7 +323,7 @@ private:
      * @param const2
      */
     void calculate_const_le(ConstValueType cal_type,
-                           const ParseConstant &const1, const ParseConstant &const2
+                            const ParseConstant &const1, const ParseConstant &const2
     );
 
     /**

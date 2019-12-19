@@ -1,7 +1,7 @@
 void main() {
     int a, b = 1;
     char* c = "123abc";
-    b = c + a;
+    b = c;
     a = b + 10 / 2 ^ 3 ^ 2 ^ 3; // pay attention to operation priority
     if (a != 0) {
         while (a < 10 && b < 10) {

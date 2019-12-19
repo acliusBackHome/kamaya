@@ -144,6 +144,16 @@ public:
                           const ParseType &type1, const ParseType &type2);
 
     /**
+     * 试图自动转换类型from成to
+     * 返回是否成功, 实际上只会返回true
+     * 因为转换失败会抛出异常
+     * @param from
+     * @param to
+     * @return
+     */
+    static bool convert(const ParseType &from, const ParseType &to);
+
+    /**
      * 比较两个typeid所对应的type的表示范围大小
      * 返回 t1 >= t2
      * @param t1_id
