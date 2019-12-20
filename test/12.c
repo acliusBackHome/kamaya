@@ -1,7 +1,8 @@
 int a = 1;
 int main() {
-    do {
+    a = 1;
+    for(int a = 1; a < 10;a = 1) {
         int b = 1;
-    }while(a != 0);
+    }
     return 0;
 }
