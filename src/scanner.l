@@ -191,6 +191,7 @@ int main(int argc, char** argv) {
   initName();
   try {
     yyparse();
+    tree.last_combine();
     int sz = tree.error_cnt();
     if (sz || !parse_error_strs.empty()) {
       cout << "错误报告:" << endl;
@@ -206,9 +207,7 @@ int main(int argc, char** argv) {
         cout << inputFile << ":" << each << endl;
       }
     }
-    // 连接错误结点
     printf("语法分析树:\n");
-    tree.last_combine();
     tree.print();
   } catch (ParseException &exc) {
     printf("未处理异常:%s\n", exc.get_info().c_str());
@@ -224,7 +223,7 @@ int main(int argc, char** argv) {
   ParseExpression::print_all_expression();
   printf("所有作用域声明:\n");
   ParseScope::print_all_declaration();
-  
+
   ir.print();
   // assembler.setSectionData(ParseScope::emitData2Nasm());
   // assembler.setSectionText(ParseScope::emitText2Nasm());

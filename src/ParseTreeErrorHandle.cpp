@@ -24,13 +24,13 @@ void ParseTree::last_combine() {
     for (auto i : tmp_nodes) {
         if (idx >= error_nodes.size()) {
 #ifdef PARSE_TREE_DEBUG
-            puts("COMPILER ERROR: OUT RANGE OF ERROR NODES.");
+            puts("ParseTree::last_combine log: OUT RANGE OF ERROR NODES.");
 #endif
             break;
         }
         if (i == error_nodes[idx]) {
 #ifdef PARSE_TREE_DEBUG
-            puts("COMPILER ERROR: SAME TAG ERROR AND LAST OF NODE.");
+            puts("ParseTree::last_combine log: SAME TAG ERROR AND LAST OF NODE.");
 #endif
             continue;
         }
