@@ -144,12 +144,16 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
         break;
     }
     if (op != "_") {
-      arg2 = to_string(
-          tree.node(init_expr.get_child(1)).get_expression().get_address());
+      arg2 = to_string(ParseExpression::get_expression(init_expr.get_child(1)).get_address());
+          //tree.node(init_expr.get_child(1)).get_expression().get_address());
     }
     switch (exp_type) {
-      case ExpressionType::E_VAR:
-        op = ":=";
+      case ExpressionType::E_VAR: {
+          // 变量直接赋值
+          const ParseVariable &var = init_expr.get_variable();
+          gen(":=", var.get_symbol(), "_", formKey(scope_id, symbol), node_id);
+          return;
+        }
         break;
       case ExpressionType::E_NOT:
         op = "!";
@@ -168,8 +172,9 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
         break;
     }
     if (op != "_") {
-      arg1 = to_string(
-          tree.node(init_expr.get_child(0)).get_expression().get_address());
+      arg1 = to_string(ParseExpression::get_expression(init_expr.get_child(0)).get_address());
+      // arg1 = to_string(
+      //     tree.node(init_expr.get_child(0)).get_expression().get_address());
     }
     result = formKey(scope_id, symbol);
     if (op != "_") {
@@ -201,4 +206,10 @@ void IR::allocEmit(const size_t &scope, const string &symbol,
   allocMap[key] = Alloc{offset, size};
   gen("alloc", to_string(offset), to_string(size), key, node_id);
   addOffset(size);
+}
+
+void IR::varDecEmit(const string &symbol, const ParseExpression &init_expr, size_t node_id, size_t scope_id) {
+  if (init_expr.get_expr_type() != ExpressionType::E_UNDEFINED) {
+    gen(":=", to_string(init_expr.get_address()), "_", formKey(scope_id, symbol), node_id);
+  }
 }

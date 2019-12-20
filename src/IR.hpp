@@ -66,6 +66,10 @@ class IR {
     stk.pop();
     return ret;
   }
+  inline string newTemp() {
+    static int idx = 0;
+    return "L" + to_string(idx++);
+  }
   inline void label(size_t *addr) { *addr = nextinstr; }
   inline vector<size_t> makelist(size_t i) { return vector<size_t>(1, i); }
   inline vector<size_t> makelist() { return vector<size_t>(); }
@@ -91,6 +95,7 @@ class IR {
                  const size_t &node_id);
   void dataEmit(const string &name, size_t size, const string &value, size_t node_id);
   void dataUndefinedEmit(const string &name, size_t size, size_t node_id);
+  void varDecEmit(const string &symbol, const ParseExpression &init_expr, size_t node_id, size_t scope_id);
 };
 
 #endif

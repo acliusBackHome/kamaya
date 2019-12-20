@@ -613,6 +613,15 @@ const ParseConstant &ParseExpression::get_const() const {
     throw ParseException(EX_EXPRESSION_NOT_CONST, info);
 }
 
+const ParseVariable &ParseExpression::get_variable() const {
+    if (is_variable()) {
+        return *(ParseVariable *) child[0];
+    }
+    string info = "ParseExpression::get_variable() expr_id=";
+    info += to_string(expr_id);
+    throw ParseException(EX_EXPRESSION_NOT_VARIABLE, info);
+}
+
 const ParseType &ParseExpression::get_ret_type() const {
     if (ret_type_id != (size_t) -1) {
         return ParseType::get_type(ret_type_id);
@@ -771,6 +780,10 @@ bool ParseExpression::is_const() const {
         ((ParseExpression *) this)->calculate_const();
     }
     return const_value != (size_t) -1;
+}
+
+bool ParseExpression::is_variable() const {
+    return expr_type == E_VAR;
 }
 
 size_t ParseExpression::get_address() const {

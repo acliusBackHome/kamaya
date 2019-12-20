@@ -258,6 +258,7 @@ enum ExceptionCode {
     EX_DECLARATION_NOT_A_FUNCTION,//符号已声明但不是声明为函数
     EX_DECLARATION_NOT_FOUND,//符号已声明但没有找到其记录,bug
     EX_EXPRESSION_NOT_CONST,//试图获取不可在编译期获取值的表达式时抛出的异常
+    EX_EXPRESSION_NOT_VARIABLE,//试图获取非变量表达式的变量值时抛出的异常
     EX_EXPRESSION_DIVIDE_ZERO,//除0异常
     EX_TYPE_CAN_NOT_CONVERT,//不能进行类型转化异常
     EX_EXPRESSION_CAN_NOT_GENERATE,//产生了错误的表达式, bug

@@ -142,6 +142,12 @@ public:
     const ParseConstant &get_const() const;
 
     /**
+     * 获取表达式的变量, 如果不存在,则会抛出异常
+     * @return
+     */
+    const ParseVariable &get_variable() const;
+
+    /**
      * 获取表达式的子表达式id, child参数目前小于2
      * 如果该表达式的类型没有子表达式, 则返回(size_t) -1
      * @param child
@@ -160,6 +166,12 @@ public:
      * @return
      */
     bool is_const() const;
+
+    /**
+     * 判断该表达式是否是变量
+     * @return
+     */
+    bool is_variable() const;
 
     /**
      * 后缀中括号表达式
