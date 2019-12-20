@@ -1,12 +1,13 @@
 #include "ParseTree.hpp"
 #include <iostream>
+#include "BaseBlock.hpp"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 bool generating_code = true;
 
-void expr_call_back(const ParseExpression& expression) {
+void expr_call_back(const ParseExpression &expression) {
 
 }
 
@@ -117,7 +118,7 @@ void test_expression() {
 //                e2(ParseConstant((long long) 2)),
 //                e3(ParseExpression::get_logic_expression(E_GE, e1, e2)),
                 e4(a), e5(b), e6(e4 + e5),
-        e7(ParseExpression::get_assign_expression(e4, e5));
+                e7(ParseExpression::get_assign_expression(e4, e5));
         ParseExpression::print_all_expression();
     } catch (ParseException &exc) {
         cout << exc.get_info() << endl;
@@ -125,13 +126,36 @@ void test_expression() {
     }
 }
 
+void test_base_block() {
+    vector<Qua> tests;
+    tests.emplace_back("0", "_", "_", "0");//!0
+    tests.emplace_back("1", "_", "_", "1");//0
+    tests.emplace_back("2", "_", "_", "2");//!1
+    tests.emplace_back("jmp", "_", "_", "2");//1
+    tests.emplace_back("4", "_", "_", "4");//!2
+    tests.emplace_back("5", "_", "_", "5");//!3
+    tests.emplace_back("jmp", "_", "_", "5");//3
+    tests.emplace_back("7", "_", "_", "7");//!4
+    tests.emplace_back("jmp", "_", "_", "0");//4
+    tests.emplace_back("9", "_", "_", "9");//!5
+    tests.emplace_back("10", "_", "_", "10");//5
+    tests.emplace_back("11", "_", "_", "11");//5
+    auto res = BaseBlock::get_base_blocks(tests);
+    for (const auto &each : res) {
+        cout << "block " << to_string(each.get_id()) << endl;
+        for (const auto &qua : each.get_qua_list()) {
+            cout << get<0>(qua) << "," << get<1>(qua) << "," << get<2>(qua) << "," << get<3>(qua) << endl;
+        }
+    }
+}
 
 int main() {
     //test_parse_type();
     //test_make_node();
     //test_make_expression();
     //test_scope();
-    test_expression();
+    //test_expression();
+    test_base_block();
     return 0;
 }
 
