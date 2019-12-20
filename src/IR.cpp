@@ -36,12 +36,7 @@ void IR::backpatch(const vector<size_t> &p, size_t pp) {
 }
 
 string IR::size2type(size_t size) {
-  static map<size_t, string> mp = {
-    {1, "db"},
-    {2, "dw"},
-    {4, "dd"},
-    {8, "dq"}
-  };
+  static map<size_t, string> mp = {{1, "db"}, {2, "dw"}, {4, "dd"}, {8, "dq"}};
   if (mp.find(size) == mp.end()) {
     log("other size: " + to_string(size));
     return "unknown";
@@ -70,15 +65,17 @@ string IR::getConstValueStr(const ParseExpression &init_expr) {
   return "BadValue";
 }
 
-void IR::dataEmit(const string &name, size_t size, const string &value, size_t node_id) {
+size_t IR::dataEmit(const string &name, size_t size, const string &value,
+                    size_t node_id) {
   string type = size2type(size);
   sectionData.push_back(SData{name, type, value});
   gen("section .data", type, value, name, node_id);
+  return -sectionData.size();
 }
 
-void IR::dataUndefinedEmit(const string &name, size_t size, size_t node_id) {
+size_t IR::dataUndefinedEmit(const string &name, size_t size, size_t node_id) {
   static const string OUTZERO = "0";
-  dataEmit(name, size, OUTZERO, node_id);
+  return dataEmit(name, size, OUTZERO, node_id);
 }
 
 // 也许没用
@@ -87,12 +84,13 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
                   size_t scope_id) {
   if (init_expr.is_const()) {
     string arg1 = getConstValueStr(init_expr);
+    string result = address2pointer(init_expr.get_address());
     if (scope_id == 0) {
       // 在静态数据段生成，字符串(TODO)也在此生成
       dataEmit(symbol, this_type.get_size(), arg1, node_id);
     } else {
       // 在栈中分配
-      gen(":=", arg1, "_", formKey(scope_id, symbol), node_id);
+      gen(":=", arg1, "_", result, node_id);
     }
   } else {
     ExpressionType exp_type = init_expr.get_expr_type();
@@ -145,50 +143,61 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
         break;
     }
     if (op != "_") {
-      arg2 = address2pointer(ParseExpression::get_expression(init_expr.get_child(1)).get_address());
-          //tree.node(init_expr.get_child(1)).get_expression().get_address());
+      const ParseExpression &right =
+          ParseExpression::get_expression(init_expr.get_child(1));
+      if (right.is_const()) {
+        arg2 = getConstValueStr(right);
+      } else {
+        arg2 = address2pointer(right.get_address());
+      }
     }
     switch (exp_type) {
       case ExpressionType::E_VAR: {
-          // 变量直接赋值
-          const ParseVariable &var = init_expr.get_variable();
-          gen(":=", address2pointer(var.get_address()), "_", formKey(scope_id, symbol), node_id);
-          return;
-        }
-        break;
+        // 变量直接赋值
+        string result = address2pointer(init_expr.get_address());
+        const ParseVariable &var = init_expr.get_variable();
+        gen(":=", address2pointer(var.get_address()), "_", result, node_id);
+        return;
+      } break;
       case ExpressionType::E_NOT:
         op = "!";
         break;
       case ExpressionType::E_ASSIGN: {
-          // 赋值表达式
-          assignEmit(init_expr.get_child(0), init_expr.get_child(1));
-          const ParseVariable &left = ParseExpression::get_expression(init_expr.get_child(0)).get_variable();
-          const ParseExpression &right = ParseExpression::get_expression(init_expr.get_child(1));
-          string arg1;
-          if (right.is_const()) {
-            arg1 = getConstValueStr(right);
-          } else {
-            arg1 = address2pointer(right.get_address());
-          }
-          gen(":=", arg1, "_", left.get_symbol(), node_id);
+        // 赋值表达式
+        assignEmit(init_expr.get_child(0), init_expr.get_child(1));
+        const ParseVariable &left =
+            ParseExpression::get_expression(init_expr.get_child(0))
+                .get_variable();
+        const ParseExpression &right =
+            ParseExpression::get_expression(init_expr.get_child(1));
+        string arg1, result;
+        if (right.is_const()) {
+          arg1 = getConstValueStr(right);
+        } else {
+          arg1 = address2pointer(right.get_address());
         }
-        break;
-      case ExpressionType::E_UNDEFINED:
+        result = address2pointer(left.get_address());
+        gen(":=", arg1, "_", result, node_id);
+      } break;
+      case ExpressionType::E_UNDEFINED:  // 应该不会跑到这里
         if (scope_id == 0) {
           dataUndefinedEmit(symbol, this_type.get_size(), node_id);
         }
         return;
-        break;
       default:
         log("other exp type");
         break;
     }
     if (op != "_") {
-      arg1 = address2pointer(ParseExpression::get_expression(init_expr.get_child(0)).get_address());
-      // arg1 = to_string(
-      //     tree.node(init_expr.get_child(0)).get_expression().get_address());
+      const ParseExpression &left =
+          ParseExpression::get_expression(init_expr.get_child(0));
+      if (left.is_const()) {
+        arg1 = getConstValueStr(left);
+      } else {
+        arg1 = address2pointer(left.get_address());
+      }
     }
-    result = formKey(scope_id, symbol);
+    result = address2pointer(init_expr.get_address());
     if (op != "_") {
       gen(op, arg1, arg2, result, node_id);
     }
@@ -202,13 +211,25 @@ void IR::relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3,
   const ParseNode &E2 = tree.node(p3);
   B.set_true_list(makelist(getNextinstr()));
   B.set_false_list(makelist(getNextinstr() + 1));
-  gen(relop, address2pointer(E1.get_expression().get_address()),
-      address2pointer(E2.get_expression().get_address()), "_", node_id);
+  string arg1, arg2;
+  const ParseExpression &left = E1.get_expression();
+  const ParseExpression &right = E2.get_expression();
+  if (left.is_const()) {
+    arg1 = getConstValueStr(left);
+  } else {
+    arg1 = address2pointer(left.get_address());
+  }
+  if (right.is_const()) {
+    arg2 = getConstValueStr(right);
+  } else {
+    arg2 = address2pointer(right.get_address());
+  }
+  gen(relop, arg1, arg2, "_", node_id);
   gen("jmp", "_", "_", "_", node_id);
 }
 
 size_t IR::allocEmit(const size_t &scope, const string &symbol,
-                   const size_t &size, const size_t &node_id) {
+                     const size_t &size, const size_t &node_id) {
   // 变量内存分配, 返回地址
   const string key = formKey(scope, symbol);
   if (allocMap.find(key) != allocMap.end()) {
@@ -222,8 +243,23 @@ size_t IR::allocEmit(const size_t &scope, const string &symbol,
   return ret;
 }
 
-void IR::varDecEmit(const string &symbol, const ParseExpression &init_expr, size_t node_id, size_t scope_id) {
+void IR::varDecEmit(size_t addr, const ParseExpression &init_expr,
+                    size_t node_id, size_t scope_id) {
   if (init_expr.get_expr_type() != ExpressionType::E_UNDEFINED) {
-    gen(":=", address2pointer(init_expr.get_address()), "_", formKey(scope_id, symbol), node_id);
+    if (init_expr.is_const()) {
+      gen(":=", getConstValueStr(init_expr), "_", address2pointer(addr),
+          node_id);
+    } else {
+      gen(":=", address2pointer(init_expr.get_address()), "_",
+          address2pointer(addr), node_id);
+    }
   }
+}
+
+inline string IR::getVarPointer(size_t id) {
+  return address2pointer(
+      ParseExpression::get_expression(id).get_variable().get_address());
+}
+inline string IR::getVarPointer(const ParseVariable &var) {
+  return address2pointer(var.get_address());
 }

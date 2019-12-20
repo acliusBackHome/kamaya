@@ -574,22 +574,38 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
             );
         } else {
             // 这里是变量声明
-            ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, ir.getOffset(), scope_id));
-            action_variable_declaration_code_generate(ir, init_expr, this_type, symbol, scope_id);
+            size_t addr = action_variable_declaration_code_generate(ir, init_expr, this_type, symbol, scope_id);
+            ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, addr));
         }
     }
 }
 
-void ParseNode::action_variable_declaration_code_generate(
+size_t ParseNode::action_variable_declaration_code_generate(
         IR &ir, const ParseExpression &init_expr, const ParseType &this_type,
         const string &symbol, const size_t &scope_id) const {
     IR_EMIT {
+        size_t addr;
         if (scope_id != 0) {
-            ir.allocEmit(scope_id, symbol, this_type.get_size(), node_id);
+            addr = ir.allocEmit(scope_id, symbol, this_type.get_size(), node_id);
+            ir.varDecEmit(addr, init_expr, node_id, scope_id);
+        } else {
+            if (init_expr.get_expr_type() == E_UNDEFINED) {
+                addr = ir.dataUndefinedEmit(symbol, this_type.get_size(), node_id);
+            } else {
+                if (init_expr.is_const()) {
+                    addr = ir.dataEmit(symbol, this_type.get_size(), IR::getConstValueStr(init_expr), node_id);
+                } else {
+                    // TODO: 支持静态区非常量初始化表达式
+                    string info = "ParseNode::action_variable_declaration_code_generate";
+                    info += " node_id=" + to_string(node_id);
+                    throw ParseException(EX_NOT_IMPLEMENTED, info);
+                }
+            }
         }
-        // ir.exprEmit(init_expr, this_type, symbol, tree, node_id, scope_id);
-        ir.varDecEmit(symbol, init_expr, node_id, scope_id);
+        // init_expr.set_address(addr); 没有任何作用
+        return addr;
     }
+    return -1;
 }
 
 

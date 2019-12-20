@@ -24,6 +24,7 @@ typedef tuple<string, string, string, string> Qua;
 class ParseTree;
 class ParseType;
 class ParseExpression;
+class ParseVariable;
 
 class IR {
   struct Alloc {
@@ -74,32 +75,41 @@ class IR {
   inline void label(size_t *addr) { *addr = nextinstr; }
   inline vector<size_t> makelist(size_t i) { return vector<size_t>(1, i); }
   inline vector<size_t> makelist() { return vector<size_t>(); }
-  inline void log(const string &msg) { cout << "IR log: " << msg << endl; }
+  static inline void log(const string &msg) {
+    cout << "IR log: " << msg << endl;
+  }
   inline void recordBegin() {
     stkpush(offset);
     offset = 0;
   }
   inline void recordEnd() { offset = stkpop(); }
   inline void assignEmit(size_t left, size_t right) {}
-  inline string address2pointer(size_t addr) { return "[esp+" + to_string(addr) + "]"; }
-
+  inline string address2pointer(size_t addr) {
+    long long addrll = addr;
+    return (addrll < 0) ? sectionData[-1 - addrll].name
+                        : ("[esp+" + to_string(addrll) + "]");
+  }
+  string getVarPointer(size_t id);
+  string getVarPointer(const ParseVariable &var);
   void print();
   string size2type(size_t size);
   vector<size_t> merge(const vector<size_t> &p1, const vector<size_t> &p2);
   void backpatch(const vector<size_t> &p, size_t i);
   void gen(const string &op, const string &arg1, const string &arg2,
            const string &result, size_t node_id);
-  string getConstValueStr(const ParseExpression &init_expr);
+  static string getConstValueStr(const ParseExpression &init_expr);
   void relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3,
                  const string &relop, size_t node_id);
   void exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
                 const string &symbol, ParseTree &tree, size_t node_id,
                 size_t scope_id);
-  size_t allocEmit(const size_t &scope, const string &symbol, const size_t &size,
-                 const size_t &node_id);
-  void dataEmit(const string &name, size_t size, const string &value, size_t node_id);
-  void dataUndefinedEmit(const string &name, size_t size, size_t node_id);
-  void varDecEmit(const string &symbol, const ParseExpression &init_expr, size_t node_id, size_t scope_id);
+  size_t allocEmit(const size_t &scope, const string &symbol,
+                   const size_t &size, const size_t &node_id);
+  size_t dataEmit(const string &name, size_t size, const string &value,
+                  size_t node_id);
+  size_t dataUndefinedEmit(const string &name, size_t size, size_t node_id);
+  void varDecEmit(size_t addr, const ParseExpression &init_expr, size_t node_id,
+                  size_t scope_id);
 };
 
 #endif

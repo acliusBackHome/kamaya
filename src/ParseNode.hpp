@@ -397,7 +397,7 @@ public:
     /**
      * 产生变量声明时的代码
      */
-    void action_variable_declaration_code_generate(
+    size_t action_variable_declaration_code_generate(
             IR &ir, const ParseExpression &init_expr, const ParseType &this_type,
             const string &symbol, const size_t &scope_id) const;
 

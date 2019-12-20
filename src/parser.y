@@ -1283,13 +1283,11 @@ compound_statement
   }
   | LB {
     scope_now = ParseScope::new_scope(scope_now);
-    ir.recordBegin();
   } block_item_list RB {
     $$ = tree.make_compound_statement_node();
     tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
     tree.set_parent($3, $$);
-    ir.recordEnd();
   }
   | error RB {
     $$ = tree.get_error(tree.error_cnt()-1);
@@ -1581,36 +1579,47 @@ jump_statement
 external_declaration
   : function_definition {
     $$ = $1;
-
-    IR_EMIT {
-      ir.recordEnd();
-      ir.recordBegin();
-    }
   }
   | declaration {
     $$ = $1;
   }
   ;
 
+record_begin : {
+  IR_EMIT {
+    ir.recordBegin();
+  }
+};
+
 function_definition
-  : declaration_specifiers declarator declaration_list compound_statement {
+  : declaration_specifiers declarator declaration_list record_begin compound_statement {
     $$ = tree.new_node("function definition 1");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);
-    tree.set_parent($4, $$);
+    tree.set_parent($5, $$);
   }
-  | declaration_specifiers declarator compound_statement {
+  | declaration_specifiers declarator record_begin compound_statement {
     const auto &symbol = tree.node($2).get_symbol();
     const auto &ret_type = tree.node($1).get_type();
     const auto &args = tree.node($2).get_parameters_list();
-    $$ = tree.make_function_definition_node(ret_type, symbol, args,
-      tree.node($3).get_begin_code());
+    try {
+      $$ = tree.make_function_definition_node(ret_type, symbol, args,
+        tree.node($4).get_begin_code());
+    } catch (ParseException &exc) {
+      $$ = tree.make_function_definition_node(ret_type, symbol, args, -1);
+      string info = "in function definition";
+      exc.push_trace(info);
+    }
     ParseScope::get_scope(scope_now).declaration(symbol, ParseFunction(ret_type,
       symbol, args));
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
-    tree.set_parent($3, $$);
+    tree.set_parent($4, $$);
+
+    IR_EMIT {
+      ir.recordEnd();
+    }
   }
   ;
 
