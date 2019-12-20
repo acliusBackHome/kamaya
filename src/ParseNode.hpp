@@ -399,7 +399,7 @@ public:
      */
     void action_variable_declaration_code_generate(
             IR &ir, const ParseExpression &init_expr, const ParseType &this_type,
-            const string &symbol) const;
+            const string &symbol, const size_t &scope_id) const;
 
     /**
      * 获取节点信息

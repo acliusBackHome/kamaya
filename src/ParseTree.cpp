@@ -84,7 +84,7 @@ void ParseTree::set_parent(size_t node_id, size_t parent) {
         if(!nodes[parent].has_key(K_BEGIN_CODE) && nodes[node_id].has_key(K_BEGIN_CODE)) {
             // 如果父节点没有K_BEGIN_CODE键值且孩子
             // 拥有键值K_BEGIN_CODE, 那么其K_BEGIN_CODE将
-            // 传到其父节点也就是该节点上 
+            // 传到其父节点也就是该节点上
             nodes[parent].set_begin_code(nodes[node_id].get_begin_code());
         }
         node_children[parent].push_back(node_id);

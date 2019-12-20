@@ -4,8 +4,12 @@
 #include "ParseTree.hpp"
 #include "ParseType.hpp"
 
+void IR::log(const string &msg) {
+  cout << "IR log: " << msg << endl;
+}
+
 void IR::print() {
-  cout << "quas" << endl;
+  log("IR QUAS OUTPUT");
   for (int i = 0; i < quas.size(); i++) {
     cout << to_string(i) << "\t(" << get<0>(quas[i]) << "," <<
                                      get<1>(quas[i]) << "," <<
@@ -56,7 +60,7 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       arg1 = to_string((int)E.get_bool());
       break;
     default:
-      cout << "other constant type" << endl;
+      log("other constant type");
       break;
     }
     gen(":=", arg1, "_", symbol, node_id);
@@ -125,21 +129,19 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       op = ":=";
       break;
     default:
-      cout << "other exp type" << endl;
+      log("other exp type");
       break;
     }
     if (op != "_") {
       arg1 = to_string(
           tree.node(init_expr.get_child(0)).get_expression().get_address());
     }
-    // result = to_string(init_expr.get_id());
     result = symbol;
     if (op != "_") {
       gen(op, arg1, arg2, result, node_id);
     }
   }
 }
-
 
 void IR::relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, const string &relop, size_t node_id) {
   ParseNode& B = tree.node(p0);
@@ -149,4 +151,16 @@ void IR::relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3, const strin
   B.set_false_list(makelist(getNextinstr()+1));
   gen(relop, to_string(E1.get_expression().get_address()), to_string(E2.get_expression().get_address()), "_", node_id);
   gen("jmp", "_", "_", "_", node_id);
+}
+
+void IR::allocEmit(const size_t &scope, const string &symbol, const size_t &size, const size_t &node_id) {
+  // 变量内存分配
+  const string key = formKey(scope, symbol);
+  if (allocMap.find(key) != allocMap.end()) {
+    log("重复的变量内存分配");
+    return;
+  }
+  allocMap[key] = Alloc{offset, size};
+  gen("alloc", to_string(offset), to_string(size), key, node_id);
+  addOffset(size);
 }
