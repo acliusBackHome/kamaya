@@ -263,6 +263,16 @@ public:
     void last_combine();
 
     /**
+     * 格式化错误信息
+     * @param eid 错误节点号
+     * @param pid 错误节点的父节点号
+     * @param input_file 输入文件名
+     * @param error_string 语法错误信息
+     * @return
+     */
+    string format_error(size_t eid, size_t pid, const string &input_file, const string &error_string);
+
+    /**
      * 对节点操作的接口, 如果节点不存在则会抛出异常: 树中没有此节点
      * @param node_id
      * @return

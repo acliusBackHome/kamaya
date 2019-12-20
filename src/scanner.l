@@ -199,8 +199,8 @@ int main(int argc, char** argv) {
       for(int i = 0; i < sz; i++) {
         size_t eid = tree.get_error(i);
         size_t pid = tree.get_parent(eid);
-        cout << inputFile + ": In " << to_string(pid) << ": " << tree.get_msg(pid) << endl;
-        cout << errorStrings[i] << endl;
+        string errorFormatString = tree.format_error(eid, pid, inputFile, errorStrings[i]);
+        cout << errorFormatString << endl;
       }
       // 语义错误
       for(const auto &each : parse_error_strs) {

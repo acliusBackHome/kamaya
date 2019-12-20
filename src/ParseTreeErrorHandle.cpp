@@ -85,6 +85,17 @@ void ParseTree::watch_error_nodes() const {
     printf("\n");
 }
 
+string ParseTree::format_error(size_t eid, size_t pid, const string & input_file, const string &error_string) {
+    string ret = "";
+    if (eid != (size_t)-1 && pid != (size_t)-1) {
+        ret += input_file + ": In " + to_string(pid) + ": " + get_msg(pid) + "\n";
+    } else {
+        ret += input_file + ":\n";
+    }
+    ret += error_string + "\n";
+    return ret;
+}
+
 #endif
 
 #pragma clang diagnostic pop
