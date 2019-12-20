@@ -158,8 +158,13 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       case ExpressionType::E_NOT:
         op = "!";
         break;
-      case ExpressionType::E_ASSIGN:
-        op = ":=";
+      case ExpressionType::E_ASSIGN: {
+          // 赋值表达式
+          assignEmit(init_expr.get_child(0), init_expr.get_child(1));
+          const ParseVariable &left = ParseExpression::get_expression(init_expr.get_child(0)).get_variable();
+          const ParseExpression &right = ParseExpression::get_expression(init_expr.get_child(1));
+          gen(":=", to_string(right.get_address()), "_", left.get_symbol(), node_id);
+        }
         break;
       case ExpressionType::E_UNDEFINED:
         if (scope_id == 0) {
@@ -195,17 +200,19 @@ void IR::relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3,
   gen("jmp", "_", "_", "_", node_id);
 }
 
-void IR::allocEmit(const size_t &scope, const string &symbol,
+size_t IR::allocEmit(const size_t &scope, const string &symbol,
                    const size_t &size, const size_t &node_id) {
-  // 变量内存分配
+  // 变量内存分配, 返回地址
   const string key = formKey(scope, symbol);
   if (allocMap.find(key) != allocMap.end()) {
     log("重复的变量内存分配");
-    return;
+    return (size_t)-1;
   }
   allocMap[key] = Alloc{offset, size};
   gen("alloc", to_string(offset), to_string(size), key, node_id);
+  size_t ret = offset;
   addOffset(size);
+  return ret;
 }
 
 void IR::varDecEmit(const string &symbol, const ParseExpression &init_expr, size_t node_id, size_t scope_id) {

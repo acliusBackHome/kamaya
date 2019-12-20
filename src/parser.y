@@ -71,6 +71,7 @@ size_t handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionTyp
 }
 
 void expr_call_back(const ParseExpression& expr) {
+  if (expr.is_const()) { return; }
   const string symbol = ir.newTemp();
   ir.allocEmit(scope_now, symbol, expr.get_ret_type().get_size(), 0);
   ir.exprEmit(expr, expr.get_ret_type(), symbol, tree, 0, scope_now);

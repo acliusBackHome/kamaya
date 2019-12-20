@@ -79,6 +79,7 @@ class IR {
     offset = 0;
   }
   inline void recordEnd() { offset = stkpop(); }
+  inline void assignEmit(size_t left, size_t right) {}
 
   void print();
   string size2type(size_t size);
@@ -91,7 +92,7 @@ class IR {
   void exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
                 const string &symbol, ParseTree &tree, size_t node_id,
                 size_t scope_id);
-  void allocEmit(const size_t &scope, const string &symbol, const size_t &size,
+  size_t allocEmit(const size_t &scope, const string &symbol, const size_t &size,
                  const size_t &node_id);
   void dataEmit(const string &name, size_t size, const string &value, size_t node_id);
   void dataUndefinedEmit(const string &name, size_t size, size_t node_id);
