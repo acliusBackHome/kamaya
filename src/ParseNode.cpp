@@ -584,8 +584,10 @@ void ParseNode::action_variable_declaration_code_generate(
         IR &ir, const ParseExpression &init_expr, const ParseType &this_type,
         const string &symbol, const size_t &scope_id) const {
     IR_EMIT {
-        ir.allocEmit(scope_id, symbol, this_type.get_size(), node_id);
-        ir.exprEmit(init_expr, this_type, symbol, tree, node_id);
+        if (scope_id != 0) {
+            ir.allocEmit(scope_id, symbol, this_type.get_size(), node_id);
+        }
+        ir.exprEmit(init_expr, this_type, symbol, tree, node_id, scope_id);
     }
 }
 
