@@ -74,7 +74,8 @@ void expr_call_back(const ParseExpression& expr) {
   IR_EMIT {
     if (expr.is_const()) { return; }
     const string symbol = ir.newTemp();
-    ir.allocEmit(scope_now, symbol, expr.get_ret_type().get_size(), 0);
+    size_t addr = ir.allocEmit(scope_now, symbol, expr.get_ret_type().get_size(), 0);
+    expr.set_address(addr);
     ir.exprEmit(expr, expr.get_ret_type(), symbol, tree, 0, scope_now);
   }
 }
@@ -567,7 +568,7 @@ assignment_expression
           }
           case EX_CAN_NOT_ASSIGN_CONST: {
             if (u_type.get_id() != T_UNKNOWN || a_type.get_id() != T_UNKNOWN) {
-                string error_info = to_string(yylineno) + 
+                string error_info = to_string(yylineno) +
                     ": error : lvalue required as left operand of assignment ";
                 parse_error_strs.emplace_back(error_info);
             }

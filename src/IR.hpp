@@ -47,6 +47,7 @@ class IR {
     offset = nextinstr = 0;
     recordBegin();  // 必须初始化符号栈
   }
+  inline vector<Qua> &getQuas() { return quas; }
   inline string formKey(const size_t &scope, const string &symbol) {
     return "_" + to_string(scope) + "@" + symbol;
   }
@@ -80,6 +81,7 @@ class IR {
   }
   inline void recordEnd() { offset = stkpop(); }
   inline void assignEmit(size_t left, size_t right) {}
+  inline string address2pointer(size_t addr) { return "[esp+" + to_string(addr) + "]"; }
 
   void print();
   string size2type(size_t size);
@@ -87,6 +89,7 @@ class IR {
   void backpatch(const vector<size_t> &p, size_t i);
   void gen(const string &op, const string &arg1, const string &arg2,
            const string &result, size_t node_id);
+  string getConstValueStr(const ParseExpression &init_expr);
   void relopEmit(ParseTree &tree, size_t p0, size_t p1, size_t p3,
                  const string &relop, size_t node_id);
   void exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
