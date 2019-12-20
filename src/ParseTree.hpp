@@ -345,7 +345,6 @@ private:
                     size_t depth, bool last_child, bool *vis) const;
 
     bool check_node(size_t node_id) const;
-
 };
 
 #endif //NKU_PRACTICE_PARSE_TREE_H

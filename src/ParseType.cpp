@@ -641,4 +641,12 @@ bool ParseType::cmp_wider_type(size_t t1_id, size_t t2_id) {
     }
 }
 
+size_t ParseType::get_ptr_lv() const {
+    return pointer_level;
+}
+
+const ParseType ParseType::get_lower_type() const {
+    return get_type(lower_type);
+}
+
 #pragma clang diagnostic pop

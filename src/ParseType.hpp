@@ -55,6 +55,12 @@ public:
     size_t get_array_size() const;
 
     /**
+     * 获取类型的指针级数, 如果不是指针, 则返回0
+     * @return
+     */
+    size_t get_ptr_lv() const;
+
+    /**
      * 获取结构体中字段名对应的类型,如果不存在或者不是结构体
      * 返回无效类型
      * @param key
@@ -87,6 +93,12 @@ public:
      * @return
      */
     size_t get_specifier() const;
+
+    /**
+     * 获取指针或者数组类型的上一级类型
+     * @return
+     */
+    const ParseType get_lower_type() const;
 
     ~ParseType();
 

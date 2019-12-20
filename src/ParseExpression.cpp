@@ -58,6 +58,16 @@ string ParseExpression::get_info() const {
             res += "constant: " + ((ParseConstant *) child[0])->get_info() + ", ";
             break;
         }
+        case E_GET_ITEM: {
+            const ParseExpression &expr1 = get_expression(child[0]),
+                    &expr2 = get_expression(child[1]);
+            sprintf(buff, "[] { Expr-%zu ", child[0]);
+            res += buff;
+            res += get_expr_type_name(expr_type);
+            sprintf(buff, " Expr-%zu }, ", child[1]);
+            res += buff;
+            break;
+        }
     }
     if (expr_type != E_CONST && is_const()) {
         res += "const_value: " + ((ParseConstant *) const_value)->get_info() + ", ";
@@ -69,6 +79,8 @@ string ParseExpression::get_info() const {
 
 string ParseExpression::get_expr_type_name(ExpressionType type) {
     switch (type) {
+        case E_UNDEFINED:
+            break;
         case E_ADD:
             return "+";
         case E_SUB:
@@ -105,8 +117,8 @@ string ParseExpression::get_expr_type_name(ExpressionType type) {
             return "!";
         case E_ASSIGN:
             return "=";
-        case E_UNDEFINED:
-            break;
+        case E_GET_ITEM:
+            return "[]";
     }
     return "undefined";
 }
@@ -184,6 +196,7 @@ bool ParseExpression::operator<(const ParseExpression &other) const {
         case E_L:
         case E_LE:
         case E_ASSIGN:
+        case E_GET_ITEM:
         case E_DIV: {
             for (size_t i = 0; i < 2; ++i) {
                 if (child[i] < other.child[i]) {
@@ -246,6 +259,7 @@ ParseExpression::~ParseExpression() {
         case E_L:
         case E_LE:
         case E_ASSIGN:
+        case E_GET_ITEM:
             return;
     }
 }
@@ -423,6 +437,7 @@ const ParseExpression &ParseExpression::generate_expression(
             }
             break;
         case E_NOT:
+        case E_GET_ITEM:
         case E_UNDEFINED:
         case E_VAR:
         case E_CONST:
@@ -490,6 +505,7 @@ void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_
         case E_NE:
         case E_L:
         case E_LE:
+        case E_GET_ITEM:
             expr.child[0] = from_expr.child[0];
             expr.child[1] = from_expr.child[1];
             break;
@@ -562,6 +578,11 @@ const ParseType &ParseExpression::get_ret_type() const {
             ret_cache = get_expression(child[0]).get_ret_type().get_id();
             return ParseType::get_type(ret_cache);
         }
+        case E_GET_ITEM : {
+            size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
+            ret_cache = get_expression(child[0]).get_ret_type().get_lower_type().get_id();
+            break;
+        }
         case E_LOGIC_OR:
         case E_LOGIC_AND:
         case E_G:
@@ -610,6 +631,7 @@ size_t ParseExpression::get_child(size_t _child) const {
         case E_NE:
         case E_L:
         case E_LE:
+        case E_GET_ITEM:
         case E_ASSIGN:
             return child[_child];
         case E_NOT:
@@ -787,6 +809,7 @@ void ParseExpression::calculate_const() {
         case E_CONST:
         case E_UNDEFINED:
         case E_VAR:
+        case E_GET_ITEM: // 能进行后缀表达式运算的都不会是常量
             // 变量或者常量, 未定义不会计算常量
             break;
     }
@@ -1135,6 +1158,23 @@ size_t ParseExpression::get_address() const {
 
 void ParseExpression::set_address(size_t expr_address) const {
     id2address[get_id()] = expr_address;
+}
+
+const ParseExpression &ParseExpression::get_item(const ParseExpression &expr) const {
+    const ParseType &this_type = get_ret_type();
+    ParseExpression res;
+    if (!this_type.get_array_size() && !this_type.get_ptr_lv()) {
+        string info = "ParseExpression::get_item(const ParseExpression &expr)";
+        info += " this_expr=" + to_string(get_id());
+        info += " expr=" + to_string(get_id());
+        throw ParseException(EX_NOT_AN_ARRAY_TYPE, info);
+    }
+    res.expr_type = E_GET_ITEM;
+    res.ret_type_id = this_type.get_lower_type().get_id();
+    res.child[0] = get_id();
+    res.child[1] = expr.get_id();
+    update(res);
+    return get_expression(res.get_id());
 }
 
 #pragma clang diagnostic pop

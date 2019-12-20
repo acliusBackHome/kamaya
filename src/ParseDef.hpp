@@ -201,6 +201,7 @@ enum ExpressionType {
     E_UNDEFINED = 0,
     E_VAR,// 变量值
     E_CONST,// 常量
+    E_GET_ITEM,// 后缀中括号表达式
     E_ADD, //加
     E_SUB,// 减
     E_MUL,// 乘
@@ -255,6 +256,7 @@ enum ExceptionCode {
     EX_TYPE_CAN_NOT_CONVERT,//不能进行类型转化异常
     EX_EXPRESSION_CAN_NOT_GENERATE,//产生了错误的表达式, bug
     EX_EXPRESSION_CAN_NOT_ACCESS,//获取了获取的不该获取到的表达式ID, bug
+    EX_NOT_AN_ARRAY_TYPE,//不能进行后缀中括号表达式
 };
 
 void expr_call_back(const ParseExpression &expr);

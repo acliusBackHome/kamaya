@@ -161,6 +161,13 @@ public:
     bool is_const() const;
 
     /**
+     * 后缀中括号表达式
+     * @param expr
+     * @return
+     */
+    const ParseExpression &get_item(const ParseExpression &expr) const;
+
+    /**
      * 输出所有的表达式
      */
     static void print_all_expression();

@@ -60,7 +60,9 @@ string ParseException::get_code_msg(ExceptionCode _code) {
         case EX_EXPRESSION_CAN_NOT_GENERATE:
             return "CanNotGenerateExpressionException(bug)";
         case EX_EXPRESSION_CAN_NOT_ACCESS:
-            return "CanNotAccessExpression(bug)";
+            return "CanNotAccessExpressionException(bug)";
+        case EX_NOT_AN_ARRAY_TYPE:
+            return "NotAnArrayTypeException";
     }
     return "UnknownException";
 }

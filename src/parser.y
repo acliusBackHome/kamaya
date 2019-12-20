@@ -167,7 +167,29 @@ postfix_expression
     $$ = $1;
   }
   | postfix_expression ML expression MR {
-    $$ = tree.new_node("postfix []");
+    const ParseExpression &expr1 = tree.node($1).get_expression(),
+                          &expr2 = tree.node($3).get_expression();
+    try {
+      $$ = tree.make_expression_node(expr1.get_item(expr2));
+    } catch (ParseException &exc) {
+      generating_code = false;
+      if (exc.get_code() != EX_NOT_AN_ARRAY_TYPE) {
+        // 这一层只处理不能进行后缀中括号表达式的异常
+        string info = "in postfix_expression ML expression MR->postfix_expression";
+        info += " expr1=" + to_string(expr1.get_id());
+        info += " expr2=" + to_string(expr2.get_id());
+        exc.push_trace(info);
+        throw exc;
+      }
+      const ParseType &type1 = expr1.get_ret_type(), &type2 = expr2.get_ret_type();
+      if (type1.get_id() != T_UNKNOWN || type2.get_id() != T_UNKNOWN) {
+          string error_info = to_string(yylineno) + ": error : expression ";
+          error_info += expr1.get_info();
+          error_info += " is not an array type";
+          parse_error_strs.emplace_back(error_info);
+      }
+      $$ = tree.make_expression_node(ParseExpression());
+    }
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
