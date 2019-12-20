@@ -5,15 +5,17 @@
 
 ParseVariable::ParseVariable() : type(T_UNKNOWN), symbol(), address((size_t) -1) {}
 
-ParseVariable::ParseVariable(const ParseType &_type, const string &_symbol, size_t _address) :
-        type(_type), symbol(_symbol), address(_address) {}
+ParseVariable::ParseVariable(const ParseType &_type, const string &_symbol,
+                             size_t _address, size_t _scope_id) :
+        type(_type), symbol(_symbol), address(_address), scope_id(_scope_id) {}
 
 string ParseVariable::get_info() const {
-    string res = "ParseVariable { type:" + type.get_info() +
-                 ", symbol:" + symbol + ", address:";
-    char buff[32];
-    sprintf(buff, "%zu }", address);
-    return res + buff;
+    string res = "ParseVariable { type:" + type.get_info();
+    res += ", symbol:" + symbol;
+    res += ", address:" + to_string(address);
+    res += ", scope_id:" + to_string(scope_id);
+    res += "}";
+    return res;
 }
 
 const ParseType &ParseVariable::get_type() const {
@@ -51,6 +53,10 @@ bool ParseVariable::operator<(const ParseVariable &other) const {
         }
     }
     return false;
+}
+
+size_t ParseVariable::get_scope_id() const {
+    return scope_id;
 }
 
 ParseVariable &ParseVariable::operator=(const ParseVariable &other) = default;
@@ -533,7 +539,7 @@ vector<ParseFunction> ParseScope::get_function_declaration(const string &symbol)
         throw ParseException(EX_DECLARATION_NOT_A_FUNCTION, info);
     }
     const vector<size_t> decs = it->second.second;
-    if(decs.empty()) {
+    if (decs.empty()) {
         // 声明了函数但是找不到其记录(BUG)
         string info = "ParseScope::get_function_declaration(const string &symbol) symbol=" + symbol;
         throw ParseException(EX_DECLARATION_NOT_FOUND, info);

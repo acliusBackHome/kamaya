@@ -27,7 +27,8 @@ public:
      * @param _symbol
      * @param _address
      */
-    ParseVariable(const ParseType &_type, const string &_symbol, size_t _address = (size_t) -1);
+    ParseVariable(const ParseType &_type, const string &_symbol,
+                  size_t _address = (size_t) -1, size_t _scope_id = (size_t) -1);
 
     /**
      * 简单地复制构造
@@ -55,6 +56,12 @@ public:
     size_t get_address() const;
 
     /**
+     *  获取变量所属作用域id
+     * @return
+     */
+    size_t get_scope_id() const;
+
+    /**
      * 在构造后再赋予地址
      * @param _address
      */
@@ -73,7 +80,7 @@ public:
 private:
     ParseType type;
     string symbol;
-    size_t address;
+    size_t address, scope_id;
 };
 
 /**
@@ -344,6 +351,7 @@ public:
     static void print_all_declaration();
 
     static map<string, ParseVariable> emitData2Nasm();
+
     static map<string, ParseFunction> emitText2Nasm();
 
     ~ParseScope();
