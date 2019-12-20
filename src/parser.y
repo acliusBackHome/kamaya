@@ -552,18 +552,32 @@ assignment_expression
       $$ = tree.make_expression_node(ParseExpression::get_assign_expression(u_expr, a_expr));
     } catch (ParseException &exc) {
         generating_code = false;
-        if (exc.get_code() != EX_TYPE_CAN_NOT_CONVERT) {
+        const ParseType &u_type = u_expr.get_ret_type(), &a_type = a_expr.get_ret_type();
+        switch(exc.get_code()) {
+          case EX_TYPE_CAN_NOT_CONVERT: {
+            if (u_type.get_id() != T_UNKNOWN || a_type.get_id() != T_UNKNOWN) {
+                string error_info = to_string(yylineno) + ": error : can not convert ";
+                error_info += a_type.get_info() + " to ";
+                error_info += u_type.get_info();
+                parse_error_strs.emplace_back(error_info);
+            }
+            break;
+          }
+          case EX_CAN_NOT_ASSIGN_CONST: {
+            if (u_type.get_id() != T_UNKNOWN || a_type.get_id() != T_UNKNOWN) {
+                string error_info = to_string(yylineno) + 
+                    ": error : lvalue required as left operand of assignment ";
+                parse_error_strs.emplace_back(error_info);
+            }
+            break;
+          }
+          default: {
             // 这一层只处理不能进行自动类型转化的表达式
             string info = "in unary_expression ASSIGN assignment_expression->assignment_expression";
             exc.push_trace(info);
             throw exc;
-        }
-        const ParseType &u_type = u_expr.get_ret_type(), &a_type = a_expr.get_ret_type();
-        if (u_type.get_id() != T_UNKNOWN || a_type.get_id() != T_UNKNOWN) {
-            string error_info = to_string(yylineno) + ": error : can not convert ";
-            error_info += a_type.get_info() + " to ";
-            error_info += u_type.get_info();
-            parse_error_strs.emplace_back(error_info);
+            break;
+          }
         }
         $$ =  tree.make_expression_node(ParseExpression());
     }

@@ -531,6 +531,13 @@ const ParseExpression &ParseExpression::generate_expression(
 const ParseExpression &ParseExpression::get_assign_expression(
         const ParseExpression &unary_expr, const ParseExpression &expr) {
     ParseExpression res;
+    if(unary_expr.is_const()) {
+        string info = "ParseExpression::get_assign_expression"
+            "(const ParseExpression &unary_expr, const ParseExpression &expr)";
+        info += "unary_expr=" + to_string(unary_expr.get_id());
+        info += "expr=" + to_string(expr.get_id());
+        throw ParseException(EX_CAN_NOT_ASSIGN_CONST, info);
+    }
     try {
         if (ParseType::convert(unary_expr.get_ret_type(), expr.get_ret_type())) {
             res.expr_type = E_ASSIGN;

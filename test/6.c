@@ -1,6 +1,7 @@
 void main() {
     int a, b = 1;
     char* c = "123abc";
+    1 = 2;
     a = c[0];
     a[0] = a;
     b = c;

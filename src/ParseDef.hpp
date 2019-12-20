@@ -265,6 +265,7 @@ enum ExceptionCode {
     EX_EXPRESSION_CAN_NOT_ACCESS,//获取了获取的不该获取到的表达式ID, bug
     EX_NOT_AN_ARRAY_TYPE,//不能进行后缀中括号表达式
     EX_NOT_IMPLEMENTED, //调用未实现方法, bug
+    EX_CAN_NOT_ASSIGN_CONST, //不能对常量赋值
 };
 
 
