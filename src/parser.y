@@ -256,10 +256,14 @@ unary_expression
     tree.set_parent($2, $$);
   }
   | unary_operator cast_expression {
-    $$ = tree.new_node("prefix expression");
-    tree.set_parent($1, $$);
-    tree.set_parent($2, $$);
+    $$ = tree.make_expression_node(
+        ParseExpression::generate_expression(
+          (ExpressionType) $1,
+          tree.node($2).get_expression()
+        )
+    );
 
+    tree.set_parent($2, $$);
     IR_EMIT {
       ParseNode& testNode = tree.node($1);
       // TODO
@@ -281,22 +285,22 @@ unary_expression
 
 unary_operator
   : AND {
-    $$ = tree.new_node("&");
+    $$ = E_ADR;
   }
   | MUL {
-    $$ = tree.new_node("*");
+    $$ = E_PTR;
   }
   | ADD {
-    $$ = tree.new_node("+");
+    $$ = E_POS;
   }
   | SUB {
-    $$ = tree.new_node("-");
+    $$ = E_NEG;
   }
   | BIT_NOT {
-    $$ = tree.new_node("~");
+    $$ = E_BIT_NOT;
   }
   | NOT {
-    $$ = tree.new_node("!");
+    $$ = E_NOT;
   }
   ;
 

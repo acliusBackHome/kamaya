@@ -460,8 +460,9 @@ void ParseType::init() {
     // 普通运算
     for (size_t i = T_BOOL; i <= T_DOUBLE; ++i) {
         // 单目运算符
-        // !非运算
-        op_able.insert(pair<OpAble, size_t>(OpAble(E_NOT, i, 0), i));
+        for(size_t j = E_NOT; i <= E_BIT_NOT; ++i) {
+            op_able.insert(pair<OpAble, size_t>(OpAble((ExpressionType)j, j, 0), j));
+        }
         // 双目运算符, 只有相同类型的运算, 不同类型的运算可以通过搜索得知
         for (size_t j = E_ADD; j <= E_POW; ++j) {
             op_able.insert(pair<OpAble, size_t>(OpAble((ExpressionType) j, i, i), i));
@@ -474,7 +475,7 @@ void ParseType::init() {
         }
     }
     // 逻辑运算符运算
-    for (size_t i = E_NOT; i <= E_LE; ++i) {
+    for (size_t i = E_LOGIC_OR; i <= E_LE; ++i) {
         op_able.insert(pair<OpAble, size_t>(OpAble((ExpressionType) i, T_BOOL, T_BOOL), T_BOOL));
     }
 }

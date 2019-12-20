@@ -208,10 +208,16 @@ enum ExpressionType {
     E_DIV,// 除
     E_MOD,// 取余
     E_POW,// 求幂
+    // 单目运算
 
+    E_NOT, // !a
+    E_ADR, // &a
+    E_PTR, // *a
+    E_NEG, // -a
+    E_POS, //+a
+    E_BIT_NOT, // ~a
     // 逻辑运算
 
-    E_NOT, //非 !
     E_LOGIC_OR,//逻辑或 ||
     E_LOGIC_AND,//逻辑与 &&
     E_G,//大于 >
@@ -257,7 +263,9 @@ enum ExceptionCode {
     EX_EXPRESSION_CAN_NOT_GENERATE,//产生了错误的表达式, bug
     EX_EXPRESSION_CAN_NOT_ACCESS,//获取了获取的不该获取到的表达式ID, bug
     EX_NOT_AN_ARRAY_TYPE,//不能进行后缀中括号表达式
+    EX_NOT_IMPLEMENTED, //调用未实现方法, bug
 };
+
 
 void expr_call_back(const ParseExpression &expr);
 

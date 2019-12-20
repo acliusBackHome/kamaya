@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 #include "ParseType.hpp"
+#include <cmath>
 
 using namespace std;
 
@@ -206,6 +207,25 @@ public:
      */
     void set_address(size_t expr_address) const;
 
+    /**
+    * 生成双目表达式统一处理函数
+    * @param expr1
+    * @param expr2
+    * @return
+    */
+    static const ParseExpression &
+    generate_expression(ExpressionType type,
+                        const ParseExpression &expr1, const ParseExpression &expr2);
+
+    /**
+    * 生成单目表达式统一处理函数
+    * @param expr
+    * @return
+    */
+    static const ParseExpression &
+    generate_expression(ExpressionType type, const ParseExpression &expr);
+
+
 private:
     size_t child[2], // 子表达式id, 有时候是ParseVariable*所以用size_t代替地址,目前只用两个
             expr_id, //缓存当前类型的id
@@ -334,14 +354,28 @@ private:
     );
 
     /**
-    * 生成表达式统一处理函数
-    * @param expr1
-    * @param expr2
-    * @return
-    */
-    static const ParseExpression &
-    generate_expression(ExpressionType type,
-                        const ParseExpression &expr1, const ParseExpression &expr2);
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_neg(ConstValueType cal_type, const ParseConstant &constant);
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_bit_not(ConstValueType cal_type, const ParseConstant &constant);
+
+    /**
+     * calculate_const太长而拆分出的子函数
+     * @param cal_type 进行运算时的常量类型
+     * @param const1
+     * @param const2
+     */
+    void calculate_const_not(ConstValueType cal_type, const ParseConstant &constant);
 
     /**
      * 初始化
