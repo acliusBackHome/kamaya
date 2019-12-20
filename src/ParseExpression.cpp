@@ -780,6 +780,9 @@ size_t ParseExpression::get_id() const {
 }
 
 bool ParseExpression::is_const() const {
+    if(expr_type == E_CONST) {
+        return true;
+    }
     if (const_value == (size_t) -1) {
         return false;
     }

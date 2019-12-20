@@ -157,8 +157,10 @@ void ParseExpression::calculate_const() {
             }
             break;
         }
-        case E_ASSIGN:// 赋值语句肯定不是常量
         case E_CONST:
+            const_value = child[0];
+            break;
+        case E_ASSIGN:// 赋值语句肯定不是常量
         case E_UNDEFINED:
         case E_VAR:
         case E_GET_ITEM: // 能进行后缀表达式运算的都不会是常量

@@ -307,6 +307,13 @@ size_t ParseTree::make_expression_node(const ParseExpression &expression) {
     return new_one;
 }
 
+size_t ParseTree::make_assign_expression_node(
+    const ParseExpression& l_expr, const ParseExpression &r_expr) {
+    size_t new_one = new_node(N_EXPRESSION);
+    nodes[new_one].set_expression(ParseExpression::get_assign_expression(l_expr, r_expr));
+    return new_one;
+}
+
 size_t ParseTree::make_block_item_list_node() {
     return new_node(N_BLOCK_ITEM_LIST);
 }

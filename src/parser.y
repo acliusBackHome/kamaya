@@ -74,9 +74,9 @@ void expr_call_back(const ParseExpression& expr) {
   IR_EMIT {
     if (expr.is_const()) { return; }
     const string symbol = ir.newTemp();
-    size_t addr = ir.allocEmit(scope_now, symbol, expr.get_ret_type().get_size(), 0);
+    size_t addr = ir.allocEmit(scope_now, symbol, expr.get_ret_type().get_size(), tree.get_node_num() - 1);
     expr.set_address(addr);
-    ir.exprEmit(expr, expr.get_ret_type(), symbol, tree, 0, scope_now);
+    ir.exprEmit(expr, expr.get_ret_type(), symbol, tree, tree.get_node_num() - 1, scope_now);
   }
 }
 
@@ -552,7 +552,7 @@ assignment_expression
     const ParseExpression &u_expr = tree.node($1).get_expression(),
                                           &a_expr = tree.node($3).get_expression();
     try {
-      $$ = tree.make_expression_node(ParseExpression::get_assign_expression(u_expr, a_expr));
+      $$ = tree.make_assign_expression_node(u_expr, a_expr);
     } catch (ParseException &exc) {
         generating_code = false;
         const ParseType &u_type = u_expr.get_ret_type(), &a_type = a_expr.get_ret_type();
@@ -1604,7 +1604,8 @@ function_definition
     const auto &symbol = tree.node($2).get_symbol();
     const auto &ret_type = tree.node($1).get_type();
     const auto &args = tree.node($2).get_parameters_list();
-    $$ = tree.make_function_definition_node(ret_type, symbol, args);
+    $$ = tree.make_function_definition_node(ret_type, symbol, args,
+      tree.node($3).get_begin_code());
     ParseScope::get_scope(scope_now).declaration(symbol, ParseFunction(ret_type,
       symbol, args));
     tree.set_parent($1, $$);

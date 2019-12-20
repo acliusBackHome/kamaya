@@ -179,6 +179,13 @@ public:
     size_t make_expression_node(const ParseExpression &expression);
 
     /**
+     * 生成一个赋值表达式节点
+     * 该节点比较特殊, 需要先生成节点再进行设置表达式, 而不能简单地用make_expression进行获取值
+     * @return
+     */
+    size_t make_assign_expression_node(const ParseExpression& l_expr, const ParseExpression &r_expr);
+
+    /**
      * 生成一个语句块列表节点
      * @return
      */
