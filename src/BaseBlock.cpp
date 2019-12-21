@@ -6,11 +6,13 @@
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 BaseBlock::BaseBlock() {
-    block_id = (size_t) -1;
+    block_id = begin_index = end_index = (size_t) -1;
 };
 
 BaseBlock::BaseBlock(const BaseBlock &other) : qua_list(other.qua_list) {
     block_id = other.block_id;
+    begin_index = other.begin_index;
+    end_index = other.end_index;
 }
 
 vector<BaseBlock> BaseBlock::get_base_blocks(const vector<Qua> &qua_list) {
@@ -39,21 +41,20 @@ vector<BaseBlock> BaseBlock::get_base_blocks(const vector<Qua> &qua_list) {
     if (tags.find(last_qua) == tags.end()) {
         tags.insert(last_qua);
     }
-//    for (const auto &each : tags) {
-//        cout << each << endl;
-//    }
     vector<BaseBlock> res;
     BaseBlock block_now;
-    block_now.block_id = 0;
+    block_now.block_id = block_now.begin_index = 0;
     auto iter = tags.begin();
     block_now.qua_list.emplace_back(qua_list[*iter]);
     iter++;
     for (size_t i = 1; i < qua_list.size(); ++i) {
-        if(iter == tags.end()) {
+        if (iter == tags.end()) {
             break;
         }
         if (i == *iter) {
+            block_now.end_index = i - 1;
             res.emplace_back(block_now);
+            block_now.begin_index = i;
             block_now.qua_list.clear();
             block_now.qua_list.emplace_back(qua_list[i]);
             block_now.block_id++;
@@ -62,6 +63,7 @@ vector<BaseBlock> BaseBlock::get_base_blocks(const vector<Qua> &qua_list) {
             block_now.qua_list.emplace_back(qua_list[i]);
         }
     }
+    block_now.end_index = *iter - 1;
     res.emplace_back(block_now);
     return res;
 }
@@ -72,6 +74,23 @@ size_t BaseBlock::get_id() const {
 
 const vector<Qua> &BaseBlock::get_qua_list() const {
     return qua_list;
+}
+
+string BaseBlock::get_info() const {
+    string res = "BaseBlock(id=" + to_string(block_id);
+    res += ", begin=" + to_string(begin_index);
+    res += ", end=" + to_string(end_index);
+    res += ")\n[\n";
+    for(const auto &each : qua_list) {
+        res += "\t(";
+        res += get<0>(each);
+        res += ", " + get<1>(each);
+        res += ", " + get<2>(each);
+        res += ", " + get<3>(each);
+        res += "),\n";
+    }
+    res += "]";
+    return res;
 }
 
 #pragma clang diagnostic pop

@@ -128,24 +128,26 @@ void test_expression() {
 
 void test_base_block() {
     vector<Qua> tests;
-    tests.emplace_back("0", "_", "_", "0");//!0
-    tests.emplace_back("1", "_", "_", "1");//0
-    tests.emplace_back("2", "_", "_", "2");//!1
-    tests.emplace_back("jmp", "_", "_", "2");//1
-    tests.emplace_back("4", "_", "_", "4");//!2
-    tests.emplace_back("5", "_", "_", "5");//!3
-    tests.emplace_back("jmp", "_", "_", "5");//3
-    tests.emplace_back("7", "_", "_", "7");//!4
-    tests.emplace_back("jmp", "_", "_", "0");//4
-    tests.emplace_back("9", "_", "_", "9");//!5
-    tests.emplace_back("10", "_", "_", "10");//5
-    tests.emplace_back("11", "_", "_", "11");//5
+    tests.emplace_back("1", "_", "_", "0");
+    tests.emplace_back("2", "_", "_", "1");
+    tests.emplace_back("3", "_", "_", "2");
+    tests.emplace_back("4", "_", "_", "2");
+    tests.emplace_back("5", "_", "_", "2");
+    tests.emplace_back("6", "_", "_", "2");
+    tests.emplace_back("7", "_", "_", "2");
+    tests.emplace_back("8", "_", "_", "2");
+    tests.emplace_back("jmp", "_", "_", "2");
+    tests.emplace_back("10", "_", "_", "2");
+    tests.emplace_back("jmp", "_", "_", "1");
+    tests.emplace_back("12", "_", "_", "4");
+    tests.emplace_back("13", "_", "_", "5");
+    tests.emplace_back("14", "_", "_", "5");
+    tests.emplace_back("15", "_", "_", "5");
+    tests.emplace_back("16", "_", "_", "5");
+    tests.emplace_back("jmp", "_", "_", "12");
     auto res = BaseBlock::get_base_blocks(tests);
     for (const auto &each : res) {
-        cout << "block " << to_string(each.get_id()) << endl;
-        for (const auto &qua : each.get_qua_list()) {
-            cout << get<0>(qua) << "," << get<1>(qua) << "," << get<2>(qua) << "," << get<3>(qua) << endl;
-        }
+        cout << each.get_info() << endl;
     }
 }
 

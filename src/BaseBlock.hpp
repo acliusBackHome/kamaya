@@ -17,13 +17,30 @@ public:
 
     size_t get_id() const;
 
+    /**
+     * 获取本基本块的四元式列表
+     * @return
+     */
     const vector<Qua> &get_qua_list() const;
 
+    /**
+     * 获取该基本块的信息
+     * @return
+     */
+    string get_info() const;
+
+    /**
+     * 根据四元式列表得到基本块列表
+     * @param qua_list
+     * @return
+     */
     static vector<BaseBlock> get_base_blocks(const vector<Qua>& qua_list);
 
 private:
     size_t block_id;
     vector<Qua> qua_list;
+    // 分别是该块第一个四元式和最后一个四元式的标号
+    size_t begin_index, end_index;
 };
 
 
