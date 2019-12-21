@@ -57,7 +57,8 @@ string ParseExpression::get_info() const {
             break;
         }
         case E_FUN: {
-            res += "function:{ " + (*((vector<ParseFunction> *) child[0]))[0].get_symbol() + " }, ";
+            const auto &func_ptrs = *(DecFuncPtrList *)(child[0]);
+            res += "function:{ " + (func_ptrs[0])->get_symbol() + " }, ";
             break;
         }
         case E_VAR: {
@@ -172,15 +173,15 @@ ParseExpression::ParseExpression(const ParseVariable &variable) {
     update(*this);
 }
 
-ParseExpression::ParseExpression(const vector<ParseFunction> &func_list) {
+ParseExpression::ParseExpression(const DecFuncPtrList &func_list) {
     if (func_list.empty()) {
-        string info = "ParseExpression(const vector<ParseFunction> &func_list)";
+        string info = "ParseExpression(const vector<const ParseFunction *> &func_list)";
         throw ParseException(EX_INVALID_FUNC_EXPRESSION, info);
     }
     const_value = 0;
-    ret_type_id = func_list[0].get_ret_type().get_id();
+    ret_type_id = (func_list[0])->get_ret_type().get_id();
     expr_type = E_FUN;
-    child[0] = (size_t) new vector<ParseFunction>(func_list);
+    child[0] = (size_t) new DecFuncPtrList(func_list);
     update(*this);
 }
 
@@ -253,11 +254,13 @@ bool ParseExpression::operator<(const ParseExpression &other) const {
             break;
         }
         case E_FUN: {
-            ParseFunction &this_fun = (*(vector<ParseFunction> *) child[0])[0],
-                    &that_fun = (*(vector<ParseFunction> *) child[0])[0];
-            if (this_fun.get_symbol() < that_fun.get_symbol()) {
+            auto &this_fun_ptrs = *((DecFuncPtrList *)(child[0])),
+                    &that_fun_ptrs = *((DecFuncPtrList *)(child[1]));
+            string this_func_symbol = (this_fun_ptrs[0])->get_symbol(),
+                that_func_symbol = (that_fun_ptrs[0])->get_symbol();
+            if (this_func_symbol < that_func_symbol) {
                 return true;
-            } else if (that_fun.get_symbol() < this_fun.get_symbol()) {
+            } else if (that_func_symbol < this_func_symbol) {
                 return false;
             }
             break;
@@ -282,7 +285,7 @@ ParseExpression::~ParseExpression() {
     }
     switch (expr_type) {
         case E_FUN:
-            delete (vector<ParseFunction> *) child[0];
+            delete (DecFuncPtrList *) child[0];
             break;
         case E_VAR:
             delete (ParseVariable *) child[0];
@@ -642,8 +645,7 @@ void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_
             expr.child[1] = from_expr.child[1];
             break;
         case E_FUN:
-            expr.child[0] = (size_t)
-                    new vector<ParseFunction>(*(vector<ParseFunction> *) from_expr.child[0]);
+            expr.child[0] = (size_t) new DecFuncPtrList(*(DecFuncPtrList *)from_expr.child[0]);
             break;
     }
 }
@@ -667,9 +669,9 @@ const ParseVariable &ParseExpression::get_variable() const {
     throw ParseException(EX_EXPRESSION_NOT_VARIABLE, info);
 }
 
-const vector<ParseFunction> &ParseExpression::get_functions() const {
+const DecFuncPtrList &ParseExpression::get_functions() const {
     if (is_function()) {
-        return *(vector<ParseFunction> *) child[0];
+        return *(DecFuncPtrList *) child[0];
     }
     string info = "ParseExpression::get_functions() expr_id=";
     info += to_string(expr_id);
@@ -750,7 +752,8 @@ const ParseType &ParseExpression::get_ret_type() const {
             break;
         case E_FUN: {
             size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
-            ret_cache = (*((vector<ParseFunction> *) child[0]))[0].get_ret_type().get_id();
+            const DecFuncPtrList &fun_ptrs = *(DecFuncPtrList *)(child[0]);
+            ret_cache = (fun_ptrs[0])->get_ret_type().get_id();
             return ParseType::get_type(ret_cache);
         }
     }

@@ -219,21 +219,21 @@ postfix_expression
       parse_error_strs.emplace_back(error_info);
     } else {
       bool found = false;
-      const vector<ParseFunction> &func_list = func_exprssion.get_functions();
-      for(const auto& each_func : func_list) {
+      const DecFuncPtrList &func_list = func_exprssion.get_functions();
+      for(const ParseFunction *each_func : func_list) {
         // 对所有重载的函数, 判断其是否有args列表为空的记录, 如果有, 返回之
-        if(each_func.get_args().empty()) {
+        if(each_func->get_args().empty()) {
           // 找到了声明
           found = true;
           // 返回一个临时变量生成的表达式
-          tree.node($$).set_expression(ParseExpression(ParseVariable(each_func.get_ret_type(), "func_ret")));
+          tree.node($$).set_expression(ParseExpression(ParseVariable(each_func->get_ret_type(), "func_ret")));
           break;
         }
       }
       if(!found) {
         // 找不到对应的函数声明
         tree.node($$).set_expression(ParseExpression());
-        const ParseFunction &expected_func = func_list[0];
+        const ParseFunction &expected_func = *(func_list[0]);
         string error_info = (yylineno) + ": error : no match function for call to ";
         error_info += expected_func.get_symbol() + "()";
         parse_error_strs.emplace_back(error_info);
@@ -251,12 +251,12 @@ postfix_expression
       parse_error_strs.emplace_back(error_info);
     } else {
       bool found = false;
-      const vector<ParseFunction> &func_list = func_exprssion.get_functions();
+      const DecFuncPtrList &func_list = func_exprssion.get_functions();
       const vector<size_t> &real_arg_list = tree.node($3).get_expression_list();
       size_t len = real_arg_list.size();
-      for(const auto& each_func : func_list) {
+      for(const ParseFunction *each_func : func_list) {
         // 对所有重载的函数, 判断其是否有args列表能够转化的记录, 如果有, 返回之
-        const auto &formal_args = each_func.get_args();
+        const auto &formal_args = each_func->get_args();
         if(formal_args.size() == real_arg_list.size()) {
           // 大小相等
           try {
@@ -268,7 +268,7 @@ postfix_expression
             // 转化成功
             found = true;
             // 返回一个临时变量生成的表达式
-            tree.node($$).set_expression(ParseExpression(ParseVariable(each_func.get_ret_type(), "func_ret")));
+            tree.node($$).set_expression(ParseExpression(ParseVariable(each_func->get_ret_type(), "func_ret")));
             break;
           } catch(ParseException &exc) {
             // 转化失败
@@ -291,7 +291,7 @@ postfix_expression
       if(!found) {
         // 找不到对应的函数声明
         tree.node($$).set_expression(ParseExpression());
-        const ParseFunction &expected_func = func_list[0];
+        const ParseFunction &expected_func = *(func_list[0]);
         string error_info = (yylineno) + ": error : no match function for call to ";
         error_info += expected_func.get_symbol() + "(";
         for(size_t i = 0; i < real_arg_list.size(); ++i) {
@@ -1722,7 +1722,6 @@ external_declaration
   ;
 
 record_begin : {
-  scope_now = ParseScope::new_scope(scope_now);
   if (generating_code) {
     ir.recordBegin();
   }
@@ -1734,11 +1733,16 @@ function_declarator
   try {
     const auto &symbol = tree.node($2).get_symbol();
     const auto &ret_type = tree.node($1).get_type();
-    const auto &args = tree.node($2).get_parameters_list();
-    ParseFunction function = ParseFunction(ret_type, symbol, args);
-    tree.node($$).set_function(function);
+    // 构造函数
+    tree.node($$).set_function(ParseFunction(ret_type, symbol, tree.node($2).get_parameters_list()));
+    auto &function = (ParseFunction &)tree.node($$).get_function();
+    vector<ParseVariable> &args = (vector<ParseVariable> &)function.get_args();//回填变量的地址,所以要转成非常量引用
     ParseScope::get_scope(scope_now).declaration(symbol, function);
-    for(const auto &arg : args) {
+    scope_now = ParseScope::new_scope(scope_now);
+    for(auto &arg : args) {
+      // TODO: 将-2填上下一个函数参数压栈的地址
+      arg.set_address((size_t) -2);
+      arg.set_scope_id(scope_now);
       ParseScope::get_scope(scope_now).declaration(arg.get_symbol(), arg);
     }
   } catch (ParseException &exc) {
@@ -1759,16 +1763,43 @@ function_definition
   }
   | function_declarator compound_statement {
     $$ = tree.make_function_definition_node();
+    // 在节点里的函数数据结构
+    auto &dec_func = (ParseFunction &)tree.node($1).get_function();
+    const auto &dec_func_args = dec_func.get_args();
     if(tree.node($2).has_key(K_BEGIN_CODE)) {
-      tree.node($1).get_function().set_address(tree.node($2).get_begin_code());
+      dec_func.set_address(tree.node($2).get_begin_code());
+    }
+    // 由于已经在之前声明了, 所以要在此回填声明中的函数的地址为begin_code
+    auto functions = ParseScope::get_scope(scope_now).get_function_declaration(dec_func.get_symbol());
+    //由于函数有重载,所以这里通过声明得到的是函数的列表, 需要找到正确的声明
+    for(auto each_func : functions) {
+      auto &each_func_args = (vector<ParseVariable> &)(each_func->get_args());
+      if(each_func_args.size() == dec_func_args.size()) {
+        // 大小相同才匹配
+        bool found = true;
+        for(size_t i = 0; i < dec_func_args.size(); ++i) {
+          if(dec_func_args[i].get_type().get_id() != each_func_args[i].get_type().get_id()) {
+            found = false;
+            break;
+          }
+        }
+        if(found) {
+          // 找到匹配的函数, 将变量的地址和scope_id写入声明中
+          for(size_t i = 0; i < dec_func_args.size(); ++i) {
+            each_func_args[i].set_address(dec_func_args[i].get_address());
+            each_func_args[i].set_scope_id(dec_func_args[i].get_scope_id());
+          }
+          ((ParseFunction *)each_func)->set_address(dec_func.get_address());
+          break;
+        }
+      }
     }
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
     if (generating_code) {
       ir.recordEnd();
     }
-    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
-    
   }
   ;
 

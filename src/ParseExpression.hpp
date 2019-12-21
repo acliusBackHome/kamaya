@@ -30,7 +30,7 @@ public:
      * 构造函数列表表达式(支持重载)
      * @param func_list
      */
-    explicit  ParseExpression(const vector<ParseFunction> &func_list);
+    explicit  ParseExpression(const DecFuncPtrList &func_list);
 
     ParseExpression(const ParseExpression &exp);
 
@@ -157,7 +157,7 @@ public:
      * 获取表达式的函数列表, 不存在抛出异常
      * @return
      */
-    const vector<ParseFunction> &get_functions() const;
+    const DecFuncPtrList &get_functions() const;
 
     /**
      * 获取表达式的子表达式id, child参数目前小于2

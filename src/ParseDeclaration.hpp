@@ -68,6 +68,12 @@ public:
     void set_address(size_t _address);
 
     /**
+     * 在构造后再赋予作用域id
+     * @param _address
+     */
+    void set_scope_id(size_t _scope_id);
+
+    /**
      * 获得变量的信息
      * @return
      */
@@ -321,7 +327,7 @@ public:
     * @param symbol
     * @return
     */
-    vector<ParseFunction> get_function_declaration(const string &symbol);
+    DecFuncPtrList get_function_declaration(const string &symbol);
 
     /**
      *获取声明的变量, 如果没有对应记录, 会抛出异常

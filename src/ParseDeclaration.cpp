@@ -34,10 +34,24 @@ void ParseVariable::set_address(size_t _address) {
     address = _address;
 }
 
+void ParseVariable::set_scope_id(size_t _scope_id) {
+    scope_id = _scope_id;
+}
+
 bool ParseVariable::operator<(const ParseVariable &other) const {
     if (type < other.type) {
         return true;
     } else if (other.type < type) {
+        return false;
+    }
+    if (scope_id < other.scope_id) {
+        return true;
+    } else if (other.scope_id < scope_id) {
+        return false;
+    }
+    if (address < other.address) {
+        return true;
+    } else if (other.address < address) {
         return false;
     }
     if (symbol.length() < other.symbol.length()) {
@@ -59,9 +73,19 @@ size_t ParseVariable::get_scope_id() const {
     return scope_id;
 }
 
-ParseVariable &ParseVariable::operator=(const ParseVariable &other) = default;
+ParseVariable &ParseVariable::operator=(const ParseVariable &other) {
+    type = other.type;
+    address = other.address;
+    symbol = other.symbol;
+    scope_id = other.scope_id;
+    return *this;
+};
 
-ParseVariable::ParseVariable(const ParseVariable &other) = default;
+ParseVariable::ParseVariable(const ParseVariable &other) : symbol(other.symbol), 
+    type(other.type) {
+    address = other.address;
+    scope_id = other.scope_id;
+}
 
 ParseType ParseFunction::get_ret_type() const {
     return ret_type;
@@ -534,8 +558,8 @@ void ParseScope::declaration(const string &symbol, const ParseFunction &function
     symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(D_FUNCTION, func_ptr);
 }
 
-vector<ParseFunction> ParseScope::get_function_declaration(const string &symbol) {
-    vector<ParseFunction> res;
+DecFuncPtrList ParseScope::get_function_declaration(const string &symbol) {
+    DecFuncPtrList res;
     auto it = symbol2dec_ptr.find(symbol);
     if (it == symbol2dec_ptr.end()) {
         if (parent_scope == this_scope) {
@@ -557,7 +581,7 @@ vector<ParseFunction> ParseScope::get_function_declaration(const string &symbol)
         throw ParseException(EX_DECLARATION_NOT_FOUND, info);
     }
     for (const auto &each : decs) {
-        res.emplace_back((*(ParseFunction *) each));
+        res.emplace_back(((const ParseFunction *) each));
     }
     return res;
 }

@@ -34,6 +34,9 @@ class IR;
 // 没有声明大小为(size_t)-1, 参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
 typedef tuple<string, ParseExpression, size_t, vector<size_t>, size_t> InitDeclarator;
 
+// 指向已经声明的函数的列表类型
+typedef vector<const ParseFunction *> DecFuncPtrList;
+
 // 基本类型的枚举
 enum BaseType {
     T_UNKNOWN = 0,

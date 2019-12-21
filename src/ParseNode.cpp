@@ -615,7 +615,7 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
         } else {
             // 这里是变量声明
             size_t addr = action_variable_declaration_code_generate(ir, init_expr, this_type, symbol, scope_id);
-            ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, addr));
+            ParseScope::get_scope(scope_id).declaration(symbol, ParseVariable(this_type, symbol, addr, scope_id));
         }
     }
 }
