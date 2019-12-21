@@ -136,15 +136,15 @@ void test_base_block() {
     tests.emplace_back("6", "_", "_", "2");
     tests.emplace_back("7", "_", "_", "2");
     tests.emplace_back("8", "_", "_", "2");
-    tests.emplace_back("jmp", "_", "_", "2");
+    tests.emplace_back("j<", "_", "_", "2");
     tests.emplace_back("10", "_", "_", "2");
-    tests.emplace_back("jmp", "_", "_", "1");
+    tests.emplace_back("j<", "_", "_", "1");
     tests.emplace_back("12", "_", "_", "4");
     tests.emplace_back("13", "_", "_", "5");
     tests.emplace_back("14", "_", "_", "5");
     tests.emplace_back("15", "_", "_", "5");
     tests.emplace_back("16", "_", "_", "5");
-    tests.emplace_back("jmp", "_", "_", "12");
+    tests.emplace_back("j<", "_", "_", "12");
     auto res = BaseBlock::get_base_blocks(tests);
     for (const auto &each : res) {
         cout << each.get_info() << endl;

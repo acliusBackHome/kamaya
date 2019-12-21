@@ -24,6 +24,12 @@ public:
     const vector<Qua> &get_qua_list() const;
 
     /**
+     * 获得基本块的出口
+     * @return
+     */
+    const vector<size_t> &get_jump_to() const;
+
+    /**
      * 获取该基本块的信息
      * @return
      */
@@ -38,7 +44,10 @@ public:
 
 private:
     size_t block_id;
+    // 表示基本块中四元式列表
     vector<Qua> qua_list;
+    // 表示基本块出口
+    vector<size_t> jump_to;
     // 分别是该块第一个四元式和最后一个四元式的标号
     size_t begin_index, end_index;
 };
