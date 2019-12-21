@@ -1724,7 +1724,7 @@ external_declaration
 
 record_begin : {
   if (generating_code) {
-    ir.recordBegin();
+    ir.recordBegin(scope_now);
   }
 };
 

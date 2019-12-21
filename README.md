@@ -33,7 +33,7 @@ yum install -y nasm
 ## Install
 
 ```sh
-apt install flex bison g++ nasm -y
+apt install flex bison g++ nasm make -y
 ```
 
 ## Usage

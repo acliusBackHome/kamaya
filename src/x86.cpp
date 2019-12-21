@@ -6,24 +6,11 @@ const string Assembler::N = "\n";
 const string Assembler::C = ",";
 const string Assembler::L = ":";
 string Assembler::getWideStr(size_t size) {
-  /*
-    db 1
-    dw 2
-    dd 4
-    dq 8
-    */
-  switch (size) {
-  case 1:
-    return "db";
-  case 2:
-    return "dw";
-  case 4:
-    return "dd";
-  case 8:
-    return "dq";
+  if (wideMap.find(size) == wideMap.end()) {
+    log("IN getWide: ERROR SIZE " + to_string(size));
+    return "BadWide";
   }
-  cerr << "IN getWide: ERROR SIZE " << to_string(size) << N;
-  exit(1);
+  return wideMap[size];
 }
 void Assembler::handleData() {
   for (auto i : sectionData) {
@@ -90,6 +77,16 @@ void Assembler::quaADD(const Qua &qua) {
   mov(x, "eax");
 }
 
+void Assembler::quaSUB(const Qua &qua) {}
+
+void Assembler::quaMUL(const Qua &qua) {}
+
+void Assembler::quaDIV(const Qua &qua) {}
+
+void Assembler::quaPOW(const Qua &qua) {}
+
+void Assembler::quaMOD(const Qua &qua) {}
+
 void Assembler::quaASSIGN(const Qua &qua) {
   // (:=,0,_,[esp+0])
   const string &dist = get<3>(qua);
@@ -97,10 +94,29 @@ void Assembler::quaASSIGN(const Qua &qua) {
   TAB;
   mov(dist, src);
 }
+void Assembler::quaALLOC(const Qua &qua) {}
+
+void Assembler::quaLT(const Qua &qua) {}
+
+void Assembler::quaLE(const Qua &qua) {}
+
+void Assembler::quaGT(const Qua &qua) {}
+
+void Assembler::quaGE(const Qua &qua) {}
+
+void Assembler::quaJMP(const Qua &qua) {}
+
+void Assembler::quaJLT(const Qua &qua) {}
+
+void Assembler::quaJLE(const Qua &qua) {}
+
+void Assembler::quaJGT(const Qua &qua) {}
+
+void Assembler::quaJGE(const Qua &qua) {}
 
 void Assembler::handleQuas(const vector<Qua> &quas) {
-  for (auto i : quas) {
-    string sign = get<0>(i);
+  for (auto qua : quas) {
+    string sign = get<0>(qua);
     if (quaMap.find(sign) == quaMap.end()) {
       log("cannot find this sign in quaMap" + sign);
       continue;
@@ -110,23 +126,7 @@ void Assembler::handleQuas(const vector<Qua> &quas) {
       log("cannot find this QuaType in quaMap");
       continue;
     }
-    quaEmit[quaType]()
-
-    QuaType qsign = quaMap[sign];
-    switch (qsign) {
-    case QuaType::Q_ADD: {
-      quaADD(i);
-      break;
-    }
-    case QuaType::Q_ASSIGN: {
-      quaASSIGN(i);
-      break;
-    }
-    default: {
-      log("skip " + sign + " qua");
-      break;
-    }
-    }
+    quaEmit[quaType](qua);
   }
 }
 
@@ -134,8 +134,4 @@ void Assembler::log(const string &str) {
   cout << "Assembler log: " << str << "\n";
 }
 
-map<string, QuaType> Assembler::quaMap = map<string, QuaType>{
-    {"+", QuaType::Q_ADD}, {"-", QuaType::Q_SUB}, {":=", QuaType::Q_ASSIGN}};
-};
 } // namespace x86
-
