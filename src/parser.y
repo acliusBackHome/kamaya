@@ -1586,15 +1586,16 @@ iteration_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | for LP expression_statement backpatch_instr expression_statement backpatch_instr expression RP backpatch_instr statement {
+  | for LP expression_statement backpatch_instr expression_statement backpatch_instr expression backpatch_next_list RP backpatch_instr statement {
     $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($5, $$);
     tree.set_parent($6, $$);
     tree.set_parent($7, $$);
-    tree.set_parent($9, $$);
+    tree.set_parent($8, $$);
     tree.set_parent($10, $$);
+    tree.set_parent($11, $$);
     tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
 
@@ -1604,13 +1605,15 @@ iteration_statement
       ParseNode& B = tree.node($5);
       ParseNode& M2 = tree.node($6);
       ParseNode& E = tree.node($7);
-      ParseNode& M3 = tree.node($9);
-      ParseNode& S1 = tree.node($10);
+      ParseNode& N = tree.node($8);
+      ParseNode& M3 = tree.node($10);
+      ParseNode& S1 = tree.node($11);
 
-      ir.backpatch(B.get_true_list(), M2.get_instr());
-      ir.backpatch(S1.get_next_list(), M1.get_instr());
-      ir.gen("jmp", "_", "_", to_string(M1.get_instr()), $$);
-      ir.backpatch(E.get_next_list(), M3.get_instr());
+      ir.backpatch(B.get_true_list(), M3.get_instr());
+      ir.backpatch(S1.get_next_list(), M2.get_instr());
+      ir.gen("jmp", "_", "_", to_string(M2.get_instr()), $$);
+      ir.backpatch(E.get_next_list(), M1.get_instr());
+      ir.backpatch(N.get_next_list(), M1.get_instr());
       S.set_next_list(B.get_false_list());
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
@@ -1640,15 +1643,16 @@ iteration_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | for LP declaration backpatch_instr expression_statement backpatch_instr expression RP backpatch_instr statement {
+  | for LP declaration backpatch_instr expression_statement backpatch_instr expression backpatch_next_list RP backpatch_instr statement {
     $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
     tree.set_parent($5, $$);
     tree.set_parent($6, $$);
     tree.set_parent($7, $$);
-    tree.set_parent($9, $$);
+    tree.set_parent($8, $$);
     tree.set_parent($10, $$);
+    tree.set_parent($11, $$);
     tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
 
@@ -1658,13 +1662,15 @@ iteration_statement
       ParseNode& B = tree.node($5);
       ParseNode& M2 = tree.node($6);
       ParseNode& E = tree.node($7);
-      ParseNode& M3 = tree.node($9);
-      ParseNode& S1 = tree.node($10);
+      ParseNode& N = tree.node($8);
+      ParseNode& M3 = tree.node($10);
+      ParseNode& S1 = tree.node($11);
 
-      ir.backpatch(B.get_true_list(), M2.get_instr());
-      ir.backpatch(S1.get_next_list(), M1.get_instr());
-      ir.gen("jmp", "_", "_", to_string(M1.get_instr()), $$);
-      ir.backpatch(E.get_next_list(), M3.get_instr());
+     ir.backpatch(B.get_true_list(), M3.get_instr());
+      ir.backpatch(S1.get_next_list(), M2.get_instr());
+      ir.gen("jmp", "_", "_", to_string(M2.get_instr()), $$);
+      ir.backpatch(E.get_next_list(), M1.get_instr());
+      ir.backpatch(N.get_next_list(), M1.get_instr());
       S.set_next_list(B.get_false_list());
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
