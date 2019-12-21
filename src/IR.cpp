@@ -319,10 +319,11 @@ void IR::varDecEmit(size_t addr, const ParseExpression &init_expr,
   }
 }
 
-inline string IR::getVarPointer(size_t id) {
+string IR::getVarPointer(size_t id) {
   return address2pointer(
       ParseExpression::get_expression(id).get_variable().get_address());
 }
-inline string IR::getVarPointer(const ParseVariable &var) {
+
+string IR::getVarPointer(const ParseVariable &var) {
   return address2pointer(var.get_address());
 }
