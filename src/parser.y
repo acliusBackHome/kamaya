@@ -269,6 +269,7 @@ postfix_expression
             found = true;
             // 返回一个临时变量生成的表达式
             tree.node($$).set_expression(ParseExpression(ParseVariable(each_func.get_ret_type(), "func_ret")));
+            break;
           } catch(ParseException &exc) {
             // 转化失败
             if(exc.get_code() != EX_TYPE_CAN_NOT_CONVERT) {
