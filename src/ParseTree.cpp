@@ -82,7 +82,7 @@ void ParseTree::set_parent(size_t node_id, size_t parent) {
     }
     if (node_parent[node_id] == (size_t) (-1)) {
         node_parent[node_id] = parent;
-        if(!nodes[parent].has_key(K_BEGIN_CODE) && nodes[node_id].has_key(K_BEGIN_CODE)) {
+        if (!nodes[parent].has_key(K_BEGIN_CODE) && nodes[node_id].has_key(K_BEGIN_CODE)) {
             // 如果父节点没有K_BEGIN_CODE键值且孩子
             // 拥有键值K_BEGIN_CODE, 那么其K_BEGIN_CODE将
             // 传到其父节点也就是该节点上
@@ -252,10 +252,10 @@ size_t ParseTree::make_declarator_node(size_t ptr_lv) {
     return new_one;
 }
 
-size_t ParseTree::make_direct_declarator_node(size_t array_size, const ParseExpression *expression) {
+size_t ParseTree::make_direct_declarator_node(const vector<size_t> &array_size, const ParseExpression *expression) {
     size_t new_one = new_node(N_DIRECT_DEC);
     nodes[new_one].set_array_size(array_size);
-    if (array_size) {
+    if (!array_size.empty()) {
         if (expression) {
             nodes[new_one].set_expression(*expression);
         } else {
@@ -302,8 +302,8 @@ size_t ParseTree::make_expression_node(const ParseExpression &expression) {
 }
 
 size_t ParseTree::make_assign_expression_node(
-    const ParseExpression& l_expr, const ParseExpression &r_expr) {
-    const ParseExpression& assign_expr = ParseExpression::get_assign_expression(l_expr, r_expr);
+        const ParseExpression &l_expr, const ParseExpression &r_expr) {
+    const ParseExpression &assign_expr = ParseExpression::get_assign_expression(l_expr, r_expr);
     size_t new_one = new_node(N_EXPRESSION);
     nodes[new_one].set_expression(assign_expr);
     return new_one;

@@ -170,21 +170,27 @@ string ParseNode::get_node_info() const noexcept {
                 case K_EXPRESSION:
                     info += "expression: " + get_expression().get_info() + ", ";
                     break;
-                case K_ARRAY_SIZE:
-                    info += "array_size: ";
-                    info += to_string(get_array_size());
-                    info += ", ";
+                case K_ARRAY_SIZE: {
+                    info += "array_size: [";
+                    const auto &list = get_array_size();
+                    for (const auto &s: list) {
+                        info += to_string(s) + ", ";
+                    }
+                    info += "], ";
                     break;
+                }
                 case K_INIT_DECLARATORS: {
                     info += "init_declarators: [";
                     const auto &list = get_init_declarators();
                     for (const auto &dec: list) {
-                        info += "{ symbol: " + get<0>(dec) +
-                                ", initializer: " + get<1>(dec).get_info() +
-                                ", is_pointer: " + ((get<2>(dec)) ? "true" : "false") +
-                                ", array_size: " + to_string(get<3>(dec)) +
-                                ", param_list_node: " + to_string(get<4>(dec)),
-                                " }, ";
+                        info += "{ symbol: " + get<0>(dec);
+                        info += ", initializer: " + get<1>(dec).get_info();
+                        info += ", is_pointer: " + string(((get<2>(dec)) ? "true" : "false"));
+                        info += ", array_size: [";
+                        for (const auto &each_size : get<3>(dec)) {
+                            info += to_string(each_size) + ", ";
+                        }
+                        info += "], param_list_node: " + to_string(get<4>(dec)) + " }, ";
                     }
                     info += "], ";
                     break;
@@ -255,12 +261,14 @@ string ParseNode::get_node_info() const noexcept {
                 }
                 case K_INIT_DEC: {
                     const auto &init_dec = get_init_declarator();
-                    info += "{ symbol: " + get<0>(init_dec) +
-                            ", initializer: " + get<1>(init_dec).get_info() +
-                            ", is_pointer: " + ((get<2>(init_dec)) ? "true" : "false") +
-                            ", array_size: " + to_string(get<3>(init_dec)) +
-                            ", param_list_node: " + to_string(get<4>(init_dec)),
-                            " }, ";
+                    info += "{ symbol: " + get<0>(init_dec);
+                    info += ", initializer: " + get<1>(init_dec).get_info();
+                    info += ", is_pointer: " + string(((get<2>(init_dec)) ? "true" : "false"));
+                    info += ", array_size: [";
+                    for (const auto &each_size : get<3>(init_dec)) {
+                        info += to_string(each_size) + ", ";
+                    }
+                    info += "], param_list_node: " + to_string(get<4>(init_dec)) + " }, ";
                     break;
                 }
                 case K_BEGIN_CODE:
@@ -344,10 +352,6 @@ void ParseNode::set_expression(const ParseExpression &expression) {
     set_field<ParseExpression>(K_EXPRESSION, expression);
 }
 
-void ParseNode::set_array_size(size_t array_size) {
-    set_field<size_t>(K_ARRAY_SIZE, array_size);
-}
-
 void ParseNode::set_scope_id(size_t scope_id) {
     set_field<size_t>(K_SCOPE_ID, scope_id);
 }
@@ -408,6 +412,10 @@ void ParseNode::set_begin_code(size_t begin_code) {
     set_field<size_t>(K_BEGIN_CODE, begin_code);
 }
 
+void ParseNode::set_array_size(const vector<size_t> &array_size) {
+    set_field<vector<size_t> >(K_ARRAY_SIZE, array_size);
+}
+
 void ParseNode::add_expression_list(const ParseExpression &expr) {
     if (has_key(K_EXPRESSION_LIST)) {
         auto &list = (vector<size_t> &) get_expression_list();
@@ -416,6 +424,17 @@ void ParseNode::add_expression_list(const ParseExpression &expr) {
         vector<size_t> list;
         list.emplace_back(expr.get_id());
         set_field<vector<size_t> >(K_EXPRESSION_LIST, list);
+    }
+}
+
+void ParseNode::add_array_size(size_t array_size) {
+    if (has_key(K_ARRAY_SIZE)) {
+        auto &list = (vector<size_t> &) get_array_size();
+        list.emplace_back(array_size);
+    } else {
+        vector<size_t> list;
+        list.emplace_back(array_size);
+        set_field<vector<size_t> >(K_ARRAY_SIZE, list);
     }
 }
 
@@ -460,8 +479,8 @@ const vector<ParseVariable> &ParseNode::get_parameters_list() const {
     return get_field<vector<ParseVariable> >(K_PARAM_LIST);
 }
 
-size_t ParseNode::get_array_size() const {
-    return get_field<size_t>(K_ARRAY_SIZE);
+const vector<size_t> &ParseNode::get_array_size() const {
+    return get_field<vector<size_t> >(K_ARRAY_SIZE);
 }
 
 const ParseConstant &ParseNode::get_const() const {
@@ -574,15 +593,19 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
         const string &symbol = get<0>(each);// 变量符号
         const ParseExpression &init_expr = get<1>(each);// 初始化表达式
         size_t ptr_level = get<2>(each);// 指针级数
-        const size_t &array_size = get<3>(each),// 数组大小: 如果为0, 则表明不是数组
-                &param_list_node = get<4>(each)// 声明为函数时的参数列表节点, 如果不声明为函数该值为0
-        ;
+        const size_t &param_list_node = get<4>(each);// 声明为函数时的参数列表节点, 如果不声明为函数该值为0
+        const vector<size_t> &array_size = get<3>(each);
         ParseType this_type(dec_type);
         if (ptr_level) {
             this_type = ParseType::get_pointer(this_type, ptr_level);
         }
-        if (array_size) {
-            this_type = ParseType::get_array(this_type, array_size);
+        if (!array_size.empty()) {
+            for (size_t i = array_size.size() - 1;; --i) {
+                this_type = ParseType::get_array(this_type, array_size[i]);
+                if (!i) {
+                    break;
+                }
+            }
         }
         if (param_list_node) {
             // 这里是函数声明
@@ -657,15 +680,14 @@ void ParseNode::collect_parameters_list() const {
 
 void ParseNode::collect_init_declarator() const {
     auto &the_map = tree.node_init_dec;
-    InitDeclarator res(get_symbol(), ParseExpression(), get_ptr_lv(), 0, get_param_list_node());
+    InitDeclarator res(get_symbol(), ParseExpression(), get_ptr_lv(), vector<size_t>(), get_param_list_node());
     // 获取元祖引用以便修改其值
     // 初始化表达式可能会有变动
     ParseExpression &init_expression = get<1>(res);
     // 数组大小声明可能会有变动
-    size_t &arr_size = get<3>(res);
+    vector<size_t> &arr_size = get<3>(res);
     switch (type) {
         case N_DECLARATOR: {
-            // 没有初始化表达式, 所以可以直接get_expression()来获取表达式
             arr_size = get_array_size();
             break;
         }

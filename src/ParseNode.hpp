@@ -101,7 +101,7 @@ public:
      * get_系列函数都会抛出ParseException异常
      * @return
      */
-    size_t get_array_size() const;
+    const vector<size_t> &get_array_size() const;
 
     /**
      * 获取节点的K_INIT_DECLARATOR值
@@ -288,13 +288,6 @@ public:
     void set_expression(const ParseExpression &expression);
 
     /**
-     * 设置节点的K_ARRAY_SIZE键对应的值
-     * 设置是否声明为数组
-     * @param array_size
-     */
-    void set_array_size(size_t array_size);
-
-    /**
      * 设置节点的K_SCOPE_ID键值
      * 设置其属于的语句块空间id
      * @param scope_id
@@ -374,11 +367,23 @@ public:
     void set_begin_code(size_t begin_code);
 
     /**
+     * 设置节点的K_ARRAY_SIZE
+     * @param code
+     */
+    void set_array_size(const vector<size_t> &array_size);
+
+    /**
      * 往节点的K_EXPRESSION_LIST里加入一个ParseExpression的id
      * 如果没有K_EXPRESSION_LIST,则new一个
      * @param expr
      */
     void add_expression_list(const ParseExpression &expr);
+
+    /**
+     * 增加节点的K_ARRAY_SIZE键对应的值列表
+     * @param array_size 这一层的数组大小
+     */
+    void add_array_size(size_t array_size);
 
     /**
      * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator

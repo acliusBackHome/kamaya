@@ -1080,10 +1080,10 @@ direct_declarator
     const ParseExpression &expr = tree.node($3).get_expression();
     if(expr.is_const()) {
       size_t array_size = expr.get_const().get_unsigned();
-      tree.node($1).update_array_size(array_size);
+      tree.node($1).add_array_size(array_size);
     } else {
       // 不是常量则出错
-      tree.node($1).update_array_size((size_t) -1);
+      tree.node($1).add_array_size((size_t) -1);
       string error_info = to_string(yylineno) + ": error : can not alloc non const array length declaration";
       parse_error_strs.emplace_back(error_info);
     }
@@ -1095,12 +1095,12 @@ direct_declarator
   //| direct_declarator ML type_qualifier_list MUL MR
   //| direct_declarator ML MUL MR
   | direct_declarator ML MR {
-    tree.node($1).update_array_size((size_t) -1);
+    tree.node($1).add_array_size((size_t) -1);
     tree.node($1).set_expression(ParseExpression());
     $$ = $1;
   }
   | direct_declarator LP parameter_type_list RP {
-    $$ = tree.make_direct_declarator_node(false);
+    $$ = tree.make_direct_declarator_node();
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -1173,14 +1173,18 @@ parameter_list
 parameter_declaration
   : declaration_specifiers declarator {
     auto type = tree.node($1).get_type();
-    size_t ptr_lv = tree.node($2).get_ptr_lv(),
-        array_size = tree.node($2).get_array_size();
+    size_t ptr_lv = tree.node($2).get_ptr_lv();
+    const vector<size_t> &array_size = tree.node($2).get_array_size();
     if(ptr_lv) {
       type = ParseType::get_pointer(type, ptr_lv);
     }
-    if(array_size) {
-      type = ParseType::get_array(type, array_size);
-      // todo:获取$2的表达式并提取出常量值填入get_array的第二个参数, 如果不能提取出常量值则置-1继续分析,并抛出error
+    if(!array_size.empty()) {
+      for (size_t i = array_size.size() - 1;; --i) {
+        type = ParseType::get_array(type, array_size[i]);
+        if (!i) {
+          break;
+        }
+      }
     }
     $$ = tree.make_parameter_declaration(ParseVariable(type, tree.node($2).get_symbol()));
     tree.set_parent($1, $$);

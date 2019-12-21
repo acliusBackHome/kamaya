@@ -120,7 +120,8 @@ public:
      * @param expression 数组大小表达式
      * @return
      */
-    size_t make_direct_declarator_node(size_t array_size = 0, const ParseExpression *expression = nullptr);
+    size_t make_direct_declarator_node(const vector<size_t> &array_size = vector<size_t>(),
+                                       const ParseExpression *expression = nullptr);
 
     /**
      * 生成一个参数列表节点
@@ -329,7 +330,7 @@ private:
     map<size_t, size_t> node_ptr_lv;
     map<size_t, ParseFunction> node_function;
     map<size_t, ParseExpression> node_expression;
-    map<size_t, size_t> node_array_size;
+    map<size_t, vector<size_t> > node_array_size;
     map<size_t, vector<InitDeclarator> > node_init_declarators;
     map<size_t, size_t> node_scope_id;
     map<size_t, size_t> node_param_list_node;

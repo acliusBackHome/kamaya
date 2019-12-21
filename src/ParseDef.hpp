@@ -3,6 +3,7 @@
 
 #include <string>
 #include <tuple>
+#include <vector>
 
 using namespace std;
 
@@ -26,9 +27,12 @@ class ParseTree;
 
 class IR;
 
-//类型声明所需信息<符号, 初始化赋值表达式, 声明的指针级数(如果不是指针为0), 数组大小(如果不是数组则是0,
+//类型声明所需信息<符号,
+// 初始化赋值表达式,
+// 声明的指针级数(如果不是指针为0),
+// 每层数组大小列表(如果不是数组则是空) a[20][10] => [20, 10],
 // 没有声明大小为(size_t)-1, 参数列表节点(如果声明为函数, 该值不为0, 表示带有参数列表信息的节点)>
-typedef tuple<string, ParseExpression, size_t, size_t, size_t> InitDeclarator;
+typedef tuple<string, ParseExpression, size_t, vector<size_t>, size_t> InitDeclarator;
 
 // 基本类型的枚举
 enum BaseType {
@@ -150,7 +154,7 @@ enum NodeKey {
             K_FUNCTION = 1 << 5,
     // 表达式记录, ParseExpression
             K_EXPRESSION = 1 << 6,
-    // 是否被声明成数组布尔值, bool
+    // 被声明成的数组大小, vector<size_t> 每一层的数组大小 a[20][10] => [20,10]
             K_ARRAY_SIZE = 1 << 7,
     // 符号和初始化表达式列表, vector<InitDeclarator>
             K_INIT_DECLARATORS = 1 << 8,
