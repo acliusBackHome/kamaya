@@ -16,9 +16,9 @@ BaseBlock::BaseBlock(const BaseBlock &other) : qua_list(other.qua_list),
     end_index = other.end_index;
 }
 
-vector<BaseBlock> BaseBlock::get_base_blocks(const vector<Qua> &qua_list) {
+BaseBlockListAndMap BaseBlock::get_base_blocks(const vector<Qua> &qua_list) {
     if (qua_list.empty()) {
-        return vector<BaseBlock>();
+        return BaseBlockListAndMap(vector<BaseBlock>(), map<size_t, size_t>());
     }
     set<size_t> tags; //标记基本块的标记
     tags.insert(0);
@@ -94,7 +94,7 @@ vector<BaseBlock> BaseBlock::get_base_blocks(const vector<Qua> &qua_list) {
             each.jump_to.emplace_back(line2block_id[next_instr]);
         }
     }
-    return res;
+    return BaseBlockListAndMap(res, line2block_id);
 }
 
 size_t BaseBlock::get_id() const {

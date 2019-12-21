@@ -2,6 +2,7 @@
 #define __X86_HPP__
 #include "IR.hpp"
 #include "ParseDeclaration.hpp"
+#include "BaseBlock.hpp"
 #include <bits/stdc++.h>
 namespace x86 {
 using namespace std;
@@ -34,6 +35,8 @@ class Assembler {
   map<string, QuaType> quaMap;
   map<size_t, string> wideMap;
   map<QuaType, std::function<void(const Qua &)>> quaEmit;
+  vector<Qua> &quas;
+  BaseBlockListAndMap bbla;
   inline static string getReg() { return "TODO"; }
   inline static string r64(int idx) { return string("r") + to_string(idx); }
   inline static string r32(int idx) {
@@ -97,6 +100,30 @@ class Assembler {
     of << "loop" << T << "pow" << to_string(pow_count) << N;
     pow_count++;
   }
+  inline void cmp(string dist, string src) {
+    static string cmpins = "cmp";
+    of << cmpins << T << dist << C << src << N;
+  }
+  inline void jlt(string block_name) {
+    static string jlt = "jl";
+    of << jlt << T << block_name << N;
+  }
+  inline void jle(string block_name) {
+    static string jle = "jle";
+    of << jle << T << block_name << N;
+  }
+  inline void jgt(string block_name) {
+    static string jgt = "jg";
+    of << jgt << T << block_name << N;
+  }
+  inline void jge(string block_name) {
+    static string jge = "jge";
+    of << jge << T << block_name << N;
+  }
+  inline void jmp(string block_name) {
+    static string jmp = "jmp";
+    of << jmp << T << block_name << N;
+  }
   inline void inc(string dist) {
     static string incins = "xor";
     of << incins << T << dist << N;
@@ -118,7 +145,7 @@ public:
   // Assembler(CodeHolder *code) {
   //   this.CodeHolder = code;
   // }
-  Assembler(ostream &out) : of(out) {
+  Assembler(ostream &out, vector<Qua> & _quas) : of(out), quas(_quas) {
     quaEmit[QuaType::Q_ADD] =
         std::bind(&Assembler::quaADD, this, std::placeholders::_1);
     quaEmit[QuaType::Q_SUB] =
@@ -192,6 +219,9 @@ public:
   void quaJLE(const Qua &qua);
   void quaJGT(const Qua &qua);
   void quaJGE(const Qua &qua);
+  void getBaseBlockMap();
+  size_t getBaseBlockID(string linenum);
+  string getBaseBlockName(string linenum);
 };
 } // namespace x86
 #endif

@@ -15,8 +15,8 @@ string before;
 int yycolumn = 0;
 bool generating_code = true;
 FILE* file;
-Assembler assembler(cout);
 IR ir;
+Assembler assembler(cout, ir.getQuas());
 
 unsigned long install_id() {
   before = yytext;
@@ -227,6 +227,7 @@ int main(int argc, char** argv) {
   if(generating_code) {
     ir.print();
   }
+  assembler.getBaseBlockMap();
   // assembler.setSectionData(ParseScope::emitData2Nasm());
   // assembler.setSectionText(ParseScope::emitText2Nasm());
   // printf("ParseTree 2 Nasm x86\n");

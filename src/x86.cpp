@@ -65,9 +65,10 @@ void Assembler::handleFunction(ParseFunction func) {
 }
 
 void Assembler::quaADD(const Qua &qua) {
-  // 2	(:=,[esp+0],_,[esp+4])
+  // 2	(+,[esp+8],1,[esp+13])
   const string &x = get<1>(qua);
-  const string &y = get<3>(qua);
+  const string &y = get<2>(qua);
+  const string &z = get<3>(qua);
   TAB;
   mov("eax", x);
   TAB;
@@ -75,13 +76,14 @@ void Assembler::quaADD(const Qua &qua) {
   TAB;
   add("eax", "ebx");
   TAB;
-  mov(x, "eax");
+  mov(z, "eax");
 }
 
 void Assembler::quaSUB(const Qua &qua) {
   // 
   const string &x = get<1>(qua);
-  const string &y = get<3>(qua);
+  const string &y = get<2>(qua);
+  const string &z = get<3>(qua);
   TAB;
   mov("eax", x);
   TAB;
@@ -89,26 +91,28 @@ void Assembler::quaSUB(const Qua &qua) {
   TAB;
   sub("eax", "ebx");
   TAB;
-  mov(x, "eax");
+  mov(z, "eax");
 }
 
 void Assembler::quaMUL(const Qua &qua) {
   // 
   const string &x = get<1>(qua);
-  const string &y = get<3>(qua);
+  const string &y = get<2>(qua);
+  const string &z = get<3>(qua);
   TAB;
   mov("eax", x);
   TAB;
-  mov("edx", y);
+  mov("ebx", y);
   TAB;
-  mul("edx");
+  mul("ebx");
   TAB;
-  mov(x, "eax");
+  mov(z, "eax");
 }
 
 void Assembler::quaDIV(const Qua &qua) {
   const string &x = get<1>(qua);
-  const string &y = get<3>(qua);
+  const string &y = get<2>(qua);
+  const string &z = get<3>(qua);
   TAB;
   mov("eax", x);
   TAB;
@@ -116,12 +120,13 @@ void Assembler::quaDIV(const Qua &qua) {
   TAB;
   div("ebx");
   TAB;
-  mov(x, "eax"); // eax存商 edx存余数
+  mov(z, "eax"); // eax存商 edx存余数
 }
 
 void Assembler::quaPOW(const Qua &qua) {
   const string &x = get<1>(qua);
-  const string &y = get<3>(qua);
+  const string &y = get<2>(qua);
+  const string &z = get<3>(qua);
   TAB;
   mov("eax", x);
   TAB;
@@ -134,12 +139,13 @@ void Assembler::quaPOW(const Qua &qua) {
   TAB;
   mul("ebx");
   loop_label();
-  mov(x, "eax");
+  mov(z, "eax");
 }
 
 void Assembler::quaMOD(const Qua &qua) {
   const string &x = get<1>(qua);
-  const string &y = get<3>(qua);
+  const string &y = get<2>(qua);
+  const string &z = get<3>(qua);
   TAB;
   mov("eax", x);
   TAB;
@@ -147,7 +153,7 @@ void Assembler::quaMOD(const Qua &qua) {
   TAB;
   div("ebx");
   TAB;
-  mov(x, "edx"); // eax存商 edx存余数
+  mov(z, "edx"); // eax存商 edx存余数
 }
 
 void Assembler::quaASSIGN(const Qua &qua) {
@@ -168,15 +174,87 @@ void Assembler::quaGT(const Qua &qua) {}
 
 void Assembler::quaGE(const Qua &qua) {}
 
-void Assembler::quaJMP(const Qua &qua) {}
+void Assembler::quaJMP(const Qua &qua) {
+  const string &jto = get<3>(qua);
+  // 获取下一个块的块名  通过行号获取块id-->生成块名
+  string blockName = getBaseBlockName(jto);
 
-void Assembler::quaJLT(const Qua &qua) {}
+  TAB;
+  jmp(blockName);
+}
 
-void Assembler::quaJLE(const Qua &qua) {}
+void Assembler::quaJLT(const Qua &qua) {
+  // (j<,[esp+8],10,19)
+  const string &x = get<1>(qua);
+  const string &y = get<2>(qua);
+  const string &jto = get<3>(qua);
+  // 获取下一个块的块名  通过行号获取块id-->生成块名
+  string blockName = getBaseBlockName(jto);
 
-void Assembler::quaJGT(const Qua &qua) {}
+  TAB;
+  cmp(x, y);
+  TAB;
+  jlt(blockName);
+}
 
-void Assembler::quaJGE(const Qua &qua) {}
+void Assembler::quaJLE(const Qua &qua) {
+  // (j<=,[esp+8],10,19)
+  const string &x = get<1>(qua);
+  const string &y = get<2>(qua);
+  const string &jto = get<3>(qua);
+  // 获取下一个块的块名  通过行号获取块id-->生成块名
+  string blockName = getBaseBlockName(jto);
+
+  TAB;
+  cmp(x, y);
+  TAB;
+  jle(blockName);
+}
+
+void Assembler::quaJGT(const Qua &qua) {
+  // (j>,[esp+8],10,19)
+  const string &x = get<1>(qua);
+  const string &y = get<2>(qua);
+  const string &jto = get<3>(qua);
+
+  string blockName = getBaseBlockName(jto);
+
+  TAB;
+  cmp(x, y);
+  TAB;
+  jgt(blockName);
+}
+
+void Assembler::quaJGE(const Qua &qua) {
+  // (j>=,[esp+8],10,19)
+  const string &x = get<1>(qua);
+  const string &y = get<2>(qua);
+  const string &jto = get<3>(qua);
+
+  string blockName = getBaseBlockName(jto);
+
+  TAB;
+  cmp(x, y);
+  TAB;
+  jge(blockName);
+}
+
+void Assembler::getBaseBlockMap() {
+  bbla = BaseBlock::get_base_blocks(quas);
+}
+
+size_t Assembler::getBaseBlockID(string linenum) {
+  size_t line = stoi(linenum);
+  map<size_t, size_t> lineNumToBlockID = get<1>(bbla);
+  return lineNumToBlockID[line];
+}
+
+string Assembler::getBaseBlockName(string linenum) {
+  size_t blockid = getBaseBlockID(linenum);
+  const string& prefix = "block";
+  string blockName = prefix + to_string(blockid);
+  return blockName;
+} 
 
 void Assembler::handleQuas(const vector<Qua> &quas) {
   for (auto qua : quas) {

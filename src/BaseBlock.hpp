@@ -5,12 +5,19 @@
 #define NKU_PRACTICE_BASE_BLOCK_HPP
 
 #include "IR.hpp"
+#include <tuple>
+
+class BaseBlock;
+
+// 表示基本块列表和其对应的行号到基本快的id的映射
+typedef tuple<vector<BaseBlock>, map<size_t, size_t> > BaseBlockListAndMap;
 
 /**
  * 表示基本块的数据结构
  */
 class BaseBlock {
 public:
+
     BaseBlock();
 
     BaseBlock(const BaseBlock &other);
@@ -40,7 +47,7 @@ public:
      * @param qua_list
      * @return
      */
-    static vector<BaseBlock> get_base_blocks(const vector<Qua>& qua_list);
+    static BaseBlockListAndMap get_base_blocks(const vector<Qua>& qua_list);
 
 private:
     size_t block_id;
