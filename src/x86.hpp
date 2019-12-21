@@ -28,6 +28,7 @@ class Assembler {
   // CodeHolder *code;
   ostream &of;
   static const string T, C, N, L;
+  static int pow_count;
   map<string, ParseVariable> sectionData;
   map<string, ParseFunction> sectionText;
   map<string, QuaType> quaMap;
@@ -80,6 +81,21 @@ class Assembler {
   inline void sub(string dist, string src) {
     static string subins = "sub";
     of << subins << T << dist << C << src << N;
+  }
+  inline void mul(string src) {
+    static string mulins = "mul";
+    of << mulins << T << src << N;
+  }
+  inline void div(string src) {
+    static string divins = "div";
+    of << divins << T << src << N;
+  }
+  inline void pow_label() {
+    of << "pow" << to_string(pow_count) << ":" << N;
+  }
+  inline void loop_label() {
+    of << "loop" << T << "pow" << to_string(pow_count) << N;
+    pow_count++;
   }
   inline void inc(string dist) {
     static string incins = "xor";

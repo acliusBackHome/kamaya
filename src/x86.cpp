@@ -5,6 +5,7 @@ const string Assembler::T = "\t";
 const string Assembler::N = "\n";
 const string Assembler::C = ",";
 const string Assembler::L = ":";
+int Assembler::pow_count = 0;
 string Assembler::getWideStr(size_t size) {
   if (wideMap.find(size) == wideMap.end()) {
     log("IN getWide: ERROR SIZE " + to_string(size));
@@ -77,15 +78,77 @@ void Assembler::quaADD(const Qua &qua) {
   mov(x, "eax");
 }
 
-void Assembler::quaSUB(const Qua &qua) {}
+void Assembler::quaSUB(const Qua &qua) {
+  // 
+  const string &x = get<1>(qua);
+  const string &y = get<3>(qua);
+  TAB;
+  mov("eax", x);
+  TAB;
+  mov("ebx", y);
+  TAB;
+  sub("eax", "ebx");
+  TAB;
+  mov(x, "eax");
+}
 
-void Assembler::quaMUL(const Qua &qua) {}
+void Assembler::quaMUL(const Qua &qua) {
+  // 
+  const string &x = get<1>(qua);
+  const string &y = get<3>(qua);
+  TAB;
+  mov("eax", x);
+  TAB;
+  mov("edx", y);
+  TAB;
+  mul("edx");
+  TAB;
+  mov(x, "eax");
+}
 
-void Assembler::quaDIV(const Qua &qua) {}
+void Assembler::quaDIV(const Qua &qua) {
+  const string &x = get<1>(qua);
+  const string &y = get<3>(qua);
+  TAB;
+  mov("eax", x);
+  TAB;
+  mov("ebx", y);
+  TAB;
+  div("ebx");
+  TAB;
+  mov(x, "eax"); // eax存商 edx存余数
+}
 
-void Assembler::quaPOW(const Qua &qua) {}
+void Assembler::quaPOW(const Qua &qua) {
+  const string &x = get<1>(qua);
+  const string &y = get<3>(qua);
+  TAB;
+  mov("eax", x);
+  TAB;
+  mov("ebx", "eax");
+  TAB;
+  mov("ecx", y);
+  TAB;
+  div("ebx");
+  pow_label();
+  TAB;
+  mul("ebx");
+  loop_label();
+  mov(x, "eax");
+}
 
-void Assembler::quaMOD(const Qua &qua) {}
+void Assembler::quaMOD(const Qua &qua) {
+  const string &x = get<1>(qua);
+  const string &y = get<3>(qua);
+  TAB;
+  mov("eax", x);
+  TAB;
+  mov("ebx", y);
+  TAB;
+  div("ebx");
+  TAB;
+  mov(x, "edx"); // eax存商 edx存余数
+}
 
 void Assembler::quaASSIGN(const Qua &qua) {
   // (:=,0,_,[esp+0])
