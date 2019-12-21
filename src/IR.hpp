@@ -40,11 +40,11 @@ class IR {
   vector<SData> sectionData;
   stack<size_t> env;
   stack<size_t> stk;
-  map<string, Alloc> allocMap;  // 运行时 alloc
- public:
+  map<string, Alloc> allocMap; // 运行时 alloc
+public:
   IR() {
     offset = nextinstr = 0;
-    recordBegin();  // 必须初始化符号栈
+    recordBegin(); // 必须初始化符号栈
   }
   inline vector<Qua> &getQuas() { return quas; }
   inline string formKey(const size_t &scope, const string &symbol) {
@@ -84,13 +84,12 @@ class IR {
   inline void assignEmit(size_t left, size_t right) {}
   inline string address2pointer(size_t addr) {
     long long addrll = addr, sub = -1 - addrll;
-    if(addrll < 0) {
-      if (sub >= sectionData.size()|| sub < 0) {
-          return "bad_addr";
+    if (addrll < 0) {
+      if (sub >= sectionData.size() || sub < 0) {
+        return "BadAddr";
       }
     }
-    return (addrll < 0) ? sectionData[sub].name
-                        : ("[esp+" + to_string(addrll) + "]");;
+    return (addrll < 0) ? sectionData[sub].name : ("[esp+" + to_string(addrll) + "]");
   }
   string getVarPointer(size_t id);
   string getVarPointer(const ParseVariable &var);
@@ -113,6 +112,10 @@ class IR {
   size_t dataUndefinedEmit(const string &name, size_t size, size_t node_id);
   void varDecEmit(size_t addr, const ParseExpression &init_expr, size_t node_id,
                   size_t scope_id);
+  size_t getItemEmit(const ParseExpression &init_expr,
+                     const ParseType &this_type, const string &symbol,
+                     ParseTree &tree, size_t node_id, size_t scope_id);
+  size_t dfsArrayGetItem(const ParseExpression &expr, vector<size_t> &psize, vector<size_t> &pid);
 };
 
 #endif

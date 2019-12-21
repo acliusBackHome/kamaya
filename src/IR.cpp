@@ -50,17 +50,19 @@ string IR::getConstValueStr(const ParseExpression &init_expr) {
   ConstValueType con_type = E.get_type();
   string arg1;
   switch (con_type) {
-    case ConstValueType::C_SIGNED:
-      return to_string(E.get_signed());
-    case ConstValueType::C_UNSIGNED:
-      return to_string(E.get_unsigned());
-    case ConstValueType::C_FLOAT:
-      return to_string(E.get_float());
-    case ConstValueType::C_BOOL:
-      return to_string((int)E.get_bool());
-    default:
-      log("other constant type");
-      break;
+  case ConstValueType::C_SIGNED:
+    return to_string(E.get_signed());
+  case ConstValueType::C_UNSIGNED:
+    return to_string(E.get_unsigned());
+  case ConstValueType::C_FLOAT:
+    return to_string(E.get_float());
+  case ConstValueType::C_BOOL:
+    return to_string((int)E.get_bool());
+  case ConstValueType::C_STRING:
+    return E.get_string();
+  default:
+    log("other constant type");
+    break;
   }
   return "BadValue";
 }
@@ -76,6 +78,59 @@ size_t IR::dataEmit(const string &name, size_t size, const string &value,
 size_t IR::dataUndefinedEmit(const string &name, size_t size, size_t node_id) {
   static const string OUTZERO = "0";
   return dataEmit(name, size, OUTZERO, node_id);
+}
+
+size_t IR::dfsArrayGetItem(const ParseExpression &expr, vector<size_t> &psize,
+                           vector<size_t> &pid) {
+  const ParseExpression &left =
+      ParseExpression::get_expression(expr.get_child(0));
+  const ParseExpression &right =
+      ParseExpression::get_expression(expr.get_child(1));
+  if (right.is_const() &&
+      right.get_const().get_type() == ConstValueType::C_SIGNED) {
+    pid.push_back(right.get_const().get_signed());
+  } else {
+    throw ParseException(ExceptionCode::EX_NOT_IMPLEMENTED,
+                         "IR::dfsArrayGetItem: implamented right value type");
+  }
+  if (left.is_variable()) {
+    if (right.is_const() &&
+        right.get_const().get_type() == ConstValueType::C_SIGNED) {
+      psize.push_back(left.get_ret_type().get_array_size());
+      return left.get_variable().get_address();
+    } else {
+      throw ParseException(ExceptionCode::EX_NOT_IMPLEMENTED,
+                           "IR::dfsArrayGetItem: the the bottom of arrary get "
+                           "item exp, implamented right value type");
+    }
+  } else {
+    psize.push_back(left.get_ret_type().get_array_size());
+    return dfsArrayGetItem(left, psize, pid);
+  }
+}
+
+size_t IR::getItemEmit(const ParseExpression &init_expr,
+                       const ParseType &this_type, const string &symbol,
+                       ParseTree &tree, size_t node_id, size_t scope_id) {
+  vector<size_t> psize;
+  vector<size_t> pid;
+  psize.push_back(init_expr.get_ret_type().get_size());
+  size_t esp = dfsArrayGetItem(init_expr, psize, pid);
+  for (int i = 1; i < psize.size(); i++) {
+    psize[i] *= psize[i - 1];
+  }
+  size_t pos = 0;
+  if (psize.size() == pid.size() + 1) {
+    for (int i = 0; i <= pid.size() - 1; i++) {
+      pos += pid[i] * psize[i];
+    }
+  } else {
+    throw ParseException(ExceptionCode::EX_UNKNOWN,
+                         "IR::getItemEmit: Bad Array Type " +
+                             init_expr.get_info());
+  }
+  init_expr.set_address(esp + pos);
+  return 0;
 }
 
 // 也许没用
@@ -96,51 +151,55 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
     ExpressionType exp_type = init_expr.get_expr_type();
     string op = "_", arg1 = "_", arg2 = "_", result = "_";
     switch (exp_type) {
-      // 双目运算符
-      case ExpressionType::E_ADD:
-        op = "+";
-        break;
-      case ExpressionType::E_SUB:
-        op = "-";
-        break;
-      case ExpressionType::E_MUL:
-        op = "*";
-        break;
-      case ExpressionType::E_DIV:
-        op = "/";
-        break;
-      case ExpressionType::E_MOD:
-        op = "%";
-        break;
-      case ExpressionType::E_POW:
-        op = "^";
-        break;
-      case ExpressionType::E_LOGIC_OR:
-        op = "||";
-        break;
-      case ExpressionType::E_LOGIC_AND:
-        op = "&&";
-        break;
-      case ExpressionType::E_G:
-        op = ">";
-        break;
-      case ExpressionType::E_GE:
-        op = ">=";
-        break;
-      case ExpressionType::E_EQUAL:
-        op = "==";
-        break;
-      case ExpressionType::E_NE:
-        op = "!=";
-        break;
-      case ExpressionType::E_L:
-        op = "<";
-        break;
-      case ExpressionType::E_LE:
-        op = "<=";
-        break;
-      default:
-        break;
+    // 双目运算符
+    case ExpressionType::E_ADD:
+      op = "+";
+      break;
+    case ExpressionType::E_SUB:
+      op = "-";
+      break;
+    case ExpressionType::E_MUL:
+      op = "*";
+      break;
+    case ExpressionType::E_DIV:
+      op = "/";
+      break;
+    case ExpressionType::E_MOD:
+      op = "%";
+      break;
+    case ExpressionType::E_POW:
+      op = "^";
+      break;
+    case ExpressionType::E_LOGIC_OR:
+      op = "||";
+      break;
+    case ExpressionType::E_LOGIC_AND:
+      op = "&&";
+      break;
+    case ExpressionType::E_G:
+      op = ">";
+      break;
+    case ExpressionType::E_GE:
+      op = ">=";
+      break;
+    case ExpressionType::E_EQUAL:
+      op = "==";
+      break;
+    case ExpressionType::E_NE:
+      op = "!=";
+      break;
+    case ExpressionType::E_L:
+      op = "<";
+      break;
+    case ExpressionType::E_LE:
+      op = "<=";
+      break;
+    case ExpressionType::E_GET_ITEM: {
+      getItemEmit(init_expr, this_type, symbol, tree, node_id, scope_id);
+      return;
+    }
+    default:
+      break;
     }
     if (op != "_") {
       const ParseExpression &right =
@@ -152,41 +211,42 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       }
     }
     switch (exp_type) {
-      case ExpressionType::E_VAR: {
-        // 变量直接赋值
-        string result = address2pointer(init_expr.get_address());
-        const ParseVariable &var = init_expr.get_variable();
-        gen(":=", address2pointer(var.get_address()), "_", result, node_id);
-        return;
-      } break;
-      case ExpressionType::E_NOT:
-        op = "!";
-        break;
-      case ExpressionType::E_ASSIGN: {
-        // 赋值表达式
-        assignEmit(init_expr.get_child(0), init_expr.get_child(1));
-        const ParseVariable &left =
-            ParseExpression::get_expression(init_expr.get_child(0))
-                .get_variable();
-        const ParseExpression &right =
-            ParseExpression::get_expression(init_expr.get_child(1));
-        string arg1, result;
-        if (right.is_const()) {
-          arg1 = getConstValueStr(right);
-        } else {
-          arg1 = address2pointer(right.get_address());
-        }
-        result = address2pointer(left.get_address());
-        gen(":=", arg1, "_", result, node_id);
-      } break;
-      case ExpressionType::E_UNDEFINED:  // 应该不会跑到这里
-        if (scope_id == 0) {
-          dataUndefinedEmit(symbol, this_type.get_size(), node_id);
-        }
-        return;
-      default:
-        log("other exp type");
-        break;
+    case ExpressionType::E_VAR: {
+      // 变量直接赋值
+      string result = address2pointer(init_expr.get_address());
+      const ParseVariable &var = init_expr.get_variable();
+      gen(":=", address2pointer(var.get_address()), "_", result, node_id);
+      return;
+    }
+    case ExpressionType::E_NOT:
+      op = "!";
+      break;
+    case ExpressionType::E_ASSIGN: {
+      // 赋值表达式
+      assignEmit(init_expr.get_child(0), init_expr.get_child(1));
+      const ParseExpression &left =
+          ParseExpression::get_expression(init_expr.get_child(0));
+      const ParseExpression &right =
+          ParseExpression::get_expression(init_expr.get_child(1));
+      string arg1, result;
+      result = address2pointer(left.get_address());
+      if (right.is_const()) {
+        arg1 = getConstValueStr(right);
+      } else {
+        arg1 = address2pointer(right.get_address());
+      }
+      gen(":=", arg1, "_", result, node_id);
+      return;
+    }
+    case ExpressionType::E_UNDEFINED: // 应该不会跑到这里
+      if (scope_id == 0) {
+        dataUndefinedEmit(symbol, this_type.get_size(), node_id);
+      }
+      // 这个表达式非常特别
+      return;
+    default:
+
+      break;
     }
     if (op != "_") {
       const ParseExpression &left =
@@ -200,6 +260,9 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
     result = address2pointer(init_expr.get_address());
     if (op != "_") {
       gen(op, arg1, arg2, result, node_id);
+    } else {
+      throw ParseException(ExceptionCode::EX_NOT_IMPLEMENTED,
+                           "other exp type " + to_string(exp_type));
     }
   }
 }
@@ -233,7 +296,7 @@ size_t IR::allocEmit(const size_t &scope, const string &symbol,
   // 变量内存分配, 返回地址
   const string key = formKey(scope, symbol);
   if (allocMap.find(key) != allocMap.end()) {
-    log("重复的变量内存分配");
+    throw ParseException(ExceptionCode::EX_UNKNOWN, "bad alloc for same var");
     return (size_t)-1;
   }
   allocMap[key] = Alloc{offset, size};

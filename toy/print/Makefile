@@ -1,4 +1,4 @@
-CC := g++
+CC := gcc
 AR := ar
 ASM := nasm
 LD := ld
