@@ -44,7 +44,7 @@ class IR {
 public:
   IR() {
     offset = nextinstr = 0;
-    recordBegin(); // 必须初始化符号栈
+    // recordBegin();  // 必须初始化符号栈
   }
   inline vector<Qua> &getQuas() { return quas; }
   inline string formKey(const size_t &scope, const string &symbol) {
@@ -68,7 +68,7 @@ public:
   }
   inline string newTemp() {
     static int idx = 0;
-    return "L" + to_string(idx++);
+    return "T" + to_string(idx++);
   }
   inline void label(size_t *addr) { *addr = nextinstr; }
   inline vector<size_t> makelist(size_t i) { return vector<size_t>(1, i); }
@@ -76,7 +76,9 @@ public:
   static inline void log(const string &msg) {
     cout << "IR log: " << msg << endl;
   }
-  inline void recordBegin() {
+  inline void recordBegin(size_t scope_id) {
+    static int idx = 0;
+    gen("function", "_", "_", "F" + to_string(idx++), scope_id);
     stkpush(offset);
     offset = 0;
   }

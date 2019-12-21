@@ -262,7 +262,7 @@ postfix_expression
           try {
             for(size_t i = 0; i < len; ++i) {
               // 尝试逐个表达式转化为形参类型
-              ParseType::convert(formal_args[i].get_type(), 
+              ParseType::convert(formal_args[i].get_type(),
                 ParseExpression::get_expression(real_arg_list[i]).get_ret_type());
             }
             // 转化成功
@@ -388,7 +388,7 @@ unary_expression
     $$ = tree.get_error(tree.error_cnt()-1);
     generating_code = false;
     if (!feof(file)) {
-      yyerrok; 
+      yyerrok;
     }
   }
   ;
@@ -1283,7 +1283,7 @@ direct_abstract_declarator
     $$ = tree.get_error(tree.error_cnt()-1);
     generating_code = false;
     if (!feof(file)) {
-      yyerrok; 
+      yyerrok;
     }
   }
   ;
@@ -1305,7 +1305,7 @@ initializer
     $$ = tree.get_error(tree.error_cnt()-1);
     generating_code = false;
     if (!feof(file)) {
-      yyerrok; 
+      yyerrok;
     }
   }
   ;
@@ -1417,7 +1417,7 @@ compound_statement
     $$ = tree.get_error(tree.error_cnt()-1);
     generating_code = false;
     if (!feof(file)) {
-      yyerrok; 
+      yyerrok;
     }
   }
   ;
@@ -1453,7 +1453,7 @@ expression_statement
     $$ = tree.get_error(tree.error_cnt()-1);
     generating_code = false;
     if (!feof(file)) {
-      yyerrok; 
+      yyerrok;
     }
   }
   ;
@@ -1629,6 +1629,7 @@ iteration_statement
       ir.gen("jmp", "_", "_", to_string(M2.get_instr()), $$);
       ir.backpatch(E.get_next_list(), M1.get_instr());
       ir.backpatch(N.get_next_list(), M1.get_instr());
+
       S.set_next_list(B.get_false_list());
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
