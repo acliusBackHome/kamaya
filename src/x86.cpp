@@ -94,6 +94,7 @@ void Assembler::quaASSIGN(const Qua &qua) {
   TAB;
   mov(dist, src);
 }
+
 void Assembler::quaALLOC(const Qua &qua) {}
 
 void Assembler::quaLT(const Qua &qua) {}

@@ -300,7 +300,11 @@ size_t IR::allocEmit(const size_t &scope, const string &symbol,
     return (size_t)-1;
   }
   allocMap[key] = Alloc{offset, size};
-  gen("alloc", to_string(offset), to_string(size), key, node_id);
+  if (size != (size_t)-1) {
+    gen("alloc", to_string(offset), to_string(size), key, node_id);
+  } else {
+    gen("alloc", to_string(offset), "BadWide", key, node_id);
+  }
   size_t ret = offset;
   addOffset(size);
   return ret;
