@@ -1,8 +1,8 @@
 #ifndef __X86_HPP__
 #define __X86_HPP__
+#include "BaseBlock.hpp"
 #include "IR.hpp"
 #include "ParseDeclaration.hpp"
-#include "BaseBlock.hpp"
 #include <bits/stdc++.h>
 namespace x86 {
 using namespace std;
@@ -24,6 +24,10 @@ enum QuaType {
   Q_JGE,
   Q_ASSIGN,
   Q_ALLOC,
+  Q_DATA, // 静态数据
+  Q_CALL,
+  Q_RET,
+  Q_FUNC,
 };
 class Assembler {
   // CodeHolder *code;
@@ -93,9 +97,7 @@ class Assembler {
     static string divins = "div";
     of << divins << T << src << N;
   }
-  inline void pow_label() {
-    of << "pow" << to_string(pow_count) << ":" << N;
-  }
+  inline void pow_label() { of << "pow" << to_string(pow_count) << ":" << N; }
   inline void loop_label() {
     of << "loop" << T << "pow" << to_string(pow_count) << N;
     pow_count++;
@@ -145,7 +147,7 @@ public:
   // Assembler(CodeHolder *code) {
   //   this.CodeHolder = code;
   // }
-  Assembler(ostream &out, vector<Qua> & _quas) : of(out), quas(_quas) {
+  Assembler(ostream &out, vector<Qua> &_quas) : of(out), quas(_quas) {
     quaEmit[QuaType::Q_ADD] =
         std::bind(&Assembler::quaADD, this, std::placeholders::_1);
     quaEmit[QuaType::Q_SUB] =
@@ -180,16 +182,26 @@ public:
         std::bind(&Assembler::quaASSIGN, this, std::placeholders::_1);
     quaEmit[QuaType::Q_ALLOC] =
         std::bind(&Assembler::quaALLOC, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_DATA] =
+        std::bind(&Assembler::quaDATA, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_CALL] =
+        std::bind(&Assembler::quaCALL, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_RET] =
+        std::bind(&Assembler::quaRET, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_FUNC] =
+        std::bind(&Assembler::quaFUNC, this, std::placeholders::_1);
     quaMap = map<string, QuaType>{
-        {"+", QuaType::Q_ADD},      {"-", QuaType::Q_SUB},
-        {"*", QuaType::Q_MUL},      {"/", QuaType::Q_DIV},
-        {"%", QuaType::Q_MOD},      {"^", QuaType::Q_POW},
-        {"<", QuaType::Q_LT},       {"<=", QuaType::Q_LE},
-        {">", QuaType::Q_GT},       {">=", QuaType::Q_GE},
-        {"jmp", QuaType::Q_JMP},    {"j<", QuaType::Q_JLT},
-        {"j<=", QuaType::Q_JLE},    {"j>", QuaType::Q_JGT},
-        {"j>=", QuaType::Q_JGE},    {":=", QuaType::Q_ASSIGN},
-        {"alloc", QuaType::Q_ALLOC}};
+        {"+", QuaType::Q_ADD},        {"-", QuaType::Q_SUB},
+        {"*", QuaType::Q_MUL},        {"/", QuaType::Q_DIV},
+        {"%", QuaType::Q_MOD},        {"^", QuaType::Q_POW},
+        {"<", QuaType::Q_LT},         {"<=", QuaType::Q_LE},
+        {">", QuaType::Q_GT},         {">=", QuaType::Q_GE},
+        {"jmp", QuaType::Q_JMP},      {"j<", QuaType::Q_JLT},
+        {"j<=", QuaType::Q_JLE},      {"j>", QuaType::Q_JGT},
+        {"j>=", QuaType::Q_JGE},      {":=", QuaType::Q_ASSIGN},
+        {"alloc", QuaType::Q_ALLOC},  {".data", QuaType::Q_DATA},
+        {"call", QuaType::Q_CALL},    {"return", QuaType::Q_RET},
+        {"function", QuaType::Q_FUNC}};
     wideMap = map<size_t, string>{{1, "db"}, {2, "dw"}, {4, "dd"}, {8, "dq"}};
   }
   string getWideStr(size_t size);
@@ -219,6 +231,10 @@ public:
   void quaJLE(const Qua &qua);
   void quaJGT(const Qua &qua);
   void quaJGE(const Qua &qua);
+  void quaDATA(const Qua &qua);
+  void quaCALL(const Qua &qua);
+  void quaRET(const Qua &qua);
+  void quaFUNC(const Qua &qua);
   void getBaseBlockMap();
   size_t getBaseBlockID(string linenum);
   string getBaseBlockName(string linenum);

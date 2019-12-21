@@ -226,7 +226,11 @@ postfix_expression
           // 找到了声明
           found = true;
           // 返回一个临时变量生成的表达式
-          tree.node($$).set_expression(ParseExpression(ParseVariable(each_func->get_ret_type(), "func_ret")));
+          size_t addr = -1;
+          if (generating_code) {
+            addr = ir.allocEmit(scope_now, ir.newTemp(), each_func->get_ret_type().get_size(), $$);
+          }
+          tree.node($$).set_expression(ParseExpression(ParseVariable(each_func->get_ret_type(), "func_ret", addr)));
           break;
         }
       }
@@ -1710,6 +1714,10 @@ jump_statement
   | RETURN expression SEMICOLON {
     $$ = tree.new_node("return statement");
     tree.set_parent($2, $$);
+
+    if (generating_code) {
+      ir.returnEmit(tree.node($2).get_expression().get_address());
+    }
   }
   ;
 
@@ -1740,9 +1748,17 @@ function_declarator
     vector<ParseVariable> &args = (vector<ParseVariable> &)function.get_args();//回填变量的地址,所以要转成非常量引用
     ParseScope::get_scope(scope_now).declaration(symbol, function);
     scope_now = ParseScope::new_scope(scope_now);
+
+    if (generating_code) {
+      ir.funcEmit(symbol, scope_now);
+    }
+
     for(auto &arg : args) {
       // TODO: 将-2填上下一个函数参数压栈的地址
-      size_t addr = ir.allocEmit(scope_now, arg.get_symbol(), arg.get_type().get_size(), 0);
+      size_t addr = 0;
+      if (generating_code) {
+        addr = ir.allocEmit(scope_now, arg.get_symbol(), arg.get_type().get_size(), 0);
+      }
       arg.set_address((size_t) addr);
       arg.set_scope_id(scope_now);
       ParseScope::get_scope(scope_now).declaration(arg.get_symbol(), arg);

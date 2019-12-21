@@ -77,22 +77,33 @@ public:
     cout << "IR log: " << msg << endl;
   }
   inline void recordBegin(size_t scope_id) {
-    static int idx = 0;
-    gen("function", "_", "_", "F" + to_string(idx++), scope_id);
     stkpush(offset);
-    offset = 0;
+    offset = 4;
+  }
+  inline void funcEmit(const string &func, size_t scope_id) {
+    gen("function", "_", "_", func, scope_id);
+    gen("alloc", "0", "4", "return addr", 0);
+    addOffset(4);
   }
   inline void recordEnd() { offset = stkpop(); }
   inline void assignEmit(size_t left, size_t right) {}
   inline string address2pointer(size_t addr) {
-    long long addrll = addr, sub = -1 - addrll;
+    long long addrll = addr; long long sub = -1 - addrll;
     if (addrll < 0) {
       if (sub >= sectionData.size() || sub < 0) {
         return "BadAddr";
       }
     }
-    return (addrll < 0) ? sectionData[sub].name : ("[esp+" + to_string(addrll) + "]");
+    return (addrll < 0) ? sectionData[sub].name
+                        : ("[ebp+" + to_string(addrll) + "]");
   }
+  inline void returnEmit(size_t addr) {
+    gen("return", address2pointer(addr), "_", "_", 0);
+  }
+  inline void fcEmit(const string &symbol, size_t node_id) {
+    gen("call", "_", "_", symbol, node_id);
+  }
+
   string getVarPointer(size_t id);
   string getVarPointer(const ParseVariable &var);
   void print();
@@ -117,7 +128,8 @@ public:
   size_t getItemEmit(const ParseExpression &init_expr,
                      const ParseType &this_type, const string &symbol,
                      ParseTree &tree, size_t node_id, size_t scope_id);
-  size_t dfsArrayGetItem(const ParseExpression &expr, vector<size_t> &psize, vector<size_t> &pid);
+  size_t dfsArrayGetItem(const ParseExpression &expr, vector<size_t> &psize,
+                         vector<size_t> &pid);
 };
 
 #endif

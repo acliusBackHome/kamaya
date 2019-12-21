@@ -80,7 +80,7 @@ void Assembler::quaADD(const Qua &qua) {
 }
 
 void Assembler::quaSUB(const Qua &qua) {
-  // 
+  //
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
@@ -95,7 +95,7 @@ void Assembler::quaSUB(const Qua &qua) {
 }
 
 void Assembler::quaMUL(const Qua &qua) {
-  // 
+  //
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
@@ -164,7 +164,13 @@ void Assembler::quaASSIGN(const Qua &qua) {
   mov(dist, src);
 }
 
-void Assembler::quaALLOC(const Qua &qua) {}
+void Assembler::quaALLOC(const Qua &qua) {
+  static int stackTop = 0;
+  // (alloc,1648,4,_2@T2)
+  string sz = get<1>(qua);
+  stackTop = max(stackTop, stoi(sz));
+  mov("esp", to_string(stackTop));
+}
 
 void Assembler::quaLT(const Qua &qua) {}
 
@@ -239,9 +245,12 @@ void Assembler::quaJGE(const Qua &qua) {
   jge(blockName);
 }
 
-void Assembler::getBaseBlockMap() {
-  bbla = BaseBlock::get_base_blocks(quas);
-}
+void Assembler::quaDATA(const Qua &qua) {}
+void Assembler::quaCALL(const Qua &qua) {}
+void Assembler::quaRET(const Qua &qua) {}
+void Assembler::quaFUNC(const Qua &qua) {}
+
+void Assembler::getBaseBlockMap() { bbla = BaseBlock::get_base_blocks(quas); }
 
 size_t Assembler::getBaseBlockID(string linenum) {
   size_t line = stoi(linenum);
@@ -251,10 +260,10 @@ size_t Assembler::getBaseBlockID(string linenum) {
 
 string Assembler::getBaseBlockName(string linenum) {
   size_t blockid = getBaseBlockID(linenum);
-  const string& prefix = "block";
+  const string &prefix = "block";
   string blockName = prefix + to_string(blockid);
   return blockName;
-} 
+}
 
 void Assembler::handleQuas(const vector<Qua> &quas) {
   for (auto qua : quas) {

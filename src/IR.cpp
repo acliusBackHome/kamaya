@@ -71,7 +71,7 @@ size_t IR::dataEmit(const string &name, size_t size, const string &value,
                     size_t node_id) {
   string type = size2type(size);
   sectionData.push_back(SData{name, type, value});
-  gen("section .data", type, value, name, node_id);
+  gen(".data", type, value, name, node_id);
   return -sectionData.size();
 }
 
@@ -216,6 +216,10 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
       string result = address2pointer(init_expr.get_address());
       const ParseVariable &var = init_expr.get_variable();
       gen(":=", address2pointer(var.get_address()), "_", result, node_id);
+      return;
+    }
+    case ExpressionType::E_FUN: {
+      gen("call", "_", "_", (init_expr.get_functions()[0])->get_symbol(), node_id);
       return;
     }
     case ExpressionType::E_NOT:
