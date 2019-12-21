@@ -62,7 +62,17 @@ string ParseException::get_code_msg(ExceptionCode _code) {
         case EX_EXPRESSION_CAN_NOT_ACCESS:
             return "CanNotAccessExpressionException(bug)";
         case EX_NOT_AN_ARRAY_TYPE:
-            return "NotAnArrayTypeException";
+            return "NotAnArrayTypeExceptionException";
+        case EX_EXPRESSION_NOT_VARIABLE:
+            return "ExpressionNotAVariableException";
+        case EX_EXPRESSION_NOT_FUNCTION:
+            return "ExpressionNotAFunctionException";
+        case EX_NOT_IMPLEMENTED:
+            return "NotImplementedException(bug)";
+        case EX_CAN_NOT_ASSIGN_CONST:
+            return "CanNotAssignToAConstantException";
+        case EX_INVALID_FUNC_EXPRESSION:
+            return "InvalidFunctionExpressionException(bug)";
     }
     return "UnknownException";
 }

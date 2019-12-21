@@ -33,6 +33,7 @@ ParseTree::ParseTree(const string &msg) {
     node_key2map[K_PARAM_LIST] = (size_t) &node_param_list;
     node_key2map[K_INIT_DEC] = (size_t) &node_init_dec;
     node_key2map[K_BEGIN_CODE] = (size_t) &node_begin_code;
+    node_key2map[K_EXPRESSION_LIST] = (size_t) &node_expression_list;
     // 初始化可搜索节点
     search_able.insert(HasNodeKey(K_SYMBOL, N_DIRECT_DEC, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_SYMBOL, N_DIRECT_DEC, N_IDENTIFIER));
@@ -274,15 +275,8 @@ size_t ParseTree::make_parameter_declaration(const ParseVariable &variable) {
     return new_one;
 }
 
-size_t ParseTree::make_function_definition_node(
-        const ParseType &ret_type, const string &symbol,
-        const vector<ParseVariable> &args,
-        size_t address) {
-    size_t new_one = new_node(N_FUNCTION_DEFINITION);
-    nodes[new_one].set_function(ParseFunction(
-            ret_type, symbol, args, address
-    ));
-    return new_one;
+size_t ParseTree::make_function_definition_node() {
+    return new_node(N_FUNCTION_DEFINITION);
 }
 
 size_t ParseTree::make_init_declarator_node() {
@@ -309,8 +303,9 @@ size_t ParseTree::make_expression_node(const ParseExpression &expression) {
 
 size_t ParseTree::make_assign_expression_node(
     const ParseExpression& l_expr, const ParseExpression &r_expr) {
+    const ParseExpression& assign_expr = ParseExpression::get_assign_expression(l_expr, r_expr);
     size_t new_one = new_node(N_EXPRESSION);
-    nodes[new_one].set_expression(ParseExpression::get_assign_expression(l_expr, r_expr));
+    nodes[new_one].set_expression(assign_expr);
     return new_one;
 }
 

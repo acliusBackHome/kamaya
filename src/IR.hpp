@@ -14,8 +14,6 @@ extern bool generating_code;
 
 void set_node_begen_code(size_t node_id, size_t code_id);
 
-#define IR_EMIT if (generating_code)
-
 using namespace std;
 
 typedef tuple<string, string, string, string> Qua;
@@ -85,9 +83,14 @@ class IR {
   inline void recordEnd() { offset = stkpop(); }
   inline void assignEmit(size_t left, size_t right) {}
   inline string address2pointer(size_t addr) {
-    long long addrll = addr;
-    return (addrll < 0) ? sectionData[-1 - addrll].name
-                        : ("[esp+" + to_string(addrll) + "]");
+    long long addrll = addr, sub = -1 - addrll;
+    if(addrll < 0) {
+      if (sub >= sectionData.size()|| sub < 0) {
+          return "bad_addr";
+      }
+    }
+    return (addrll < 0) ? sectionData[sub].name
+                        : ("[esp+" + to_string(addrll) + "]");;
   }
   string getVarPointer(size_t id);
   string getVarPointer(const ParseVariable &var);

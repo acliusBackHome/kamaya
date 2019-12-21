@@ -350,6 +350,13 @@ public:
      */
     static void print_all_declaration();
 
+    /**
+     * 获取指定声明的声明类型
+     * @param symbol
+     * @return
+     */
+    DeclarationType get_symbol_dec_type(const string& symbol);
+
     static map<string, ParseVariable> emitData2Nasm();
 
     static map<string, ParseFunction> emitText2Nasm();

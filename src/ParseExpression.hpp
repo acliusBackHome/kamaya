@@ -20,13 +20,19 @@ public:
 
     explicit ParseExpression(const ParseVariable &variable);
 
-    ParseExpression(const ParseExpression &exp);
-
     /**
      * 从常量构造表达式
      * @param constant
      */
     explicit ParseExpression(const ParseConstant &constant);
+
+    /**
+     * 构造函数列表表达式(支持重载)
+     * @param func_list
+     */
+    explicit  ParseExpression(const vector<ParseFunction> &func_list);
+
+    ParseExpression(const ParseExpression &exp);
 
     ~ParseExpression();
 
@@ -148,6 +154,12 @@ public:
     const ParseVariable &get_variable() const;
 
     /**
+     * 获取表达式的函数列表, 不存在抛出异常
+     * @return
+     */
+    const vector<ParseFunction> &get_functions() const;
+
+    /**
      * 获取表达式的子表达式id, child参数目前小于2
      * 如果该表达式的类型没有子表达式, 则返回(size_t) -1
      * @param child
@@ -172,6 +184,12 @@ public:
      * @return
      */
     bool is_variable() const;
+
+    /**
+     * 判断该表达式是否是函数
+     * @return
+     */
+    bool is_function() const;
 
     /**
      * 后缀中括号表达式

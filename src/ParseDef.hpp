@@ -97,7 +97,6 @@ enum NodeType {
     // variable参数变量
             N_PARAM_DECLARATION = 9,
     //函数声明
-    //function参数记录
             N_FUNCTION_DEFINITION = 10,
     // 初始化声明器
     // 可进行的操作:
@@ -135,7 +134,13 @@ enum NodeType {
     // if语句
             N_IF_STMT = 22,
     // 语句列表
-            N_BI_LIST = 23
+            N_BI_LIST = 23,
+    // 参数表达式列表节点,
+            N_EXPRESSION_LIST = 24,
+    // 函数声明节点,
+            N_FUNCTION_DECLARATOR = 25,
+    // 函数调用节点,
+            N_FUNCTION_CALL = 26,
 };
 
 // 用64位整数表示该节点所拥有的键值
@@ -187,10 +192,12 @@ enum NodeKey {
             K_PARAM_LIST = 1 << 20,
     // 初始化声明器 InitDeclarator
             K_INIT_DEC = 1 << 21,
-    // 节点的第一条代码编号
+    // 节点的第一条代码编号 size_t
             K_BEGIN_CODE = 1 << 22,
+    // 表达式列表, 用于函数调用或者逗号表达式 vector<size_t>
+            K_EXPRESSION_LIST = 1 << 23,
 };
-#define NUM_OF_NODE_KEY_TYPE 23
+#define NUM_OF_NODE_KEY_TYPE 24
 #define MAX_NODE_KEY_TYPE ((1 << (NUM_OF_NODE_KEY_TYPE - 1)) + 1)
 
 // 用于表示参数2所表示的节点中是否存在它的子节点中是否有参数1类型的唯一的key,
@@ -200,6 +207,7 @@ typedef tuple<NodeKey, NodeType, NodeType> HasNodeKey;
 enum ExpressionType {
     E_UNDEFINED = 0,
     E_VAR,// 变量值
+    E_FUN,// 函数表达式
     E_CONST,// 常量
     E_GET_ITEM,// 后缀中括号表达式
     E_ADD, //加
@@ -259,6 +267,7 @@ enum ExceptionCode {
     EX_DECLARATION_NOT_FOUND,//符号已声明但没有找到其记录,bug
     EX_EXPRESSION_NOT_CONST,//试图获取不可在编译期获取值的表达式时抛出的异常
     EX_EXPRESSION_NOT_VARIABLE,//试图获取非变量表达式的变量值时抛出的异常
+    EX_EXPRESSION_NOT_FUNCTION,//试图获取非函数表达式的函数列表时抛出的异常
     EX_EXPRESSION_DIVIDE_ZERO,//除0异常
     EX_TYPE_CAN_NOT_CONVERT,//不能进行类型转化异常
     EX_EXPRESSION_CAN_NOT_GENERATE,//产生了错误的表达式, bug
@@ -266,6 +275,7 @@ enum ExceptionCode {
     EX_NOT_AN_ARRAY_TYPE,//不能进行后缀中括号表达式
     EX_NOT_IMPLEMENTED, //调用未实现方法, bug
     EX_CAN_NOT_ASSIGN_CONST, //不能对常量赋值
+    EX_INVALID_FUNC_EXPRESSION, //试图构造非法函数表达式
 };
 
 

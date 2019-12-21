@@ -448,6 +448,18 @@ ParseScope::ParseScope(const ParseScope &other) {
     assign(*this, other);
 }
 
+DeclarationType ParseScope::get_symbol_dec_type(const string& symbol) {
+    auto it = symbol2dec_ptr.find(symbol);
+    if (it == symbol2dec_ptr.end()) {
+        if (parent_scope == this_scope) {
+            // 找不到变量声明
+            return D_UNKNOWN;
+        }
+        return get_scope(parent_scope).get_symbol_dec_type(symbol);
+    }
+    return it->second.first;
+}
+
 void ParseScope::declaration(const string &symbol, const ParseVariable &variable) {
     if (symbol.empty()) {
         printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: 试图声明空符号\n");

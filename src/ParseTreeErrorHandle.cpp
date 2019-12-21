@@ -48,9 +48,13 @@ void ParseTree::last_combine() {
 }
 
 size_t ParseTree::native_root(size_t idx) {
-    size_t p = idx;
+    size_t p = idx, last;
     while (get_parent(p) != (size_t) (-1)) {
+        last = p;
         p = get_parent(p);
+        if (p == last) {
+            return p;
+        }
     }
     return p;
 }

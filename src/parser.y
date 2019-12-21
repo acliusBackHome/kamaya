@@ -71,7 +71,7 @@ size_t handle_expression(unsigned int expr_1, unsigned int expr_2, ExpressionTyp
 }
 
 void expr_call_back(const ParseExpression& expr) {
-  IR_EMIT {
+  if (generating_code) {
     if (expr.is_const()) { return; }
     const string symbol = ir.newTemp();
     size_t addr = ir.allocEmit(scope_now, symbol, expr.get_ret_type().get_size(), tree.get_node_num() - 1);
@@ -130,27 +130,36 @@ id_delaration
 // 以下是表达式
 primary_expression
   : id_delaration {
-    ParseVariable variable;
     const string &symbol = tree.node($1).get_symbol();
-    try {
-      variable = ParseScope::get_scope(scope_now).get_variable_declaration(symbol);
-    } catch (ParseException &exc) {
-      // 找不到变量声明:声明一个同样符号的变量, 防止重复报错
-      generating_code = false;
-      if(exc.get_code() != EX_NOT_DECLARED) {
-      	// 这一层只处理变量未声明的异常
-        string info = "in id_delaration->primary_expression";
-        exc.push_trace(info);
-      	throw exc;
+    switch(ParseScope::get_scope(scope_now).get_symbol_dec_type(symbol)) {
+      case D_VARIABLE : {
+        ParseVariable variable;
+        variable = ParseScope::get_scope(scope_now).get_variable_declaration(symbol);
+        $$ = tree.make_expression_node(ParseExpression(variable));
+        break;
       }
-      // 将错误信息记录后声明一个符号为symbol的无效的变量
-      string error_info = to_string(yylineno) + ": error :'";
-      error_info += symbol + "' was not declared in this scope";
-      parse_error_strs.emplace_back(error_info);
-      ParseScope::get_scope(scope_now).declaration(symbol, ParseVariable(ParseType(T_UNKNOWN), symbol));
-      variable = ParseScope::get_scope(scope_now).get_variable_declaration(symbol);
+      case D_FUNCTION :{
+        auto function_list = ParseScope::get_scope(scope_now).get_function_declaration(symbol);
+        $$ = tree.make_expression_node(ParseExpression(function_list));
+        break;
+      }
+      case D_UNKNOWN :{
+        // 找不到声明
+        // 将错误信息记录后声明一个符号为symbol的无效的变量
+        // 找不到变量声明:声明一个同样符号的变量, 防止重复报错
+        generating_code = false;
+        // 错误恢复
+        $$ = tree.make_expression_node(ParseExpression());
+        // 错误记录
+        string error_info = to_string(yylineno) + ": error :'";
+        error_info += symbol + "' was not declared in this scope";
+        parse_error_strs.emplace_back(error_info);
+        string info = "id_delaration->primary_expression";
+        info += " symbol=" + symbol;
+        info += " node_id=" + to_string($$);
+        info += " scope_id=" + to_string(scope_now);
+      }
     }
-    $$ = tree.make_expression_node(ParseExpression(variable));
     tree.set_parent($1, $$);
   }
   | NUMBER {
@@ -163,7 +172,7 @@ primary_expression
   | LP expression RP {
     $$ = $2;
 
-    IR_EMIT {
+    if (generating_code) {
       // 已经向上传递 truelist falselist
     }
   }
@@ -201,11 +210,99 @@ postfix_expression
     tree.set_parent($3, $$);
   }
   | postfix_expression LP RP {
-    $$ = tree.new_node("function call");
+    $$ = tree.new_node(N_FUNCTION_CALL);
+    const ParseExpression& func_exprssion = tree.node($1).get_expression();
+    if(!func_exprssion.is_function()) {
+      string error_info = to_string(yylineno) + ": error : expression ";
+      error_info += func_exprssion.get_info();
+      error_info += " can not use as a function";
+      parse_error_strs.emplace_back(error_info);
+    } else {
+      bool found = false;
+      const vector<ParseFunction> &func_list = func_exprssion.get_functions();
+      for(const auto& each_func : func_list) {
+        // 对所有重载的函数, 判断其是否有args列表为空的记录, 如果有, 返回之
+        if(each_func.get_args().empty()) {
+          // 找到了声明
+          found = true;
+          // 返回一个临时变量生成的表达式
+          tree.node($$).set_expression(ParseExpression(ParseVariable(each_func.get_ret_type(), "func_ret")));
+          break;
+        }
+      }
+      if(!found) {
+        // 找不到对应的函数声明
+        tree.node($$).set_expression(ParseExpression());
+        const ParseFunction &expected_func = func_list[0];
+        string error_info = (yylineno) + ": error : no match function for call to ";
+        error_info += expected_func.get_symbol() + "()";
+        parse_error_strs.emplace_back(error_info);
+      }
+    }
     tree.set_parent($1, $$);
   }
   | postfix_expression LP argument_expression_list RP {
-    $$ = tree.new_node("function call");
+    $$ = tree.new_node(N_FUNCTION_CALL);
+    const ParseExpression& func_exprssion = tree.node($1).get_expression();
+    if(!func_exprssion.is_function()) {
+      string error_info = to_string(yylineno) + ": error : expression ";
+      error_info += func_exprssion.get_info();
+      error_info += " can not use as a function";
+      parse_error_strs.emplace_back(error_info);
+    } else {
+      bool found = false;
+      const vector<ParseFunction> &func_list = func_exprssion.get_functions();
+      const vector<size_t> &real_arg_list = tree.node($3).get_expression_list();
+      size_t len = real_arg_list.size();
+      for(const auto& each_func : func_list) {
+        // 对所有重载的函数, 判断其是否有args列表能够转化的记录, 如果有, 返回之
+        const auto &formal_args = each_func.get_args();
+        if(formal_args.size() == real_arg_list.size()) {
+          // 大小相等
+          try {
+            for(size_t i = 0; i < len; ++i) {
+              // 尝试逐个表达式转化为形参类型
+              ParseType::convert(formal_args[i].get_type(), 
+                ParseExpression::get_expression(real_arg_list[i]).get_ret_type());
+            }
+            // 转化成功
+            found = true;
+            // 返回一个临时变量生成的表达式
+            tree.node($$).set_expression(ParseExpression(ParseVariable(each_func.get_ret_type(), "func_ret")));
+          } catch(ParseException &exc) {
+            // 转化失败
+            if(exc.get_code() != EX_TYPE_CAN_NOT_CONVERT) {
+              // 不是转化异常, 不能够在此处理
+              string info = "in postfix_expression LP argument_expression_list RP->postfix_expression";
+              info += " $1=" + to_string($1);
+              info += " $3=" + to_string($3);
+              tree.node($$).set_expression(ParseExpression());
+              tree.set_parent($1, $$);
+              tree.set_parent($3, $$);
+              exc.push_trace(info);
+              throw exc;
+            }
+            // 继续尝试
+          }
+          break;
+        }
+      }
+      if(!found) {
+        // 找不到对应的函数声明
+        tree.node($$).set_expression(ParseExpression());
+        const ParseFunction &expected_func = func_list[0];
+        string error_info = (yylineno) + ": error : no match function for call to ";
+        error_info += expected_func.get_symbol() + "(";
+        for(size_t i = 0; i < real_arg_list.size(); ++i) {
+          error_info += ParseExpression::get_expression(real_arg_list[i]).get_ret_type().get_info();
+          if(i != real_arg_list.size() - 1) {
+            error_info += ", ";
+          }
+        }
+        error_info += ")";
+        parse_error_strs.emplace_back(error_info);
+      }
+    }
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
   }
@@ -241,12 +338,14 @@ postfix_expression
 
 argument_expression_list
   : assignment_expression {
-    $$ = tree.new_node("argument expression list");
+    $$ = tree.new_node(N_EXPRESSION_LIST);
+    tree.node($$).add_expression_list(tree.node($1).get_expression());
     tree.set_parent($1, $$);
   }
   | argument_expression_list COMMA assignment_expression {
     $$ = $1;
-    tree.set_parent($3, $1);
+    tree.node($$).add_expression_list(tree.node($3).get_expression());
+    tree.set_parent($3, $$);
   }
   ;
 
@@ -271,7 +370,7 @@ unary_expression
     );
 
     tree.set_parent($2, $$);
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& testNode = tree.node($1);
       // TODO
     }
@@ -286,7 +385,10 @@ unary_expression
   }
   | error RP {
     $$ = tree.get_error(tree.error_cnt()-1);
-    if (!feof(file)) yyerrok;
+    generating_code = false;
+    if (!feof(file)) {
+      yyerrok; 
+    }
   }
   ;
 
@@ -395,7 +497,7 @@ relational_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ir.relopEmit(tree, $$, $1, $3, "j<", $$);
     }
   }
@@ -404,7 +506,7 @@ relational_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ir.relopEmit(tree, $$, $1, $3, "j<=", $$);
     }
   }
@@ -413,7 +515,7 @@ relational_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ir.relopEmit(tree, $$, $1, $3, "j>", $$);
     }
   }
@@ -422,7 +524,7 @@ relational_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ir.relopEmit(tree, $$, $1, $3, "j>=", $$);
     }
   }
@@ -437,7 +539,7 @@ equality_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ir.relopEmit(tree, $$, $1, $3, "j==", $$);
     }
   }
@@ -446,14 +548,14 @@ equality_expression
     tree.set_parent($1, $$);
     tree.set_parent($3, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ir.relopEmit(tree, $$, $1, $3, "j!=", $$);
     }
   }
   | TRUE {
     $$ = tree.make_const_node((bool)true);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& B = tree.node($$);
       B.set_false_list(ir.makelist(ir.getNextinstr()));
       ir.gen("jmp", "_", "_", "_", $$);
@@ -462,7 +564,7 @@ equality_expression
   | FALSE {
     $$ = tree.make_const_node((bool)false);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& B = tree.node($$);
       B.set_true_list(ir.makelist(ir.getNextinstr()));
       ir.gen("jmp", "_", "_", "_", $$);
@@ -496,7 +598,7 @@ logic_and_expression
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& B = tree.node($$);
       ParseNode& B1 = tree.node($1);
       ParseNode& M = tree.node($3);
@@ -519,7 +621,7 @@ logic_or_expression
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& B = tree.node($$);
       ParseNode& B1 = tree.node($1);
       ParseNode& M = tree.node($3);
@@ -1163,7 +1265,10 @@ direct_abstract_declarator
   }
   | error RP {
     $$ = tree.get_error(tree.error_cnt()-1);
-    if (!feof(file)) yyerrok;
+    generating_code = false;
+    if (!feof(file)) {
+      yyerrok; 
+    }
   }
   ;
 
@@ -1182,7 +1287,10 @@ initializer
   }
   | error RB {
     $$ = tree.get_error(tree.error_cnt()-1);
-    if (!feof(file)) yyerrok;
+    generating_code = false;
+    if (!feof(file)) {
+      yyerrok; 
+    }
   }
   ;
 
@@ -1291,7 +1399,10 @@ compound_statement
   }
   | error RB {
     $$ = tree.get_error(tree.error_cnt()-1);
-    if (!feof(file)) yyerrok;
+    generating_code = false;
+    if (!feof(file)) {
+      yyerrok; 
+    }
   }
   ;
 
@@ -1324,14 +1435,17 @@ expression_statement
   }
   | error SEMICOLON {
     $$ = tree.get_error(tree.error_cnt()-1);
-    if (!feof(file)) yyerrok;
+    generating_code = false;
+    if (!feof(file)) {
+      yyerrok; 
+    }
   }
   ;
 
 backpatch_instr : {
   $$ = tree.new_node(N_BP_INST);
 
-  IR_EMIT {
+  if (generating_code) {
     tree.node($$).set_instr(ir.getNextinstr());
   }
 };
@@ -1339,7 +1453,7 @@ backpatch_instr : {
 backpatch_next_list : {
   $$ = tree.new_node(N_BP_NEXT_LIST);
 
-  IR_EMIT {
+  if (generating_code) {
     ParseNode& N = tree.node($$);
     N.set_next_list(ir.makelist(ir.getNextinstr()));
     ir.gen("jmp", "_", "_", "_", $$);
@@ -1353,7 +1467,7 @@ selection_statement
     tree.set_parent($5, $$);
     tree.set_parent($6, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& B = tree.node($3);
       ParseNode& M = tree.node($5);
@@ -1374,7 +1488,7 @@ selection_statement
     tree.set_parent($9, $$);
     tree.set_parent($10, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& B = tree.node($3);
       ParseNode& M1 = tree.node($5);
@@ -1412,7 +1526,7 @@ iteration_statement
     tree.set_parent($6, $$);
     tree.set_parent($7, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& M1 = tree.node($3);
       ParseNode& B = tree.node($4);
@@ -1432,7 +1546,7 @@ iteration_statement
     tree.set_parent($6, $$);
     tree.set_parent($7, $$);
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& M1 = tree.node($2);
       ParseNode& S1 = tree.node($3);
@@ -1456,7 +1570,7 @@ iteration_statement
     tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& M1 = tree.node($4);
       ParseNode& B = tree.node($5);
@@ -1483,7 +1597,7 @@ iteration_statement
     tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& M1 = tree.node($4);
       ParseNode& B = tree.node($5);
@@ -1510,7 +1624,7 @@ iteration_statement
     tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& M1 = tree.node($4);
       ParseNode& B = tree.node($5);
@@ -1537,7 +1651,7 @@ iteration_statement
     tree.node($$).set_scope_id(scope_now);
     scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
 
-    IR_EMIT {
+    if (generating_code) {
       ParseNode& S = tree.node($$);
       ParseNode& M1 = tree.node($4);
       ParseNode& B = tree.node($5);
@@ -1586,10 +1700,32 @@ external_declaration
   ;
 
 record_begin : {
-  IR_EMIT {
+  scope_now = ParseScope::new_scope(scope_now);
+  if (generating_code) {
     ir.recordBegin();
   }
 };
+
+function_declarator
+: declaration_specifiers declarator record_begin {
+  $$ = tree.new_node(N_FUNCTION_DECLARATOR);
+  try {
+    const auto &symbol = tree.node($2).get_symbol();
+    const auto &ret_type = tree.node($1).get_type();
+    const auto &args = tree.node($2).get_parameters_list();
+    ParseFunction function = ParseFunction(ret_type, symbol, args);
+    tree.node($$).set_function(function);
+    ParseScope::get_scope(scope_now).declaration(symbol, function);
+    for(const auto &arg : args) {
+      ParseScope::get_scope(scope_now).declaration(arg.get_symbol(), arg);
+    }
+  } catch (ParseException &exc) {
+    string info = "in declaration_specifiers declarator record_begin->function_declarator";
+    exc.push_trace(info);
+  }
+  tree.set_parent($1, $$);
+  tree.set_parent($2, $$);
+}
 
 function_definition
   : declaration_specifiers declarator declaration_list record_begin compound_statement {
@@ -1599,27 +1735,18 @@ function_definition
     tree.set_parent($3, $$);
     tree.set_parent($5, $$);
   }
-  | declaration_specifiers declarator record_begin compound_statement {
-    const auto &symbol = tree.node($2).get_symbol();
-    const auto &ret_type = tree.node($1).get_type();
-    const auto &args = tree.node($2).get_parameters_list();
-    try {
-      $$ = tree.make_function_definition_node(ret_type, symbol, args,
-        tree.node($4).get_begin_code());
-    } catch (ParseException &exc) {
-      $$ = tree.make_function_definition_node(ret_type, symbol, args, -1);
-      string info = "in function definition";
-      exc.push_trace(info);
+  | function_declarator compound_statement {
+    $$ = tree.make_function_definition_node();
+    if(tree.node($2).has_key(K_BEGIN_CODE)) {
+      tree.node($1).get_function().set_address(tree.node($2).get_begin_code());
     }
-    ParseScope::get_scope(scope_now).declaration(symbol, ParseFunction(ret_type,
-      symbol, args));
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
-    tree.set_parent($4, $$);
-
-    IR_EMIT {
+    if (generating_code) {
       ir.recordEnd();
     }
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
+    
   }
   ;
 

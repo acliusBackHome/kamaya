@@ -80,7 +80,7 @@ public:
     * get_系列函数都会抛出ParseException异常
     * @return
     */
-    const ParseFunction &get_function() const;
+    ParseFunction &get_function() const;
 
     /**
      * 获取节点的参数列表, 用于函数获取其参数列表时,
@@ -183,6 +183,12 @@ public:
      * @param true_list
      */
     const vector<size_t> &get_next_list() const;
+
+    /**
+     * 获取节点的K_EXPRESSION键值
+     * @param true_list
+     */
+    const vector<size_t> &get_expression_list() const;
 
     /**
      * 获取节点的类型
@@ -366,6 +372,13 @@ public:
      * @param code
      */
     void set_begin_code(size_t begin_code);
+
+    /**
+     * 往节点的K_EXPRESSION_LIST里加入一个ParseExpression的id
+     * 如果没有K_EXPRESSION_LIST,则new一个
+     * @param expr
+     */
+    void add_expression_list(const ParseExpression &expr);
 
     /**
      * 往节点的K_INIT_DECLARATOR里加入一个InitDeclarator

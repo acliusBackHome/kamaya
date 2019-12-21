@@ -142,11 +142,7 @@ public:
      * @param address 初始地址
      * @return
      */
-    size_t make_function_definition_node(
-            const ParseType &ret_type,
-            const string &symbol,
-            const vector<ParseVariable> &args,
-            size_t address = (size_t) -1);
+    size_t make_function_definition_node();
 
     /**
      * 生成一个初始化声明器节点
@@ -347,6 +343,7 @@ private:
     map<size_t, vector<ParseVariable> > node_param_list;
     map<size_t, InitDeclarator> node_init_dec;
     map<size_t, size_t> node_begin_code;
+    map<size_t, vector<size_t> > node_expression_list;
 
     // 建立NodeKey枚举到相应的map地址的映射在Node类里用来
     // 用模板将类型强制转换回来, 减少代码量

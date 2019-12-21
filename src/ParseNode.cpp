@@ -68,6 +68,8 @@ string ParseNode::get_key_name(NodeKey type) noexcept {
             return "init_declarator";
         case K_BEGIN_CODE:
             return "begin_code";
+        case K_EXPRESSION_LIST:
+            return "expression_list";
     }
     return "unknown";
 }
@@ -122,6 +124,12 @@ string ParseNode::get_node_type_name(NodeType type) noexcept {
             return "if_statement";
         case N_BI_LIST:
             return "block_item_list";
+        case N_EXPRESSION_LIST:
+            return "expression_list";
+        case N_FUNCTION_DECLARATOR:
+            return "function_declarator";
+        case N_FUNCTION_CALL:
+            return "function_call";
     }
     return "unknown";
 }
@@ -262,6 +270,15 @@ string ParseNode::get_node_info() const noexcept {
                 case K_BEGIN_CODE:
                     info += "begin_code: " + to_string(get_begin_code()) + ", ";
                     break;
+                case K_EXPRESSION_LIST: {
+                    info += "expression_list: [";
+                    const auto &list = get_expression_list();
+                    for (const auto &each: list) {
+                        info += to_string(each) + ", ";
+                    }
+                    info += "], ";
+                    break;
+                }
             }
         }
         each_key <<= 1;
@@ -395,25 +412,25 @@ void ParseNode::set_begin_code(size_t begin_code) {
     set_field<size_t>(K_BEGIN_CODE, begin_code);
 }
 
+void ParseNode::add_expression_list(const ParseExpression &expr) {
+    if (has_key(K_EXPRESSION_LIST)) {
+        auto &list = (vector<size_t> &)get_expression_list();
+        list.emplace_back(expr.get_id());
+    } else {
+        vector<size_t> list;
+        list.emplace_back(expr.get_id());
+        set_field<vector<size_t> >(K_EXPRESSION_LIST, list);
+    }
+}
 
 void ParseNode::add_init_declarator(const InitDeclarator &init_declarator) {
-    try {
-        // 暂时转变为非常量引用
+    if (has_key(K_INIT_DECLARATORS)) {
         auto &list = (vector<InitDeclarator> &) get_init_declarators();
         list.emplace_back(init_declarator);
-    } catch (ParseException &exc) {
-        switch (exc.get_code()) {
-            // 捕获异常: 找不到键值, 那就新建一个
-            case EX_NODE_NO_SUCH_KEY: {
-                vector<InitDeclarator> list;
-                list.emplace_back(init_declarator);
-                set_field<vector<InitDeclarator> >(K_INIT_DECLARATORS, list);
-                break;
-            }
-            default:
-                exc.push_trace("in ParseNode::add_init_declarator(const InitDeclarator &init_declarator)");
-                throw exc;
-        }
+    } else {
+        vector<InitDeclarator> list;
+        list.emplace_back(init_declarator);
+        set_field<vector<InitDeclarator> >(K_INIT_DECLARATORS, list);
     }
 }
 
@@ -439,8 +456,8 @@ const ParseVariable &ParseNode::get_variable() const {
     return get_field<ParseVariable>(K_VARIABLE);
 }
 
-const ParseFunction &ParseNode::get_function() const {
-    return get_field<ParseFunction>(K_FUNCTION);
+ParseFunction &ParseNode::get_function() const {
+    return (ParseFunction &)get_field<ParseFunction>(K_FUNCTION);
 }
 
 const vector<ParseVariable> &ParseNode::get_parameters_list() const {
@@ -523,6 +540,10 @@ const vector<size_t> &ParseNode::get_next_list() const {
     return get_field<vector<size_t> >(K_NEXT_LIST);
 }
 
+const vector<size_t> &ParseNode::get_expression_list() const {
+    return get_field<vector<size_t> >(K_EXPRESSION_LIST);
+}
+
 void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
     if (type != N_DECLARATION) {
         // 目前只允许声明节点做这个声明动作
@@ -583,7 +604,7 @@ void ParseNode::action_declaration(size_t scope_id, IR &ir) const {
 size_t ParseNode::action_variable_declaration_code_generate(
         IR &ir, const ParseExpression &init_expr, const ParseType &this_type,
         const string &symbol, const size_t &scope_id) const {
-    IR_EMIT {
+    if (generating_code) {
         size_t addr;
         if (scope_id != 0) {
             addr = ir.allocEmit(scope_id, symbol, this_type.get_size(), node_id);
@@ -605,7 +626,7 @@ size_t ParseNode::action_variable_declaration_code_generate(
         // init_expr.set_address(addr); 没有任何作用
         return addr;
     }
-    return -1;
+    return (size_t) -1;
 }
 
 

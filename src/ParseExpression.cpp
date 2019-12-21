@@ -56,6 +56,10 @@ string ParseExpression::get_info() const {
             res += buff;
             break;
         }
+        case E_FUN: {
+            res += "function:{ " + (*((vector<ParseFunction> *) child[0]))[0].get_symbol() + " }, ";
+            break;
+        }
         case E_VAR: {
             res += "variable:{ " + ((ParseVariable *) child[0])->get_info() + " }, ";
             break;
@@ -133,6 +137,8 @@ string ParseExpression::get_expr_type_name(ExpressionType type) {
             return "*";
         case E_BIT_NOT:
             return "~";
+        case E_FUN:
+            return "function";
     }
     return "undefined";
 }
@@ -163,6 +169,18 @@ ParseExpression::ParseExpression(const ParseVariable &variable) {
     expr_type = E_VAR;
     child[0] = (size_t)
             new ParseVariable(variable);
+    update(*this);
+}
+
+ParseExpression::ParseExpression(const vector<ParseFunction> &func_list) {
+    if (func_list.empty()) {
+        string info = "ParseExpression(const vector<ParseFunction> &func_list)";
+        throw ParseException(EX_INVALID_FUNC_EXPRESSION, info);
+    }
+    const_value = 0;
+    ret_type_id = func_list[0].get_ret_type().get_id();
+    expr_type = E_FUN;
+    child[0] = (size_t) new vector<ParseFunction>(func_list);
     update(*this);
 }
 
@@ -234,6 +252,16 @@ bool ParseExpression::operator<(const ParseExpression &other) const {
             }
             break;
         }
+        case E_FUN: {
+            ParseFunction &this_fun = (*(vector<ParseFunction> *) child[0])[0],
+                    &that_fun = (*(vector<ParseFunction> *) child[0])[0];
+            if (this_fun.get_symbol() < that_fun.get_symbol()) {
+                return true;
+            } else if (that_fun.get_symbol() < this_fun.get_symbol()) {
+                return false;
+            }
+            break;
+        }
         case E_VAR: {
             ParseVariable &this_var = *(ParseVariable *) child[0],
                     &that_var = *(ParseVariable *) (other.child[0]);
@@ -253,6 +281,9 @@ ParseExpression::~ParseExpression() {
         delete (ParseConstant *) const_value;
     }
     switch (expr_type) {
+        case E_FUN:
+            delete (vector<ParseFunction> *) child[0];
+            break;
         case E_VAR:
             delete (ParseVariable *) child[0];
             break;
@@ -285,6 +316,7 @@ ParseExpression::~ParseExpression() {
         case E_POS:
         case E_BIT_NOT:
             return;
+
     }
 }
 
@@ -462,6 +494,7 @@ const ParseExpression &ParseExpression::generate_expression(
         case E_UNDEFINED:
         case E_VAR:
         case E_CONST:
+        case E_FUN:
         case E_ASSIGN: {
             // 错误调用该函数
             string info = "ParseExpression::generate_expression("
@@ -500,6 +533,7 @@ const ParseExpression &ParseExpression::generate_expression(
         case E_GET_ITEM:
         case E_UNDEFINED:
         case E_VAR:
+        case E_FUN:
         case E_CONST:
         case E_ASSIGN:
         case E_ADD:
@@ -531,9 +565,9 @@ const ParseExpression &ParseExpression::generate_expression(
 const ParseExpression &ParseExpression::get_assign_expression(
         const ParseExpression &unary_expr, const ParseExpression &expr) {
     ParseExpression res;
-    if(unary_expr.is_const()) {
+    if (unary_expr.is_const()) {
         string info = "ParseExpression::get_assign_expression"
-            "(const ParseExpression &unary_expr, const ParseExpression &expr)";
+                      "(const ParseExpression &unary_expr, const ParseExpression &expr)";
         info += "unary_expr=" + to_string(unary_expr.get_id());
         info += "expr=" + to_string(expr.get_id());
         throw ParseException(EX_CAN_NOT_ASSIGN_CONST, info);
@@ -607,6 +641,10 @@ void ParseExpression::assign(ParseExpression &expr, const ParseExpression &from_
             expr.child[0] = from_expr.child[0];
             expr.child[1] = from_expr.child[1];
             break;
+        case E_FUN:
+            expr.child[0] = (size_t)
+                    new vector<ParseFunction>(*(vector<ParseFunction> *) from_expr.child[0]);
+            break;
     }
 }
 
@@ -627,6 +665,15 @@ const ParseVariable &ParseExpression::get_variable() const {
     string info = "ParseExpression::get_variable() expr_id=";
     info += to_string(expr_id);
     throw ParseException(EX_EXPRESSION_NOT_VARIABLE, info);
+}
+
+const vector<ParseFunction> &ParseExpression::get_functions() const {
+    if (is_function()) {
+        return *(vector<ParseFunction> *) child[0];
+    }
+    string info = "ParseExpression::get_functions() expr_id=";
+    info += to_string(expr_id);
+    throw ParseException(EX_EXPRESSION_NOT_FUNCTION, info);
 }
 
 const ParseType &ParseExpression::get_ret_type() const {
@@ -701,6 +748,11 @@ const ParseType &ParseExpression::get_ret_type() const {
         }
         case E_UNDEFINED:
             break;
+        case E_FUN: {
+            size_t &ret_cache = (((ParseExpression *) this)->ret_type_id);
+            ret_cache = (*((vector<ParseFunction> *) child[0]))[0].get_ret_type().get_id();
+            return ParseType::get_type(ret_cache);
+        }
     }
     ((ParseExpression *) this)->ret_type_id = 0;
     return ParseType::get_type(T_UNKNOWN);
@@ -747,6 +799,7 @@ size_t ParseExpression::get_child(size_t _child) const {
             return child[_child];
         case E_VAR:
         case E_CONST:
+        case E_FUN:
         case E_UNDEFINED: {
             string info = "ParseExpression::get_child_expression(size_t _child) expr_id=";
             info += to_string(expr_id);
@@ -780,7 +833,7 @@ size_t ParseExpression::get_id() const {
 }
 
 bool ParseExpression::is_const() const {
-    if(expr_type == E_CONST) {
+    if (expr_type == E_CONST) {
         return true;
     }
     if (const_value == (size_t) -1) {
@@ -794,6 +847,10 @@ bool ParseExpression::is_const() const {
 
 bool ParseExpression::is_variable() const {
     return expr_type == E_VAR;
+}
+
+bool ParseExpression::is_function() const {
+    return expr_type == E_FUN;
 }
 
 size_t ParseExpression::get_address() const {

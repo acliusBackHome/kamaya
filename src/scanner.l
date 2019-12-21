@@ -223,8 +223,10 @@ int main(int argc, char** argv) {
   ParseExpression::print_all_expression();
   printf("所有作用域声明:\n");
   ParseScope::print_all_declaration();
-
-  ir.print();
+  
+  if(generating_code) {
+    ir.print();
+  }
   // assembler.setSectionData(ParseScope::emitData2Nasm());
   // assembler.setSectionText(ParseScope::emitText2Nasm());
   // printf("ParseTree 2 Nasm x86\n");
