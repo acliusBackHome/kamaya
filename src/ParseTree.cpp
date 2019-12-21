@@ -17,7 +17,7 @@ ParseTree::ParseTree(const string &msg) {
     node_key2map[K_PTR_LV] = (size_t) &node_ptr_lv;
     node_key2map[K_FUNCTION] = (size_t) &node_function;
     node_key2map[K_EXPRESSION] = (size_t) &node_expression;
-    node_key2map[K_IS_ARRAY] = (size_t) &node_is_array;
+    node_key2map[K_ARRAY_SIZE] = (size_t) &node_array_size;
     node_key2map[K_INIT_DECLARATORS] = (size_t) &node_init_declarators;
     node_key2map[K_SCOPE_ID] = (size_t) &node_scope_id;
     node_key2map[K_PARAM_LIST_NODE] = (size_t) &node_param_list_node;
@@ -47,7 +47,7 @@ ParseTree::ParseTree(const string &msg) {
     search_able.insert(HasNodeKey(K_PARAM_LIST_NODE, N_INIT_DECLARATOR, N_DECLARATOR));
     search_able.insert(HasNodeKey(K_PARAM_LIST, N_DIRECT_DEC, N_PARAM_LIST));
     search_able.insert(HasNodeKey(K_PARAM_LIST, N_DECLARATOR, N_DIRECT_DEC));
-    search_able.insert(HasNodeKey(K_IS_ARRAY, N_DECLARATOR, N_DIRECT_DEC));
+    search_able.insert(HasNodeKey(K_ARRAY_SIZE, N_DECLARATOR, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_CONST, N_INITIALIZER, N_CONST));
     search_able.insert(HasNodeKey(K_EXPRESSION, N_DECLARATOR, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_EXPRESSION));
@@ -252,10 +252,10 @@ size_t ParseTree::make_declarator_node(size_t ptr_lv) {
     return new_one;
 }
 
-size_t ParseTree::make_direct_declarator_node(bool is_array, const ParseExpression *expression) {
+size_t ParseTree::make_direct_declarator_node(size_t array_size, const ParseExpression *expression) {
     size_t new_one = new_node(N_DIRECT_DEC);
-    nodes[new_one].set_is_array(is_array);
-    if (is_array) {
+    nodes[new_one].set_array_size(array_size);
+    if (array_size) {
         if (expression) {
             nodes[new_one].set_expression(*expression);
         } else {

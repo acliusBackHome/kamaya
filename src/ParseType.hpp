@@ -240,7 +240,8 @@ private:
      * @param ptr_lv
      * @param arr_size
      */
-    ParseType(BaseType bt, size_t low_t, map<string, size_t> *fs, size_t ts, size_t ptr_lv, size_t arr_size);
+    ParseType(BaseType bt, size_t low_t, map<string, size_t> *fs, size_t ts, size_t ptr_lv, size_t arr_size,
+        int spe = 0);
 
     /**
      * 获取类型id, 如果没有该类型id的记录, 那么则加入该记录并返回其id

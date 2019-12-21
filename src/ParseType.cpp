@@ -480,10 +480,11 @@ void ParseType::init() {
     }
 }
 
-ParseType::ParseType(BaseType bt, size_t low_t, map<string, size_t> *fs, size_t ts, size_t ptr_lv, size_t arr_size) {
+ParseType::ParseType(BaseType bt, size_t low_t, map<string, size_t> *fs, size_t ts, size_t ptr_lv, size_t arr_size, int spe) {
     base_type = bt;
     lower_type = low_t;
     fields = fs;
+    specifier = spe;
     type_size = ts;
     pointer_level = ptr_lv;
     array_size = arr_size;

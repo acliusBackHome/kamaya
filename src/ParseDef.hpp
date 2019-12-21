@@ -77,33 +77,22 @@ enum NodeType {
     //value: 常量值
             N_CONST = 3,
     // 类型声明:
-    // type: 声明的类型
             N_TYPE_SPE = 4,
     // 类型修饰声明:
-    // 目前没有直接键值
             N_DECLARATION_SPE = 5,
     // 声明器:
-    // is_pointer: 是否声明为指针
-    // is_function: 是否声明为函数
             N_DECLARATOR = 6,
-    // 直接声明:
-    // is_array: 是否声明成数组标记
     // expression: 表达式, 表示数组大小的表达式
             N_DIRECT_DEC = 7,
     // 参数列表:
-    // scope_id: 表示该参数声明所在的新空间id
             N_PARAM_LIST = 8,
     // 参数声明
-    // variable参数变量
             N_PARAM_DECLARATION = 9,
     //函数声明
             N_FUNCTION_DEFINITION = 10,
     // 初始化声明器
-    // 可进行的操作:
             N_INIT_DECLARATOR = 11,
     // 初始化声明器列表
-    // symbol_initializers: vector<InitDeclarator>,
-    // string 是符号, ParseExpression是初始化表达式,
     // 用于给声明提供带初始化的符号信息
             N_INIT_DECLARATOR_LIST = 12,
     // 初始化器
@@ -162,7 +151,7 @@ enum NodeKey {
     // 表达式记录, ParseExpression
             K_EXPRESSION = 1 << 6,
     // 是否被声明成数组布尔值, bool
-            K_IS_ARRAY = 1 << 7,
+            K_ARRAY_SIZE = 1 << 7,
     // 符号和初始化表达式列表, vector<InitDeclarator>
             K_INIT_DECLARATORS = 1 << 8,
     // 语句块空间id, size_t

@@ -97,11 +97,11 @@ public:
     const InitDeclarator &get_init_declarator() const;
 
     /**
-     * 获取节点的K_IS_ARRAY值
+     * 获取节点的K_ARRAY_SIZE值
      * get_系列函数都会抛出ParseException异常
      * @return
      */
-    bool get_is_array() const;
+    size_t get_array_size() const;
 
     /**
      * 获取节点的K_INIT_DECLARATOR值
@@ -288,11 +288,11 @@ public:
     void set_expression(const ParseExpression &expression);
 
     /**
-     * 设置节点的K_IS_ARRAY键对应的值
+     * 设置节点的K_ARRAY_SIZE键对应的值
      * 设置是否声明为数组
-     * @param is_array
+     * @param array_size
      */
-    void set_is_array(bool is_array);
+    void set_array_size(size_t array_size);
 
     /**
      * 设置节点的K_SCOPE_ID键值
@@ -387,11 +387,11 @@ public:
     void add_init_declarator(const InitDeclarator &init_declarator);
 
     /**
-     * 没有警告地更新K_IS_ARRAY键值
+     * 没有警告地更新K_ARRAY_SIZE键值
      * 更新是否声明为数组
-     * @param is_array
+     * @param array_size
      */
-    void update_is_array(bool is_array);
+    void update_array_size(size_t array_size);
 
     /**
      * 没有警告地更新K_PTR_LV键值

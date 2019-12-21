@@ -36,8 +36,8 @@ string ParseNode::get_key_name(NodeKey type) noexcept {
             return "function";
         case K_EXPRESSION:
             return "expression";
-        case K_IS_ARRAY:
-            return "is_array";
+        case K_ARRAY_SIZE:
+            return "array_size";
         case K_INIT_DECLARATORS:
             return "init_declarators";
         case K_SCOPE_ID:
@@ -170,13 +170,9 @@ string ParseNode::get_node_info() const noexcept {
                 case K_EXPRESSION:
                     info += "expression: " + get_expression().get_info() + ", ";
                     break;
-                case K_IS_ARRAY:
-                    info += "is_array: ";
-                    if (get_is_array()) {
-                        info += "true";
-                    } else {
-                        info += "false";
-                    }
+                case K_ARRAY_SIZE:
+                    info += "array_size: ";
+                    info += to_string(get_array_size());
                     info += ", ";
                     break;
                 case K_INIT_DECLARATORS: {
@@ -348,8 +344,8 @@ void ParseNode::set_expression(const ParseExpression &expression) {
     set_field<ParseExpression>(K_EXPRESSION, expression);
 }
 
-void ParseNode::set_is_array(bool is_array) {
-    set_field<bool>(K_IS_ARRAY, is_array);
+void ParseNode::set_array_size(size_t array_size) {
+    set_field<size_t>(K_ARRAY_SIZE, array_size);
 }
 
 void ParseNode::set_scope_id(size_t scope_id) {
@@ -392,8 +388,8 @@ void ParseNode::set_next_list(const vector<size_t> &next_list) {
     set_field<vector<size_t> >(K_NEXT_LIST, next_list);
 }
 
-void ParseNode::update_is_array(bool is_array) {
-    set_field<bool>(K_IS_ARRAY, is_array, true);
+void ParseNode::update_array_size(size_t array_size) {
+    set_field<size_t>(K_ARRAY_SIZE, array_size, true);
 }
 
 void ParseNode::update_ptr_lv(size_t ptr_lv) {
@@ -414,7 +410,7 @@ void ParseNode::set_begin_code(size_t begin_code) {
 
 void ParseNode::add_expression_list(const ParseExpression &expr) {
     if (has_key(K_EXPRESSION_LIST)) {
-        auto &list = (vector<size_t> &)get_expression_list();
+        auto &list = (vector<size_t> &) get_expression_list();
         list.emplace_back(expr.get_id());
     } else {
         vector<size_t> list;
@@ -457,15 +453,15 @@ const ParseVariable &ParseNode::get_variable() const {
 }
 
 ParseFunction &ParseNode::get_function() const {
-    return (ParseFunction &)get_field<ParseFunction>(K_FUNCTION);
+    return get_field<ParseFunction>(K_FUNCTION);
 }
 
 const vector<ParseVariable> &ParseNode::get_parameters_list() const {
     return get_field<vector<ParseVariable> >(K_PARAM_LIST);
 }
 
-bool ParseNode::get_is_array() const {
-    return get_field<bool>(K_IS_ARRAY);
+size_t ParseNode::get_array_size() const {
+    return get_field<size_t>(K_ARRAY_SIZE);
 }
 
 const ParseConstant &ParseNode::get_const() const {
@@ -670,21 +666,7 @@ void ParseNode::collect_init_declarator() const {
     switch (type) {
         case N_DECLARATOR: {
             // 没有初始化表达式, 所以可以直接get_expression()来获取表达式
-            if (get_is_array()) {
-                // 数组大小声明表达式
-                const ParseExpression &arr_dec_expr = get_expression();
-                if (arr_dec_expr.is_defined()) {
-                    // 数组声明大小必须是可计算的无符号整数
-                    try {
-                        arr_size = arr_dec_expr.get_const().get_unsigned();
-                    } catch (ParseException &ext) {
-                        // 发现异常不是本层能够处理的
-                        string info = "ParseNode::collect_init_declarator() node_id=" + to_string(node_id);
-                        ext.push_trace(info);
-                        throw ext;
-                    }
-                }
-            }
+            arr_size = get_array_size();
             break;
         }
         case N_INIT_DECLARATOR: {
@@ -694,20 +676,7 @@ void ParseNode::collect_init_declarator() const {
                 const ParseNode &child = tree.nodes[each];
                 switch (child.type) {
                     case N_DECLARATOR: {
-                        if (child.get_is_array()) {
-                            const ParseExpression &arr_dec_expr = child.get_expression();
-                            if (arr_dec_expr.is_defined()) {
-                                // 数组声明大小必须是可计算的无符号整数
-                                try {
-                                    arr_size = arr_dec_expr.get_const().get_unsigned();
-                                } catch (ParseException &ext) {
-                                    // 发现异常不是本层能够处理的
-                                    string info = "ParseNode::collect_init_declarator() node_id=" + to_string(node_id);
-                                    ext.push_trace(info);
-                                    throw ext;
-                                }
-                            }
-                        }
+                        arr_size = child.get_array_size();
                         break;
                     }
                     case N_INITIALIZER : {

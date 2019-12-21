@@ -120,7 +120,7 @@ public:
      * @param expression 数组大小表达式
      * @return
      */
-    size_t make_direct_declarator_node(bool is_array = false, const ParseExpression *expression = nullptr);
+    size_t make_direct_declarator_node(size_t array_size = 0, const ParseExpression *expression = nullptr);
 
     /**
      * 生成一个参数列表节点
@@ -179,7 +179,7 @@ public:
      * 该节点比较特殊, 需要先生成节点再进行设置表达式, 而不能简单地用make_expression进行获取值
      * @return
      */
-    size_t make_assign_expression_node(const ParseExpression& l_expr, const ParseExpression &r_expr);
+    size_t make_assign_expression_node(const ParseExpression &l_expr, const ParseExpression &r_expr);
 
     /**
      * 生成一个语句块列表节点
@@ -288,6 +288,7 @@ public:
     size_t native_root(size_t idx);
 
 #ifdef PARSE_TREE_DEBUG
+
     /**
      *  检查子节点生成情况
      */
@@ -301,7 +302,8 @@ public:
     /**
      *  检查错误结点
      */
-     void watch_error_nodes() const;
+    void watch_error_nodes() const;
+
 #endif
 
 private:
@@ -327,7 +329,7 @@ private:
     map<size_t, size_t> node_ptr_lv;
     map<size_t, ParseFunction> node_function;
     map<size_t, ParseExpression> node_expression;
-    map<size_t, bool> node_is_array;
+    map<size_t, size_t> node_array_size;
     map<size_t, vector<InitDeclarator> > node_init_declarators;
     map<size_t, size_t> node_scope_id;
     map<size_t, size_t> node_param_list_node;
