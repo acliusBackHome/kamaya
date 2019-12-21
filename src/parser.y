@@ -1742,7 +1742,8 @@ function_declarator
     scope_now = ParseScope::new_scope(scope_now);
     for(auto &arg : args) {
       // TODO: 将-2填上下一个函数参数压栈的地址
-      arg.set_address((size_t) -2);
+      size_t addr = ir.allocEmit(scope_now, arg.get_symbol(), arg.get_type().get_size(), 0);
+      arg.set_address((size_t) addr);
       arg.set_scope_id(scope_now);
       ParseScope::get_scope(scope_now).declaration(arg.get_symbol(), arg);
     }
@@ -1772,7 +1773,7 @@ function_definition
     }
     // 由于已经在之前声明了, 所以要在此回填声明中的函数的地址为begin_code
     auto functions = ParseScope::get_scope(scope_now).get_function_declaration(dec_func.get_symbol());
-    //由于函数有重载,所以这里通过声明得到的是函数的列表, 需要找到正确的声明
+    // 由于函数有重载,所以这里通过声明得到的是函数的列表, 需要找到正确的声明
     for(auto each_func : functions) {
       auto &each_func_args = (vector<ParseVariable> &)(each_func->get_args());
       if(each_func_args.size() == dec_func_args.size()) {
