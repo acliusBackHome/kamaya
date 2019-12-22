@@ -245,6 +245,34 @@ void Assembler::quaJGE(const Qua &qua) {
   jge(blockName);
 }
 
+void Assembler::quaJE(const Qua &qua)  {
+  //(j==,[ebp+20],10,25)
+  const string &x = get<1>(qua);
+  const string &y = get<2>(qua);
+  const string &jto = get<3>(qua);
+
+  string blockName = getBaseBlockName(jto);
+
+  TAB;
+  cmp(x, y);
+  TAB;
+  je(blockName);
+}
+
+void Assembler::quaJNE(const Qua &qua) {
+  //(j!=,[ebp+20],10,25)
+  const string &x = get<1>(qua);
+  const string &y = get<2>(qua);
+  const string &jto = get<3>(qua);
+
+  string blockName = getBaseBlockName(jto);
+
+  TAB;
+  cmp(x, y);
+  TAB;
+  jne(blockName);
+}
+
 void Assembler::quaDATA(const Qua &qua) {}
 void Assembler::quaCALL(const Qua &qua) {}
 void Assembler::quaRET(const Qua &qua) {}

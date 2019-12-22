@@ -122,6 +122,14 @@ class Assembler {
     static string jge = "jge";
     of << jge << T << block_name << N;
   }
+  inline void je(string block_name) {
+    static string je = "je";
+    of << je << T << block_name << N;
+  }
+  inline void jne(string block_name) {
+    static string jne = "jne";
+    of << jne << T << block_name << N;
+  }
   inline void jmp(string block_name) {
     static string jmp = "jmp";
     of << jmp << T << block_name << N;
@@ -231,6 +239,8 @@ public:
   void quaJLE(const Qua &qua);
   void quaJGT(const Qua &qua);
   void quaJGE(const Qua &qua);
+  void quaJE(const Qua &qua);
+  void quaJNE(const Qua &qua);
   void quaDATA(const Qua &qua);
   void quaCALL(const Qua &qua);
   void quaRET(const Qua &qua);
