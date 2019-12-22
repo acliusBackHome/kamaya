@@ -1,4 +1,7 @@
 test/*.out
+test/*.asm
+test/*.o
+test/*.bin
 trash/*
 src/CMakeLists.txt
 src/cmake-build-debug

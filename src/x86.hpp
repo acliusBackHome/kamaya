@@ -154,6 +154,9 @@ class Assembler {
     static string pushinc = "push";
     of << pushinc << T << reg << N;
   }
+  inline void label(string l) {
+    of << l << ":" << N;
+  }
 
 public:
   // Assembler(CodeHolder *code) {

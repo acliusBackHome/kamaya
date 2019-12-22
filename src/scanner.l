@@ -16,7 +16,8 @@ int yycolumn = 0;
 bool generating_code = true;
 FILE* file;
 IR ir;
-Assembler assembler(cout, ir.getQuas());
+ostringstream asmstream;
+Assembler assembler(asmstream, ir.getQuas());
 
 unsigned long install_id() {
   before = yytext;
@@ -166,10 +167,18 @@ int yywrap()
 }
 
 int main(int argc, char** argv) {
+  string outS;
   if (argc < 2) {
     cout << argv[0] << ": fatal error: no input files" << endl
          << "compilation terminated." << endl;
     return 1;
+  }
+  if (argc < 3) {
+    cout << argv[0] << ": warning: no output asm file specified, using a.asm." << endl
+         << "compilation continued." << endl;
+    outS = "a.asm";
+  } else {
+    outS = argv[2];
   }
   inputFile = argv[1]; // In fact, this is exec file
   char strline[2048];
@@ -223,7 +232,7 @@ int main(int argc, char** argv) {
   ParseExpression::print_all_expression();
   printf("所有作用域声明:\n");
   ParseScope::print_all_declaration();
-  
+
   if(generating_code) {
     ir.print();
   }
@@ -233,5 +242,10 @@ int main(int argc, char** argv) {
   // assembler.setSectionText(ParseScope::emitText2Nasm());
   // printf("ParseTree 2 Nasm x86\n");
   // assembler.handleNasm();
+  cout << asmstream.str() << endl;
+  ofstream outSOf(outS, ios::out);
+  outSOf << asmstream.str() << endl;
+  outSOf.close();
+  cout << "completed" << endl;
   return  0;
 }

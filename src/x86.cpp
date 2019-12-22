@@ -160,8 +160,8 @@ void Assembler::quaASSIGN(const Qua &qua) {
   // (:=,0,_,[esp+0])
   const string &dist = get<3>(qua);
   const string &src = get<1>(qua);
-  TAB;
-  mov(dist, src);
+  TAB; mov("eax", src);
+  TAB; mov(dist, "eax");
 }
 
 void Assembler::quaALLOC(const Qua &qua) {
@@ -169,7 +169,9 @@ void Assembler::quaALLOC(const Qua &qua) {
   // (alloc,1648,4,_2@T2)
   string sz = get<1>(qua);
   stackTop = max(stackTop, stoi(sz));
-  mov("esp", to_string(stackTop));
+  TAB; mov("eax", "ebp");
+  TAB; add("eax", to_string(stackTop));
+  TAB; mov("esp", "eax");
 }
 
 void Assembler::quaLT(const Qua &qua) {}
@@ -279,8 +281,21 @@ void Assembler::quaJNE(const Qua &qua) {
 
 void Assembler::quaDATA(const Qua &qua) {}
 void Assembler::quaCALL(const Qua &qua) {}
-void Assembler::quaRET(const Qua &qua) {}
-void Assembler::quaFUNC(const Qua &qua) {}
+void Assembler::quaRET(const Qua &qua) {
+  const string &rv = get<1>(qua);
+  if (rv != "_") {
+    TAB; mov("eax", rv);
+  }
+  TAB; pop("ebx");
+  // TAB; of << "leave" << N;
+  TAB; of << "ret" << N;
+}
+void Assembler::quaFUNC(const Qua &qua) {
+  const string &l = get<3>(qua);
+  label(l);
+  TAB; push("ebp");
+  TAB; mov("ebp", "esp");
+}
 
 void Assembler::getBaseBlockMap() { bbla = BaseBlock::get_base_blocks(quas); }
 
@@ -298,7 +313,7 @@ string Assembler::getBaseBlockName(string linenum) {
 }
 
 void Assembler::handleQuas(const vector<Qua> &quas) {
-  const string& beginning = "global " + getBaseBlockName("0");
+  const string& beginning = "global main";
   const string& text_label = "[section .text]";
   const string& data_label = "[section .data]";
   // 打印开头 此时of为cout，且bbla(BaseBlockListAndMap)已经赋值，可以直接调用接口打印
@@ -322,7 +337,7 @@ void Assembler::handleQuas(const vector<Qua> &quas) {
 }
 
 void Assembler::log(const string &str) {
-  cout << "Assembler log: " << str << "\n";
+  of << "Assembler log: " << str << "\n";
 }
 
 } // namespace x86

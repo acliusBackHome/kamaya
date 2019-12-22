@@ -25,7 +25,10 @@ clean:
 test: main
 	for dir in $(shell ls test/*.c);\
 		do \
-			./dist/bin/main $$dir > $$dir.out; \
+			./dist/bin/main $$dir $$dir.asm > $$dir.out; \
+			nasm -f elf32 -o $$dir.o $$dir.asm; \
+			ld -m elf_i386 -o $$dir.bin $$dir.o; \
+			echo "run ./$${dir}.bin to watch result"; \
 		done
 
 run: main
