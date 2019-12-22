@@ -101,6 +101,10 @@ size_t BaseBlock::get_id() const {
     return block_id;
 }
 
+size_t BaseBlock::get_begin_index() const {
+    return begin_index;
+}
+
 const vector<Qua> &BaseBlock::get_qua_list() const {
     return qua_list;
 }

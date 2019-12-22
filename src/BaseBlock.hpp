@@ -24,6 +24,8 @@ public:
 
     size_t get_id() const;
 
+    size_t get_begin_index() const;
+
     /**
      * 获取本基本块的四元式列表
      * @return

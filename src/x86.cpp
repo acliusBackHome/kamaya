@@ -188,8 +188,7 @@ void Assembler::quaNE(const Qua &qua) {}
 
 void Assembler::quaJMP(const Qua &qua) {
   const string &jto = get<3>(qua);
-  // 获取下一个块的块名  通过行号获取块id-->生成块名
-  string blockName = getBaseBlockName(jto);
+  string blockName = getBlockName(jto);
 
   TAB;
   jmp(blockName);
@@ -200,8 +199,7 @@ void Assembler::quaJLT(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
-  // 获取下一个块的块名  通过行号获取块id-->生成块名
-  string blockName = getBaseBlockName(jto);
+  string blockName = getBlockName(jto);
 
   TAB;
   cmp(x, y);
@@ -214,8 +212,7 @@ void Assembler::quaJLE(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
-  // 获取下一个块的块名  通过行号获取块id-->生成块名
-  string blockName = getBaseBlockName(jto);
+  string blockName = getBlockName(jto);
 
   TAB;
   cmp(x, y);
@@ -228,8 +225,7 @@ void Assembler::quaJGT(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
-
-  string blockName = getBaseBlockName(jto);
+  string blockName = getBlockName(jto);
 
   TAB;
   cmp(x, y);
@@ -242,8 +238,7 @@ void Assembler::quaJGE(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
-
-  string blockName = getBaseBlockName(jto);
+  string blockName = getBlockName(jto);
 
   TAB;
   cmp(x, y);
@@ -256,8 +251,7 @@ void Assembler::quaJE(const Qua &qua)  {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
-
-  string blockName = getBaseBlockName(jto);
+  string blockName = getBlockName(jto);
 
   TAB;
   cmp(x, y);
@@ -270,8 +264,7 @@ void Assembler::quaJNE(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
-
-  string blockName = getBaseBlockName(jto);
+  string blockName = getBlockName(jto);
 
   TAB;
   cmp(x, y);
@@ -299,29 +292,25 @@ void Assembler::quaFUNC(const Qua &qua) {
 
 void Assembler::getBaseBlockMap() { bbla = BaseBlock::get_base_blocks(quas); }
 
-size_t Assembler::getBaseBlockID(string linenum) {
-  size_t line = stoi(linenum);
-  map<size_t, size_t> lineNumToBlockID = get<1>(bbla);
-  return lineNumToBlockID[line];
-}
-
-string Assembler::getBaseBlockName(string linenum) {
-  size_t blockid = getBaseBlockID(linenum);
-  const string &prefix = "block";
-  string blockName = prefix + to_string(blockid);
-  return blockName;
-}
-
-void Assembler::handleQuas(const vector<Qua> &quas) {
-  const string& beginning = "global main";
-  const string& text_label = "[section .text]";
-  const string& data_label = "[section .data]";
+void Assembler::handleQuas() {
+  const string beginning = "global block0";
+  const string block_prefix = "block";
+  const string text_label = "[section .text]";
+  const string data_label = "[section .data]";
   // 打印开头 此时of为cout，且bbla(BaseBlockListAndMap)已经赋值，可以直接调用接口打印
   of << beginning << N;
   // 标记指令区
   of << text_label << N;
   // 打印汇编指令
-  for (auto qua : quas) {
+  map<size_t, size_t> &lineNumToBlockID = get<1>(bbla);
+  vector<BaseBlock> &baseblock = get<0>(bbla);
+  for (size_t i = 0; i < quas.size(); ++i) {
+    auto &qua = quas[i];
+    size_t blockid = lineNumToBlockID[i];
+    size_t begin_index = baseblock[blockid].get_begin_index();
+    if (i == begin_index) {
+      of << block_prefix << blockid << ":" << N;
+    }    
     string sign = get<0>(qua);
     if (quaMap.find(sign) == quaMap.end()) {
       log("cannot find this sign in quaMap" + sign);
@@ -334,6 +323,21 @@ void Assembler::handleQuas(const vector<Qua> &quas) {
     }
     quaEmit[quaType](qua);
   }
+}
+
+string Assembler::getBlockName(string jto) {
+  string blockName;
+  const string &block = "block";
+  size_t linenum = stoi(jto);
+  map<size_t, size_t> &lineToBlockID = get<1>(bbla);
+  map<size_t, size_t>::iterator iter = lineToBlockID.find(linenum);
+  if (iter != lineToBlockID.end()) {
+    blockName = block + to_string(iter->second);
+  }
+  else {
+    //TODO: 抛出异常
+  }
+  return blockName;
 }
 
 void Assembler::log(const string &str) {

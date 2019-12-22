@@ -44,6 +44,7 @@ class Assembler {
   map<size_t, string> wideMap;
   map<QuaType, std::function<void(const Qua &)>> quaEmit;
   vector<Qua> &quas;
+  map<size_t, size_t>beginIndexToBlockID;
   BaseBlockListAndMap bbla;
   inline static string getReg() { return "TODO"; }
   inline static string r64(int idx) { return string("r") + to_string(idx); }
@@ -235,7 +236,7 @@ public:
   void handleData();
   void handleExpr(ParseExpression expr);
   void handleFunction(ParseFunction func);
-  void handleQuas(const vector<Qua> &quas);
+  void handleQuas();
   void setSectionData(map<string, ParseVariable> data);
   void setSectionText(map<string, ParseFunction> text);
   void log(const string &str);
@@ -264,9 +265,9 @@ public:
   void quaCALL(const Qua &qua);
   void quaRET(const Qua &qua);
   void quaFUNC(const Qua &qua);
+  string getBlockName(string jto);
   void getBaseBlockMap();
-  size_t getBaseBlockID(string linenum);
-  string getBaseBlockName(string linenum);
+  void get_begin_index();
 };
 } // namespace x86
 #endif
