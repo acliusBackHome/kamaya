@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
     return 1;
   }
   if (argc < 3) {
-    cout << argv[0] << ": warning: no output asm file specified, using a.asm." << endl
+    cout << argv[0] << ": warning: no output asm file specified, using a.asm" << endl
          << "compilation continued." << endl;
     outS = "a.asm";
   } else {

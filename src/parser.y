@@ -8,6 +8,8 @@ char buff[1024];
 // 当前全局语句块空间, 用于声明的时候
 size_t scope_now = 0;
 
+string this_function_symbol = "";
+
 /**
  * 处理规约表达式中的双目表达式的处理方式抽取
  * @param expr_1
@@ -75,7 +77,11 @@ void expr_call_back(const ParseExpression& expr) {
     if (expr.is_const()) { return; }
     const string symbol = ir.newTemp();
     size_t addr = ir.allocEmit(scope_now, symbol, expr.get_ret_type().get_size(), tree.get_node_num() - 1);
-    expr.set_address(addr);
+    if (expr.is_variable()) {
+      expr.set_address(expr.get_variable().get_address());
+    } else {
+      expr.set_address(addr);
+    }
     ir.exprEmit(expr, expr.get_ret_type(), symbol, tree, tree.get_node_num() - 1, scope_now);
   }
 }
@@ -1710,13 +1716,35 @@ jump_statement
   }
   | RETURN SEMICOLON {
     $$ = tree.new_node("return statement");
+
+    if (generating_code) {
+      if(ParseScope::get_scope(scope_now).get_symbol_dec_type("output") == D_VARIABLE) {
+        const ParseVariable &out = ParseScope::get_scope(scope_now).get_variable_declaration("output");
+        ir.printEmit(out.get_address(), $$);
+      }
+      
+      if(this_function_symbol == "main") {
+        ir.exitEmit(); // TODO: only 0
+      } else {
+        ir.returnEmit(tree.node($2).get_expression().get_address());
+      }
+    }
   }
   | RETURN expression SEMICOLON {
     $$ = tree.new_node("return statement");
     tree.set_parent($2, $$);
 
     if (generating_code) {
-      ir.returnEmit(tree.node($2).get_expression().get_address());
+      if(ParseScope::get_scope(scope_now).get_symbol_dec_type("output") == D_VARIABLE) {
+        const ParseVariable &out = ParseScope::get_scope(scope_now).get_variable_declaration("output");
+        ir.printEmit(out.get_address(), $$);
+      }
+      
+      if(this_function_symbol == "main") {
+        ir.exitEmit(); // TODO: only 0
+      } else {
+        ir.returnEmit(tree.node($2).get_expression().get_address());
+      }
     }
   }
   ;
@@ -1741,6 +1769,7 @@ function_declarator
   $$ = tree.new_node(N_FUNCTION_DECLARATOR);
   try {
     const auto &symbol = tree.node($2).get_symbol();
+    this_function_symbol = symbol;
     const auto &ret_type = tree.node($1).get_type();
     // 构造函数
     tree.node($$).set_function(ParseFunction(ret_type, symbol, tree.node($2).get_parameters_list()));
@@ -1750,7 +1779,7 @@ function_declarator
     scope_now = ParseScope::new_scope(scope_now);
 
     if (generating_code) {
-      ir.funcEmit(symbol, scope_now);
+      ir.funcEmit(symbol, $$);
     }
 
     for(auto &arg : args) {
@@ -1764,6 +1793,7 @@ function_declarator
       ParseScope::get_scope(scope_now).declaration(arg.get_symbol(), arg);
     }
   } catch (ParseException &exc) {
+    this_function_symbol = "";
     string info = "in declaration_specifiers declarator record_begin->function_declarator";
     exc.push_trace(info);
   }
@@ -1818,6 +1848,7 @@ function_definition
     if (generating_code) {
       ir.recordEnd();
     }
+    this_function_symbol = "";
   }
   ;
 

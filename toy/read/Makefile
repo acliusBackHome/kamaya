@@ -1,6 +1,7 @@
 CC := gcc
 AR := ar
 ASM := nasm
+LD := ld
 
 test_read: libread read.inc test_read.nasm
 	$(ASM) -f elf32 -P"read.inc" -o test_read.o test_read.nasm

@@ -628,6 +628,9 @@ size_t ParseNode::action_variable_declaration_code_generate(
         if (scope_id != 0) {
             addr = ir.allocEmit(scope_id, symbol, this_type.get_size(), node_id);
             ir.varDecEmit(addr, init_expr, node_id, scope_id);
+            if (symbol == "input") {
+                ir.readEmit(addr, node_id);
+            }
         } else {
             if (init_expr.get_expr_type() == E_UNDEFINED) {
                 addr = ir.dataUndefinedEmit(symbol, this_type.get_size(), node_id);

@@ -212,10 +212,6 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
     }
     switch (exp_type) {
     case ExpressionType::E_VAR: {
-      // 变量直接赋值
-      string result = address2pointer(init_expr.get_address());
-      const ParseVariable &var = init_expr.get_variable();
-      gen(":=", address2pointer(var.get_address()), "_", result, node_id);
       return;
     }
     case ExpressionType::E_FUN: {

@@ -1,5 +1,7 @@
 all: run
 
+CC := g++
+
 dist/scanner.yy.cpp: src/scanner.l dist/parser.tab.cpp
 	flex -o $@ $<
 
@@ -8,11 +10,13 @@ dist/parser.tab.cpp: src/parser.y
 
 copy:
 	cp src/*.hpp src/*.cpp dist/
+	cp src/*.a dist/
+	cp src/*.inc dist/
 
 dist/kamaya.cpp: copy
 
 compile: dist/parser.tab.cpp dist/scanner.yy.cpp dist/kamaya.cpp dist/ParseTree.cpp dist/ParseNode.cpp dist/ParseType.cpp dist/ParseExpression.cpp dist/ParseDeclaration.cpp dist/ParseTreeErrorHandle.cpp dist/ParseException.cpp dist/ParseExpressionConstCalculate.cpp dist/BaseBlock.cpp dist/x86.cpp dist/IR.cpp
-	g++ -o dist/bin/main $^ -std=c++11
+	$(CC) -o dist/bin/main $^ -std=c++11
 
 main:
 	make clean
@@ -26,9 +30,10 @@ test: main
 	for dir in $(shell ls test/*.c);\
 		do \
 			./dist/bin/main $$dir $$dir.asm > $$dir.out; \
-			nasm -f elf32 -o $$dir.o $$dir.asm; \
-			ld -m elf_i386 -o $$dir.bin $$dir.o; \
+			nasm -f elf32 -P"./dist/print.inc" -P"./dist/read.inc"  -o $$dir.o $$dir.asm; \
+			ld -m elf_i386 -o $$dir.bin $$dir.o dist/libprint.a dist/libread.a ; \
 			echo "run ./$${dir}.bin to watch result"; \
 		done
 
 run: main
+	make test

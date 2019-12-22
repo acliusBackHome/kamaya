@@ -80,10 +80,16 @@ public:
     stkpush(offset);
     offset = 4;
   }
-  inline void funcEmit(const string &func, size_t scope_id) {
-    gen("function", "_", "_", func, scope_id);
+  inline void funcEmit(const string &func, size_t node_id) {
+    gen("function", "_", "_", func, node_id);
     gen("alloc", "0", "4", "return addr", 0);
     addOffset(4);
+  }
+  inline void readEmit(size_t addr, size_t node_id) {
+    gen("read", "_", "_", address2pointer(addr), node_id);
+  }
+  inline void printEmit(size_t addr, size_t node_id) {
+    gen("print", "_", "_", address2pointer(addr), node_id);
   }
   inline void recordEnd() { offset = stkpop(); }
   inline void assignEmit(size_t left, size_t right) {}
@@ -99,6 +105,9 @@ public:
   }
   inline void returnEmit(size_t addr) {
     gen("return", address2pointer(addr), "_", "_", 0);
+  }
+  inline void exitEmit() {
+    gen("exit", "_", "_", "_", 0);
   }
   inline void fcEmit(const string &symbol, size_t node_id) {
     gen("call", "_", "_", symbol, node_id);

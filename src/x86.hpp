@@ -32,6 +32,9 @@ enum QuaType {
   Q_CALL,
   Q_RET,
   Q_FUNC,
+  Q_READ,
+  Q_PRINT,
+  Q_EXIT,
 };
 class Assembler {
   // CodeHolder *code;
@@ -44,7 +47,7 @@ class Assembler {
   map<size_t, string> wideMap;
   map<QuaType, std::function<void(const Qua &)>> quaEmit;
   vector<Qua> &quas;
-  map<size_t, size_t>beginIndexToBlockID;
+  map<size_t, size_t> beginIndexToBlockID;
   BaseBlockListAndMap bbla;
   inline static string getReg() { return "TODO"; }
   inline static string r64(int idx) { return string("r") + to_string(idx); }
@@ -108,7 +111,7 @@ class Assembler {
     pow_count++;
   }
   inline void cmp(string dist, string src) {
-    static string cmpins = "cmp";
+    static string cmpins = "cmp\tdword";
     of << cmpins << T << dist << C << src << N;
   }
   inline void jlt(string block_name) {
@@ -155,9 +158,7 @@ class Assembler {
     static string pushinc = "push";
     of << pushinc << T << reg << N;
   }
-  inline void label(string l) {
-    of << l << ":" << N;
-  }
+  inline void label(string l) { of << l << ":" << N; }
 
 public:
   // Assembler(CodeHolder *code) {
@@ -214,20 +215,27 @@ public:
         std::bind(&Assembler::quaRET, this, std::placeholders::_1);
     quaEmit[QuaType::Q_FUNC] =
         std::bind(&Assembler::quaFUNC, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_READ] =
+        std::bind(&Assembler::quaREAD, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_PRINT] =
+        std::bind(&Assembler::quaPRINT, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_EXIT] =
+        std::bind(&Assembler::quaEXIT, this, std::placeholders::_1);
     quaMap = map<string, QuaType>{
-        {"+", QuaType::Q_ADD},        {"-", QuaType::Q_SUB},
-        {"*", QuaType::Q_MUL},        {"/", QuaType::Q_DIV},
-        {"%", QuaType::Q_MOD},        {"^", QuaType::Q_POW},
-        {"<", QuaType::Q_LT},         {"<=", QuaType::Q_LE},
-        {">", QuaType::Q_GT},         {">=", QuaType::Q_GE},
-        {"==", QuaType::Q_EQ},        {"!=", QuaType::Q_NE},
-        {"jmp", QuaType::Q_JMP},      {"j<", QuaType::Q_JLT},
-        {"j<=", QuaType::Q_JLE},      {"j>", QuaType::Q_JGT},
-        {"j>=", QuaType::Q_JGE},      {"j==", QuaType::Q_JE},
-        {":=", QuaType::Q_ASSIGN},    {"j!=", QuaType::Q_JNE},
-        {"alloc", QuaType::Q_ALLOC},  {".data", QuaType::Q_DATA},
-        {"call", QuaType::Q_CALL},    {"return", QuaType::Q_RET},
-        {"function", QuaType::Q_FUNC}};
+        {"+", QuaType::Q_ADD},         {"-", QuaType::Q_SUB},
+        {"*", QuaType::Q_MUL},         {"/", QuaType::Q_DIV},
+        {"%", QuaType::Q_MOD},         {"^", QuaType::Q_POW},
+        {"<", QuaType::Q_LT},          {"<=", QuaType::Q_LE},
+        {">", QuaType::Q_GT},          {">=", QuaType::Q_GE},
+        {"==", QuaType::Q_EQ},         {"!=", QuaType::Q_NE},
+        {"jmp", QuaType::Q_JMP},       {"j<", QuaType::Q_JLT},
+        {"j<=", QuaType::Q_JLE},       {"j>", QuaType::Q_JGT},
+        {"j>=", QuaType::Q_JGE},       {"j==", QuaType::Q_JE},
+        {":=", QuaType::Q_ASSIGN},     {"j!=", QuaType::Q_JNE},
+        {"alloc", QuaType::Q_ALLOC},   {".data", QuaType::Q_DATA},
+        {"call", QuaType::Q_CALL},     {"return", QuaType::Q_RET},
+        {"function", QuaType::Q_FUNC}, {"read", QuaType::Q_READ},
+        {"print", QuaType::Q_PRINT},   {"exit", QuaType::Q_EXIT}};
     wideMap = map<size_t, string>{{1, "db"}, {2, "dw"}, {4, "dd"}, {8, "dq"}};
   }
   string getWideStr(size_t size);
@@ -265,6 +273,9 @@ public:
   void quaCALL(const Qua &qua);
   void quaRET(const Qua &qua);
   void quaFUNC(const Qua &qua);
+  void quaREAD(const Qua &qua);
+  void quaPRINT(const Qua &qua);
+  void quaEXIT(const Qua &qua);
   string getBlockName(string jto);
   void getBaseBlockMap();
   void get_begin_index();
