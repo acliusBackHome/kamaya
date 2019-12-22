@@ -130,6 +130,10 @@ string ParseNode::get_node_type_name(NodeType type) noexcept {
             return "function_declarator";
         case N_FUNCTION_CALL:
             return "function_call";
+        case N_STRUCT_ENUM:
+            return "struct_enum";
+        case N_STRUCT_DEC_LIST:
+            return "struct_dec_list";
     }
     return "unknown";
 }

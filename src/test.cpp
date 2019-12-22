@@ -20,10 +20,10 @@ using namespace std;
 void test_parse_type() {
     typedef ParseType PType;
     PType type1(T_INT), type2 = PType::get_pointer(type1, 1), type3 = PType::get_pointer(type2, 1);
-    vector<pair<string, PType> > fields;
-    fields.emplace_back("a", type1);
-    fields.emplace_back("b", type2);
-    fields.emplace_back("c", type3);
+    vector<pair<string, size_t> > fields;
+    fields.emplace_back("a", type1.get_id());
+    fields.emplace_back("b", type2.get_id());
+    fields.emplace_back("c", type3.get_id());
     vector<pair<string, size_t> > self_ptr;
     self_ptr.emplace_back("d", 2);
     self_ptr.emplace_back("e", 2);
@@ -145,10 +145,17 @@ void test_base_block() {
     tests.emplace_back("15", "_", "_", "5");
     tests.emplace_back("16", "_", "_", "5");
     tests.emplace_back("j<", "_", "_", "12");
-    auto res = BaseBlock::get_base_blocks(tests);
-    for (const auto &each : res) {
-        cout << each.get_info() << endl;
-    }
+}
+
+void test_struct() {
+    ParseType type(T_INT);
+    vector< pair<string, size_t> > s_t;
+    s_t.emplace_back("a", type.get_id());
+    s_t.emplace_back("b", type.get_id());
+    ParseType struct_type = ParseType::get_struct(s_t);
+    cout << type.get_info() << endl;
+    cout << struct_type.get_info() << endl;
+    ParseType::print_all_type();
 }
 
 int main() {
@@ -157,7 +164,8 @@ int main() {
     //test_make_expression();
     //test_scope();
     //test_expression();
-    test_base_block();
+    //test_base_block();
+    test_struct();
     return 0;
 }
 

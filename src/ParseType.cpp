@@ -285,8 +285,11 @@ ParseType ParseType::get_pointer(const ParseType &type, size_t ptr_level) {
 }
 
 
-ParseType ParseType::get_struct(const vector<pair<string, ParseType> > &otherTypes,
+ParseType ParseType::get_struct(const vector<pair<string, size_t> > &otherTypes,
                                 const vector<pair<string, size_t> > &self_ptr) {
+    if(id2type.empty()) {
+        init();
+    }
     size_t new_type_id = id2type.size();
     // 给新类型预分配位置
     // 这有个"特性": 如果重复调用此函数试图生成一模一样的结构体会被看成两个
@@ -300,8 +303,8 @@ ParseType ParseType::get_struct(const vector<pair<string, ParseType> > &otherTyp
     auto &res_fields = *res.fields;
     for (const auto &field: otherTypes) {
         if (res_fields.find(field.first) == res_fields.end()) {
-            (*res.fields)[field.first] = get_type_id((ParseType &) field.second);
-            res.type_size += field.second.get_size();
+            (*res.fields)[field.first] = field.second;
+            res.type_size += get_type(field.second).get_size();
         } else {
             return ParseType();
         }
@@ -405,10 +408,10 @@ size_t ParseType::get_type_id(const ParseType &type) {
     if (type.type_id == (size_t) -1) {
         auto iter = type2id.find(type);
         if (iter == type2id.end()) {
-
             ((ParseType &) type).type_id = id2type.size();
             type2id[type] = type.type_id;
             id2type.emplace_back(type);
+            id2info.emplace_back(type.get_info());
             return type.type_id;
         }
         return ((ParseType &) type).type_id = iter->second;
@@ -422,7 +425,7 @@ const ParseType &ParseType::get_type(size_t type_id) {
         init();
     }
     if (type_id >= id2type.size()) {
-        printf("ParseType &ParseType::get_node_type(size_t expr_id): 警告: 试图获取不存在的类型, id:%zu\n", type_id);
+        printf("ParseType &ParseType::get_type(size_t type_id): 警告: 试图获取不存在的类型, id:%zu\n", type_id);
         return id2type[T_UNKNOWN];
     }
     return id2type[type_id];

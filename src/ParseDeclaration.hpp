@@ -316,6 +316,14 @@ public:
     void declaration(const string &symbol, const ParseVariable &variable);
 
     /**
+     * 声明符号为类型
+     * @param symbol
+     * @param variable
+     */
+    void declaration(const string &symbol, const ParseType &type);
+
+
+    /**
      * 声明符号为函数
      * @param symbol
      * @param variable
@@ -323,18 +331,31 @@ public:
     void declaration(const string &symbol, const ParseFunction &function);
 
     /**
+     * 获取该作用域所有的声明
+     * @return
+     */
+    vector<string> get_all_dec_symbol() const;
+
+    /**
     * 获取声明的函数, 如果没有对应记录, 会抛出异常
     * @param symbol
     * @return
     */
-    DecFuncPtrList get_function_declaration(const string &symbol);
+    DecFuncPtrList get_function_declaration(const string &symbol) const;
+
+    /**
+     * 获取指定声明的声明类型
+     * @param symbol
+     * @return
+     */
+    DeclarationType get_symbol_dec_type(const string &symbol) const;
 
     /**
      *获取声明的变量, 如果没有对应记录, 会抛出异常
      * @param symbol
      * @return
      */
-    ParseVariable get_variable_declaration(const string &symbol);
+    ParseVariable get_variable_declaration(const string &symbol) const;
 
     /**
      * 进入一个新的空间:
@@ -355,13 +376,6 @@ public:
      * 打印所有已有的声明
      */
     static void print_all_declaration();
-
-    /**
-     * 获取指定声明的声明类型
-     * @param symbol
-     * @return
-     */
-    DeclarationType get_symbol_dec_type(const string& symbol);
 
     static map<string, ParseVariable> emitData2Nasm();
 

@@ -137,6 +137,10 @@ enum NodeType {
             N_FUNCTION_DECLARATOR = 25,
     // 函数调用节点,
             N_FUNCTION_CALL = 26,
+    // 结构体或枚举声明节点
+            N_STRUCT_ENUM = 27,
+    // 结构体声明列表
+            N_STRUCT_DEC_LIST = 28
 };
 
 // 用64位整数表示该节点所拥有的键值
@@ -245,7 +249,7 @@ enum DeclarationType {
     D_UNKNOWN, //未知,可以占位
     D_FUNCTION,// 函数声明
     D_VARIABLE,// 变量声明
-    // TODO: 类或者结构体声明
+    D_TYPE,// 类型声明
 };
 
 // 自定义异常代码

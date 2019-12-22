@@ -129,11 +129,11 @@ public:
     /**
      * 将其他类型组合起来成为一个新类型, 即struct构造,
      * 要求名字不能重复,
-     * @param otherTypes <string 字段名, Type> 的列表 其他类型的字段名和类型对象
+     * @param otherTypes <string 字段名, size_t> 的列表 其他类型的字段名和类型对象id
      * @param self_ptr <string, size_t 指针级数> 的列表 本类型指针字段名和指针级数,指针级数>0
      * @return 如果构造不成功,返回一个type_id为T_UNKNOWN的Type
      */
-    static ParseType get_struct(const vector<pair<string, ParseType>> &otherTypes,
+    static ParseType get_struct(const vector<pair<string, size_t> > &otherTypes,
                                 const vector<pair<string, size_t>> &self_ptr =
                                 vector<pair<string, size_t> >());
 

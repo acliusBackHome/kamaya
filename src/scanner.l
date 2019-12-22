@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
   initName();
   try {
     yyparse();
-    tree.last_combine();
+    //tree.last_combine();
     int sz = tree.error_cnt();
     if (sz || !parse_error_strs.empty()) {
       cout << "错误报告:" << endl;

@@ -208,6 +208,17 @@ public:
     size_t make_pointer_node(size_t ptr_lv = 1);
 
     /**
+     * 生成一个结构体节点
+     * @param str_emn_node 结构体或者枚举类型的节点
+     * @param id_node 带有符号信息的id节点
+     * @param dec_list_node 带有声明信息的声明列表节点
+     * @param scope_now 当前作用域
+     * @return
+     */
+    size_t make_struct_node(size_t str_emn_node, size_t id_node,
+                            size_t dec_list_node, size_t scope_now);
+
+    /**
      * 自定义类型声明或者给类型别名, 建立字符串到ParseType的映射
      * @param type_name
      * @param type

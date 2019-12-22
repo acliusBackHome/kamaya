@@ -896,24 +896,27 @@ type_specifier
    }
    | struct_or_union_specifier {
      $$ = tree.new_node("struct specifier");
-     $$ = $1;
+     tree.set_parent($1, $$);
    }
   ;
 
 struct_or_union_specifier
-  : struct_or_union id_delaration LB struct_declaration_list RB {
-    $$ = tree.new_node("struct or union_specifier");
-    tree.set_parent($1, $$);
-    tree.set_parent($2, $$);
-    tree.set_parent($4, $$);
+  : struct_or_union id_delaration LB {
+    scope_now = ParseScope::new_scope(scope_now);
+  } struct_declaration_list RB {
+    $$ = tree.make_struct_node($1, $2, $5, scope_now);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
-  | struct_or_union LB struct_declaration_list RB {
-    $$ = tree.new_node("struct or union_specifier");
+  | struct_or_union LB {
+    scope_now = ParseScope::new_scope(scope_now);
+  } struct_declaration_list RB {
+    $$ = tree.new_node(N_STRUCT_ENUM);
     tree.set_parent($1, $$);
-    tree.set_parent($3, $$);
+    tree.set_parent($4, $$);
+    scope_now = ParseScope::get_scope(scope_now).get_parent_scope_id();
   }
   | struct_or_union id_delaration {
-    $$ = tree.new_node("struct or union_specifier");
+    $$ = tree.new_node("struct or union_specifier 3");
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
   }
@@ -930,7 +933,7 @@ struct_or_union
 
 struct_declaration_list
   : struct_declaration {
-    $$ = tree.new_node("struct declaration list");
+    $$ = tree.new_node(N_STRUCT_DEC_LIST);
     tree.set_parent($1, $$);
   }
   | struct_declaration_list struct_declaration {
@@ -941,16 +944,21 @@ struct_declaration_list
 
 struct_declaration
   : specifier_qualifier_list struct_declarator_list SEMICOLON {
-    $$ = tree.new_node("struct declaration");
+    // !
+    // $$ = tree.new_node("struct declaration");
+    $$ = tree.make_declaration_node();
     tree.set_parent($1, $$);
     tree.set_parent($2, $$);
+    tree.node($$).action_declaration(scope_now, ir);
   }
   ;
 
 // 修饰并声明的列表
 specifier_qualifier_list
   : type_specifier {
-    $$ = tree.new_node("specifier_qualifier_list");
+    // @
+    $$ = tree.make_declaration_specifier_node();
+    // $$ = tree.new_node("specifier_qualifier_list 1");
     tree.set_parent($1, $$);
   }
   | type_specifier specifier_qualifier_list {
@@ -958,7 +966,7 @@ specifier_qualifier_list
     tree.set_parent($1, $$);
   }
   | type_qualifier {
-    $$ = tree.new_node("specifier_qualifier_list");
+    $$ = tree.new_node("specifier_qualifier_list 2");
     tree.set_parent($1, $$);
   }
   | type_qualifier specifier_qualifier_list {
@@ -969,12 +977,14 @@ specifier_qualifier_list
 
 struct_declarator_list
   : struct_declarator {
-    $$ = tree.new_node("struct declarator list");
+    $$ = tree.make_init_declarator_list_node();
+    tree.node($$).add_init_declarator(tree.node($1).get_init_declarator());
     tree.set_parent($1, $$);
   }
   | struct_declarator_list COMMA struct_declarator {
+    tree.node($1).add_init_declarator(tree.node($3).get_init_declarator());
     $$ = $1;
-    tree.set_parent($1, $$);
+    tree.set_parent($3, $$);
   }
   ;
 

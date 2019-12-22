@@ -327,4 +327,51 @@ size_t ParseTree::make_pointer_node(size_t ptr_lv) {
     return new_one;
 }
 
+size_t ParseTree::make_struct_node(size_t str_emn_node, size_t id_node,
+                                   size_t dec_list_node, size_t scope_now) {
+    size_t new_one = new_node(N_STRUCT_ENUM);
+    const string &str_symbol = nodes[id_node].get_symbol();
+    const auto the_scope = ParseScope::get_scope(scope_now);
+    auto symbol_list = the_scope.get_all_dec_symbol();
+    vector<pair<string, size_t> > member;
+    for (const auto &each_symbol : symbol_list) {
+        auto dec_type = the_scope.get_symbol_dec_type(each_symbol);
+        switch (dec_type) {
+            case D_FUNCTION: {
+                // 目前不支持
+                string info = "ParseTree::make_struct_node(size_t str_emn_node, size_t id_node, "
+                              "size_t dec_list_node, size_t scope_now)";
+                info += " str_emn_node=" + to_string(str_emn_node);
+                info += " id_node=" + to_string(id_node);
+                info += " dec_list_node=" + to_string(dec_list_node);
+                info += " scope_now=" + to_string(scope_now);
+                throw ParseException(EX_NOT_IMPLEMENTED, info);
+            }
+            case D_UNKNOWN: {
+                string info = "ParseTree::make_struct_node(size_t str_emn_node, size_t id_node, "
+                              "size_t dec_list_node, size_t scope_now)";
+                info += " str_emn_node=" + to_string(str_emn_node);
+                info += " id_node=" + to_string(id_node);
+                info += " dec_list_node=" + to_string(dec_list_node);
+                info += " scope_now=" + to_string(scope_now);
+                throw ParseException(EX_UNKNOWN, info);
+            }
+            case D_VARIABLE: {
+                const auto &var = the_scope.get_variable_declaration(each_symbol);
+                member.emplace_back(var.get_symbol(), var.get_type().get_id());
+            }
+            case D_TYPE: {
+                break;
+            }
+        }
+    }
+    ParseType new_type = ParseType::get_struct(member);
+    auto &parent_scope = ParseScope::get_scope(the_scope.get_parent_scope_id());
+    parent_scope.declaration(str_symbol, new_type);
+    set_parent(str_emn_node, new_one);
+    set_parent(id_node, new_one);
+    set_parent(dec_list_node, new_one);
+    return new_one;
+}
+
 #pragma clang diagnostic pop

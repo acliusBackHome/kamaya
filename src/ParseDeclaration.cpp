@@ -81,8 +81,8 @@ ParseVariable &ParseVariable::operator=(const ParseVariable &other) {
     return *this;
 };
 
-ParseVariable::ParseVariable(const ParseVariable &other) : symbol(other.symbol), 
-    type(other.type) {
+ParseVariable::ParseVariable(const ParseVariable &other) : symbol(other.symbol),
+                                                           type(other.type) {
     address = other.address;
     scope_id = other.scope_id;
 }
@@ -472,7 +472,7 @@ ParseScope::ParseScope(const ParseScope &other) {
     assign(*this, other);
 }
 
-DeclarationType ParseScope::get_symbol_dec_type(const string& symbol) {
+DeclarationType ParseScope::get_symbol_dec_type(const string &symbol) const {
     auto it = symbol2dec_ptr.find(symbol);
     if (it == symbol2dec_ptr.end()) {
         if (parent_scope == this_scope) {
@@ -482,6 +482,22 @@ DeclarationType ParseScope::get_symbol_dec_type(const string& symbol) {
         return get_scope(parent_scope).get_symbol_dec_type(symbol);
     }
     return it->second.first;
+}
+
+void ParseScope::declaration(const string &symbol, const ParseType &type) {
+    if (symbol.empty()) {
+        printf("ParseDeclaration(const string &symbol, const ParseType &type): 警告: 试图声明空符号\n");
+        return;
+    }
+    auto it = symbol2dec_ptr.find(symbol);
+    if (it != symbol2dec_ptr.end()) {
+        printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: 试图重声明符号"
+               "%s 为 类型:%s 跳过该操作\n", symbol.c_str(), type.get_info().c_str());
+        return;
+    }
+    vector<size_t> type_id;
+    type_id.emplace_back(type.get_id());
+    symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(D_TYPE, type_id);
 }
 
 void ParseScope::declaration(const string &symbol, const ParseVariable &variable) {
@@ -558,7 +574,7 @@ void ParseScope::declaration(const string &symbol, const ParseFunction &function
     symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(D_FUNCTION, func_ptr);
 }
 
-DecFuncPtrList ParseScope::get_function_declaration(const string &symbol) {
+DecFuncPtrList ParseScope::get_function_declaration(const string &symbol) const {
     DecFuncPtrList res;
     auto it = symbol2dec_ptr.find(symbol);
     if (it == symbol2dec_ptr.end()) {
@@ -586,7 +602,7 @@ DecFuncPtrList ParseScope::get_function_declaration(const string &symbol) {
     return res;
 }
 
-ParseVariable ParseScope::get_variable_declaration(const string &symbol) {
+ParseVariable ParseScope::get_variable_declaration(const string &symbol) const {
     auto it = symbol2dec_ptr.find(symbol);
     if (it == symbol2dec_ptr.end()) {
         if (parent_scope == this_scope) {
@@ -642,7 +658,16 @@ void ParseScope::print_all_declaration() {
                     printf("%s\n", ((ParseVariable *) var_ptr)->get_info().c_str());
                     break;
                 }
-                default: {
+                case D_TYPE: {
+                    if (each.second.second.empty()) {
+                        printf("异常: 定义为类型但未发现记录, 请检查实现或者调用\n");
+                        continue;
+                    }
+                    const auto &type = ParseType::get_type(each.second.second[0]);
+                    printf("%s\n", type.get_info().c_str());
+                    break;
+                }
+                case D_UNKNOWN: {
                     printf("%s 未知声明\n", each.first.c_str());
                     break;
                 }
@@ -760,9 +785,16 @@ void ParseScope::assign(ParseScope &scope, const ParseScope &from_scope) {
                 }
                 scope.symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(type, ptr_list);
                 break;
+            case D_TYPE:
+                for (const auto &each_ptr: from_ptr) {
+                    ptr_list.emplace_back(each_ptr);
+                }
+                scope.symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(type, ptr_list);
+                break;
             case D_UNKNOWN:
                 scope.symbol2dec_ptr[symbol] = pair<DeclarationType, vector<size_t> >(type, ptr_list);
                 break;
+
         }
     }
 }
@@ -771,6 +803,7 @@ ParseScope::~ParseScope() {
     for (const auto &each : symbol2dec_ptr) {
         switch (each.second.first) {
             case D_UNKNOWN:
+            case D_TYPE:
                 break;
             case D_FUNCTION:
                 for (const auto &each_ptr : each.second.second) {
@@ -789,6 +822,17 @@ ParseScope::~ParseScope() {
 ParseScope &ParseScope::operator=(const ParseScope &other) {
     assign(*this, other);
     return *this;
+}
+
+vector<string> ParseScope::get_all_dec_symbol() const {
+    vector<string> list;
+    for (const auto &each : symbol2dec_ptr) {
+        if (each.first.empty()) {
+            continue;
+        }
+        list.emplace_back(each.first);
+    }
+    return list;
 }
 
 #pragma clang diagnostic pop
