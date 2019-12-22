@@ -294,6 +294,15 @@ string Assembler::getBaseBlockName(string linenum) {
 }
 
 void Assembler::handleQuas(const vector<Qua> &quas) {
+  const string& beginning = "global " + getBaseBlockName("0");
+  const string& text_label = "[section .text]";
+  const string& data_label = "[section .data]";
+  // 打印开头 此时of为cout，且bbla(BaseBlockListAndMap)已经赋值，可以直接调用接口打印
+  TAB;
+  of << beginning << N;
+  // 标记指令区
+  of << text_label << N;
+  // 打印汇编指令
   for (auto qua : quas) {
     string sign = get<0>(qua);
     if (quaMap.find(sign) == quaMap.end()) {

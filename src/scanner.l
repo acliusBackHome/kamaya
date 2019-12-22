@@ -228,6 +228,7 @@ int main(int argc, char** argv) {
     ir.print();
   }
   assembler.getBaseBlockMap();
+  assembler.handleQuas(ir.getQuas());
   // assembler.setSectionData(ParseScope::emitData2Nasm());
   // assembler.setSectionText(ParseScope::emitText2Nasm());
   // printf("ParseTree 2 Nasm x86\n");
