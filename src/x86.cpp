@@ -180,6 +180,10 @@ void Assembler::quaGT(const Qua &qua) {}
 
 void Assembler::quaGE(const Qua &qua) {}
 
+void Assembler::quaEQ(const Qua &qua) {}
+
+void Assembler::quaNE(const Qua &qua) {}
+
 void Assembler::quaJMP(const Qua &qua) {
   const string &jto = get<3>(qua);
   // 获取下一个块的块名  通过行号获取块id-->生成块名
@@ -298,7 +302,6 @@ void Assembler::handleQuas(const vector<Qua> &quas) {
   const string& text_label = "[section .text]";
   const string& data_label = "[section .data]";
   // 打印开头 此时of为cout，且bbla(BaseBlockListAndMap)已经赋值，可以直接调用接口打印
-  TAB;
   of << beginning << N;
   // 标记指令区
   of << text_label << N;

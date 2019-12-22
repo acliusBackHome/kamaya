@@ -17,11 +17,15 @@ enum QuaType {
   Q_LE,
   Q_GT,
   Q_GE,
+  Q_EQ,
+  Q_NE,
   Q_JMP,
   Q_JLT,
   Q_JLE,
   Q_JGT,
   Q_JGE,
+  Q_JE,
+  Q_JNE,
   Q_ASSIGN,
   Q_ALLOC,
   Q_DATA, // 静态数据
@@ -176,6 +180,10 @@ public:
         std::bind(&Assembler::quaGT, this, std::placeholders::_1);
     quaEmit[QuaType::Q_GE] =
         std::bind(&Assembler::quaGE, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_EQ] =
+        std::bind(&Assembler::quaEQ, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_NE] =
+        std::bind(&Assembler::quaNE, this, std::placeholders::_1);
     quaEmit[QuaType::Q_JMP] =
         std::bind(&Assembler::quaJMP, this, std::placeholders::_1);
     quaEmit[QuaType::Q_JLT] =
@@ -186,6 +194,10 @@ public:
         std::bind(&Assembler::quaJGT, this, std::placeholders::_1);
     quaEmit[QuaType::Q_JGE] =
         std::bind(&Assembler::quaJGE, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_JE] =
+        std::bind(&Assembler::quaJE, this, std::placeholders::_1);
+    quaEmit[QuaType::Q_JNE] =
+        std::bind(&Assembler::quaJNE, this, std::placeholders::_1);
     quaEmit[QuaType::Q_ASSIGN] =
         std::bind(&Assembler::quaASSIGN, this, std::placeholders::_1);
     quaEmit[QuaType::Q_ALLOC] =
@@ -204,9 +216,11 @@ public:
         {"%", QuaType::Q_MOD},        {"^", QuaType::Q_POW},
         {"<", QuaType::Q_LT},         {"<=", QuaType::Q_LE},
         {">", QuaType::Q_GT},         {">=", QuaType::Q_GE},
+        {"==", QuaType::Q_EQ},        {"!=", QuaType::Q_NE},
         {"jmp", QuaType::Q_JMP},      {"j<", QuaType::Q_JLT},
         {"j<=", QuaType::Q_JLE},      {"j>", QuaType::Q_JGT},
-        {"j>=", QuaType::Q_JGE},      {":=", QuaType::Q_ASSIGN},
+        {"j>=", QuaType::Q_JGE},      {"j==", QuaType::Q_JE},
+        {":=", QuaType::Q_ASSIGN},    {"j!=", QuaType::Q_JNE},
         {"alloc", QuaType::Q_ALLOC},  {".data", QuaType::Q_DATA},
         {"call", QuaType::Q_CALL},    {"return", QuaType::Q_RET},
         {"function", QuaType::Q_FUNC}};
@@ -234,6 +248,8 @@ public:
   void quaLE(const Qua &qua);
   void quaGT(const Qua &qua);
   void quaGE(const Qua &qua);
+  void quaEQ(const Qua &qua);
+  void quaNE(const Qua &qua);
   void quaJMP(const Qua &qua);
   void quaJLT(const Qua &qua);
   void quaJLE(const Qua &qua);
