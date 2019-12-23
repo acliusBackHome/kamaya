@@ -1796,12 +1796,11 @@ record_begin : {
 function_declarator
 : declaration_specifiers declarator record_begin {
   $$ = tree.new_node(N_FUNCTION_DECLARATOR);
+  const auto &symbol = tree.node($2).get_symbol();
+  const auto &ret_type = tree.node($1).get_type();
+  tree.node($$).set_function(ParseFunction(ret_type, symbol, tree.node($2).get_parameters_list()));
   try {
-    const auto &symbol = tree.node($2).get_symbol();
-    // this_function_symbol = symbol;
-    const auto &ret_type = tree.node($1).get_type();
     // 构造函数
-    tree.node($$).set_function(ParseFunction(ret_type, symbol, tree.node($2).get_parameters_list()));
     auto &function = (ParseFunction &)tree.node($$).get_function();
     vector<ParseVariable> &args = (vector<ParseVariable> &)function.get_args();//回填变量的地址,所以要转成非常量引用
     ParseScope::get_scope(scope_now).declaration(symbol, function);
@@ -1822,9 +1821,14 @@ function_declarator
       ParseScope::get_scope(scope_now).declaration(arg.get_symbol(), arg);
     }
   } catch (ParseException &exc) {
-    // this_function_symbol = "";
-    string info = "in declaration_specifiers declarator record_begin->function_declarator";
-    exc.push_trace(info);
+    if (exc.get_code() != EX_INVALID_FUNC_OVERRIDE) {
+      string info = "in declaration_specifiers declarator record_begin->function_declarator";
+      exc.push_trace(info);
+    }
+    string error_info = to_string(yylineno) + ": error : invalid function override ";
+    error_info += " function=" + symbol;
+    error_info += " return " + ret_type.get_info();
+    parse_error_strs.emplace_back(error_info);
   }
   tree.set_parent($1, $$);
   tree.set_parent($2, $$);

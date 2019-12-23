@@ -276,6 +276,7 @@ enum ExceptionCode {
     EX_NOT_IMPLEMENTED, //调用未实现方法, bug
     EX_CAN_NOT_ASSIGN_CONST, //不能对常量赋值
     EX_INVALID_FUNC_EXPRESSION, //试图构造非法函数表达式
+    EX_INVALID_FUNC_OVERRIDE, //错误的函数重载
 };
 
 

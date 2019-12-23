@@ -73,6 +73,8 @@ string ParseException::get_code_msg(ExceptionCode _code) {
             return "CanNotAssignToAConstantException";
         case EX_INVALID_FUNC_EXPRESSION:
             return "InvalidFunctionExpressionException(bug)";
+        case EX_INVALID_FUNC_OVERRIDE:
+            return "InvalideFunctionOverrideExcpetion";
     }
     return "UnknownException";
 }

@@ -530,24 +530,25 @@ void ParseScope::declaration(const string &symbol, const ParseFunction &function
     auto it = symbol2dec_ptr.find(symbol);
     if (it != symbol2dec_ptr.end()) {
         if (it->second.first != D_FUNCTION) {
-            printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: "
+            printf("ParseDeclaration(const string &symbol, const ParseFunction &function): 警告: "
                    "符号%s已被声明但不是函数声明, 试图重声明为函数%s\n", symbol.c_str(),
                    function.get_info().c_str());
             return;
         }
         vector<size_t> &dec_ptr = it->second.second;
         if (dec_ptr.empty()) {
-            printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: 发现异常:"
+            printf("ParseDeclaration(const string &symbol, const ParseFunction &function): 警告: 发现异常:"
                    "符号%s被声明为函数, 但是找不到其记录, 请检查实现和调用\n", symbol.c_str());
             return;
         }
         const ParseType &ret_type = ((ParseFunction *) dec_ptr[0])->get_ret_type(),
                 &this_ret_type = function.get_ret_type();
         if (ret_type < this_ret_type || this_ret_type < ret_type) {
-            printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告: "
-                   "试图重载返回值冲突的函数:%s, 返回值%s, 试图定义返回值%s\n", symbol.c_str(),
-                   ret_type.get_info().c_str(), this_ret_type.get_info().c_str());
-            return;
+            string info = "ParseDeclaration(const string &symbol, const ParseFunction &function)";
+            info += " symbol=" + symbol;
+            info += " previous_ret_type" + ret_type.get_info();
+            info += " this_ret_type" + this_ret_type.get_info();
+            throw ParseException(EX_INVALID_FUNC_OVERRIDE, info);
         }
         const auto &this_args = function.get_args();
         for (const auto &func_ptr : dec_ptr) {
@@ -560,7 +561,7 @@ void ParseScope::declaration(const string &symbol, const ParseFunction &function
                     }
                 }
                 if (is_the_same) {
-                    printf("ParseDeclaration(const string &symbol, const ParseVariable &variable): 警告:"
+                    printf("ParseDeclaration(const string &symbol, const ParseFunction &function): 警告:"
                            "试图处重复定义函数%s: %s, 跳过此操作\n", symbol.c_str(), function.get_info().c_str());
                     return;
                 }

@@ -1,6 +1,6 @@
 int main() {
   int output;
-  if (false) {
+  if (1) {
       int t = 0;
       int p = 0;
       while (t < 3) {
