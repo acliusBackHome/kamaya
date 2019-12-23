@@ -3,32 +3,24 @@
   <img alt="Version" src="https://img.shields.io/badge/version-0.0.1-blue.svg?cacheSeconds=2592000" />
 </p>
 
-> Another stupid tiny c complier.
-
-## DEPENDENCES UPDATE： NASM32
-
-run
-```
-apt install -y nasm
-# or
-yum install -y nasm
-```
-
-## CLI UPDATE: HOW TO RUN? JUST FUCK THIS IN CMD: MAKE TEST
-我们会帮你完成前置工作的，请放心。
+> Another tiny c complier.
 
 ## Dirs
 ```
 .
-├── trash       # 垃圾文件夹
-├── dist        # 构建文件夹
-│   └── bin     # 可执行文件所在文件夹
-├── src         # 源代码
-├── test        # 测试文件夹
-└── util        # 工具文件夹
+├── dist              # 构建文件夹
+│   └── bin           # 可执行文件生成文件夹
+├── src               # 源代码文件夹
+├── test              # 测试文件夹
+├── toy               # 一些有意思的玩具
+│   ├── asm_in_c
+│   ├── flexbison
+│   ├── hello
+│   ├── liblika
+│   ├── print
+│   └── read
+└── trash             # 垃圾文件夹
 ```
-
-我们要编写的是 src 文件夹中的源代码。
 
 ## Install
 
@@ -39,13 +31,13 @@ apt install flex bison g++ nasm make -y
 ## Usage
 
 ```sh
-make main
+make test
 ```
 
 ## Run tests
 
 ```sh
-make test
+make only_test
 ```
 
 ## Author
@@ -56,6 +48,3 @@ make test
 ## Show your support
 
 Give a ⭐️ if this project helped you!
-
-***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_

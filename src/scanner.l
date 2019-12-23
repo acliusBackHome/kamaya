@@ -238,10 +238,6 @@ int main(int argc, char** argv) {
   }
   assembler.getBaseBlockMap();
   assembler.handleQuas();
-  // assembler.setSectionData(ParseScope::emitData2Nasm());
-  // assembler.setSectionText(ParseScope::emitText2Nasm());
-  // printf("ParseTree 2 Nasm x86\n");
-  // assembler.handleNasm();
   cout << asmstream.str() << endl;
   ofstream outSOf(outS, ios::out);
   outSOf << asmstream.str() << endl;

@@ -5,7 +5,7 @@ const string Assembler::T = "\t";
 const string Assembler::N = "\n";
 const string Assembler::C = ",";
 const string Assembler::L = ":";
-int Assembler::pow_count = 0;
+
 string Assembler::getWideStr(size_t size) {
   if (wideMap.find(size) == wideMap.end()) {
     log("IN getWide: ERROR SIZE " + to_string(size));
@@ -13,99 +13,35 @@ string Assembler::getWideStr(size_t size) {
   }
   return wideMap[size];
 }
-// void Assembler::handleData() {
-//   for (auto i : sectionData) {
-//     of << i.first << L << T
-//        << Assembler::getWideStr(i.second.get_type().get_size()) << T << "0"
-//        << N;
-//   }
-// }
-// void Assembler::setSectionData(map<string, ParseVariable> data) {
-//   sectionData = data;
-// }
-void Assembler::setSectionText(map<string, ParseFunction> text) {
-  sectionText = text;
-}
-void Assembler::handleNasm() {
-  handleProgram();
-  of << T << "section" << T << ".text" << N;
-  // handleFunction();
-  for (auto i : sectionText) {
-    handleFunction(i.second);
-  }
-  of << T << "section" << T << ".data" << N;
-  // handleData();
-}
-void Assembler::handleProgram() { of << T << "global main" << N; }
-void Assembler::handleFunction(ParseFunction func) {
-  of << func.get_symbol() << L << N;
-  TAB;
-  push("ebp");
-  TAB;
-  mov("ebp", "esp");
-
-  int paramBytes = 0;
-  for (auto i : func.get_args()) {
-    paramBytes += i.get_type().get_size();
-  }
-
-  // 为参数提供栈帧
-  TAB;
-  sub("esp", to_string(paramBytes));
-
-  // 装载参数，上下二选一
-  for (auto i : func.get_args()) {
-    // TODO
-  }
-
-  TAB;
-  of << "leave" << N;
-  TAB;
-  of << "ret" << N;
-}
 
 void Assembler::quaADD(const Qua &qua) {
   // 2	(+,[esp+8],1,[esp+13])
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
-  TAB;
   mov("eax", x);
-  TAB;
   mov("ebx", y);
-  TAB;
   add("eax", "ebx");
-  TAB;
   mov(z, "eax");
 }
 
 void Assembler::quaSUB(const Qua &qua) {
-  //
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
-  TAB;
   mov("eax", x);
-  TAB;
   mov("ebx", y);
-  TAB;
   sub("eax", "ebx");
-  TAB;
   mov(z, "eax");
 }
 
 void Assembler::quaMUL(const Qua &qua) {
-  //
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
-  TAB;
   mov("eax", x);
-  TAB;
   mov("ebx", y);
-  TAB;
   mul("ebx");
-  TAB;
   mov(z, "eax");
 }
 
@@ -113,13 +49,9 @@ void Assembler::quaDIV(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
-  TAB;
   mov("eax", x);
-  TAB;
   mov("ebx", y);
-  TAB;
   div("ebx");
-  TAB;
   mov(z, "eax"); // eax存商 edx存余数
 }
 
@@ -127,15 +59,10 @@ void Assembler::quaPOW(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
-  TAB;
   mov("eax", "1");
-  TAB;
   mov("ebx", x);
-  TAB;
   mov("ecx", y);
-  TAB;
   pow_label();
-  TAB;
   mul("ebx");
   loop_label();
   mov(z, "eax");
@@ -145,13 +72,9 @@ void Assembler::quaMOD(const Qua &qua) {
   const string &x = get<1>(qua);
   const string &y = get<2>(qua);
   const string &z = get<3>(qua);
-  TAB;
   mov("eax", x);
-  TAB;
   mov("ebx", y);
-  TAB;
   div("ebx");
-  TAB;
   mov(z, "edx"); // eax存商 edx存余数
 }
 
@@ -160,10 +83,10 @@ void Assembler::quaASSIGN(const Qua &qua) {
   const string &dist = get<3>(qua);
   const string &src = get<1>(qua);
   if (dist == "eax" || src == "eax") {
-    TAB; mov(dist, src);
+    mov(dist, src);
   } else {
-    TAB; mov("eax", src);
-    TAB; mov(dist, "eax");
+    mov("eax", src);
+    mov(dist, "eax");
   }
 }
 
@@ -175,53 +98,45 @@ void Assembler::quaALLOC(const Qua &qua) {
   stackTop = max(stackTop, stoi(top));
   if (stackTop < stoi(top)) {
     stackTop = stoi(top);
-    TAB; sub("esp",sz);
+    sub("esp", sz);
   }
-
-  // TAB; mov("eax", "ebp");
-  // TAB; sub("eax", to_string(stackTop));
-  // TAB; mov("esp", "eax");
 }
 
-void Assembler::quaLT(const Qua &qua) {}
+/* TODO: 未使用 */
+void Assembler::quaLT(const Qua &qua) { log("undefined instruction"); }
+void Assembler::quaLE(const Qua &qua) { log("undefined instruction"); }
+void Assembler::quaGT(const Qua &qua) { log("undefined instruction"); }
+void Assembler::quaGE(const Qua &qua) { log("undefined instruction"); }
+void Assembler::quaEQ(const Qua &qua) { log("undefined instruction"); }
+void Assembler::quaNE(const Qua &qua) { log("undefined instruction"); }
+void Assembler::quaLOGICNOT(const Qua &qua) { log("undefined instruction"); }
+/* 未使用 */
 
-void Assembler::quaLE(const Qua &qua) {}
-
-void Assembler::quaGT(const Qua &qua) {}
-
-void Assembler::quaGE(const Qua &qua) {}
-
-void Assembler::quaEQ(const Qua &qua) {}
-
-void Assembler::quaNE(const Qua &qua) {}
 void Assembler::quaLOGICAND(const Qua &qua) {
   // (||,[ebp+28],[ebp+29],[ebp+30])
   const string &a = get<1>(qua);
   const string &b = get<2>(qua);
   const string &c = get<3>(qua);
-  TAB; mov("eax", a);
-  TAB; mov("ebx", b);
-  TAB; _and("eax", "ebx");
-  TAB; mov(c, "eax");
+  mov("eax", a);
+  mov("ebx", b);
+  _and("eax", "ebx");
+  mov(c, "eax");
 }
+
 void Assembler::quaLOGICOR(const Qua &qua) {
   // (||,[ebp+28],[ebp+29],[ebp+30])
   const string &a = get<1>(qua);
   const string &b = get<2>(qua);
   const string &c = get<3>(qua);
-  TAB; mov("eax", a);
-  TAB; mov("ebx", b);
-  TAB; _or("eax", "ebx");
-  TAB; mov(c, "eax");
-}
-void Assembler::quaLOGICNOT(const Qua &qua) {
+  mov("eax", a);
+  mov("ebx", b);
+  _or("eax", "ebx");
+  mov(c, "eax");
 }
 
 void Assembler::quaJMP(const Qua &qua) {
   const string &jto = get<3>(qua);
   string blockName = getBlockName(jto);
-
-  TAB;
   jmp(blockName);
 }
 
@@ -231,10 +146,7 @@ void Assembler::quaJLT(const Qua &qua) {
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
   string blockName = getBlockName(jto);
-
-  TAB;
   cmp(x, y);
-  TAB;
   jlt(blockName);
 }
 
@@ -244,10 +156,7 @@ void Assembler::quaJLE(const Qua &qua) {
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
   string blockName = getBlockName(jto);
-
-  TAB;
   cmp(x, y);
-  TAB;
   jle(blockName);
 }
 
@@ -257,10 +166,7 @@ void Assembler::quaJGT(const Qua &qua) {
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
   string blockName = getBlockName(jto);
-
-  TAB;
   cmp(x, y);
-  TAB;
   jgt(blockName);
 }
 
@@ -270,10 +176,7 @@ void Assembler::quaJGE(const Qua &qua) {
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
   string blockName = getBlockName(jto);
-
-  TAB;
   cmp(x, y);
-  TAB;
   jge(blockName);
 }
 
@@ -283,10 +186,7 @@ void Assembler::quaJE(const Qua &qua) {
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
   string blockName = getBlockName(jto);
-
-  TAB;
   cmp(x, y);
-  TAB;
   je(blockName);
 }
 
@@ -296,10 +196,7 @@ void Assembler::quaJNE(const Qua &qua) {
   const string &y = get<2>(qua);
   const string &jto = get<3>(qua);
   string blockName = getBlockName(jto);
-
-  TAB;
   cmp(x, y);
-  TAB;
   jne(blockName);
 }
 
@@ -309,53 +206,46 @@ void Assembler::quaDATA(const Qua &qua) {
   const string &symbol = get<3>(qua);
   const string &init = get<2>(qua);
   const string &wide = get<1>(qua);
-  sectionData.push_back(DataVar{
-    .symbol = symbol,
-    .init = init,
-    .wide = wide
-  });
+  sectionData.push_back(DataVar{.symbol = symbol, .init = init, .wide = wide});
 }
+
 void Assembler::quaCALL(const Qua &qua) {
   const string &func = get<3>(qua);
   of << T << "call" << T << func << N;
 }
+
 void Assembler::quaRET(const Qua &qua) {
   const string &rv = get<1>(qua);
   if (rv != "_") {
-    TAB;
     mov("eax", rv);
   }
-  TAB;
   pop("ebp");
-  // TAB; of << "leave" << N;
-  TAB;
+  //  of << "leave" << N;
   of << "ret" << N;
 }
+
 void Assembler::quaFUNC(const Qua &qua) {
   const string &l = get<3>(qua);
   label(l);
-  TAB;
   push("ebp");
-  TAB;
   mov("ebp", "esp");
 }
 
 void Assembler::quaREAD(const Qua &qua) {
   const string &dist = get<3>(qua);
-  TAB; of << "read" << endl;
-  TAB; mov(dist, "eax");
+  of << "read" << endl;
+  mov(dist, "eax");
 }
+
 void Assembler::quaPRINT(const Qua &qua) {
   const string &src = get<3>(qua);
-  TAB; of << "push dword" << T << src << N;
-  TAB; of << "print \"%d\"" << N;
+  of << "push dword" << T << src << N;
+  of << "print \"%d\"" << N;
 }
+
 void Assembler::quaEXIT(const Qua &qua) {
-  TAB;
   mov("eax", "1");
-  TAB;
   mov("ebx", "0");
-  TAB;
   of << "int 0x80" << N;
 }
 
@@ -366,15 +256,14 @@ void Assembler::handleQuas() {
   const string block_prefix = "block";
   const string text_label = "[section .text]";
   const string data_label = "[section .data]";
-  // 打印开头
-  // 此时of为cout，且bbla(BaseBlockListAndMap)已经赋值，可以直接调用接口打印
+  // 若 bbla(BaseBlockListAndMap)已经赋值，可以直接调用接口打印
+  // 否则指令为空
   of << beginning << N;
-  // 标记指令区
   of << text_label << N;
-  of << "_start:\n"\
-        "call main\n"\
-        "mov ebx, eax\n"\
-        "mov eax, 1\n"\
+  of << "_start:\n"
+        "call main\n"
+        "mov ebx, eax\n"
+        "mov eax, 1\n"
         "int 0x80\n";
   // 打印汇编指令
   map<size_t, size_t> &lineNumToBlockID = get<1>(bbla);
@@ -400,7 +289,8 @@ void Assembler::handleQuas() {
   }
   of << data_label << N;
   for (int i = 0; i < sectionData.size(); i++) {
-    of << sectionData[i].symbol << ":" << T << sectionData[i].wide << T << sectionData[i].init << N;
+    of << sectionData[i].symbol << ":" << T << sectionData[i].wide << T
+       << sectionData[i].init << N;
   }
 }
 
@@ -413,7 +303,7 @@ string Assembler::getBlockName(string jto) {
   if (iter != lineToBlockID.end()) {
     blockName = block + to_string(iter->second);
   } else {
-    // TODO: 抛出异常
+    log("cannot find this linenum");
   }
   return blockName;
 }
@@ -421,5 +311,4 @@ string Assembler::getBlockName(string jto) {
 void Assembler::log(const string &str) {
   of << "Assembler log: " << str << "\n";
 }
-
 } // namespace x86

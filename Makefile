@@ -32,10 +32,11 @@ test: main
 only_test:
 	for dir in $(shell ls test/*.c);\
 		do \
-			./dist/bin/main $$dir $$dir.asm > $$dir.out; \
-			nasm -f elf32 -P"./dist/print.inc" -P"./dist/read.inc"  -o $$dir.o $$dir.asm; \
-			ld -m elf_i386 -o $$dir.bin $$dir.o dist/libprint.a dist/libread.a ; \
-			echo "run ./$${dir}.bin to watch result"; \
+			./dist/bin/main $$dir $$dir.asm > $$dir.out && \
+			nasm -f elf32 -P"./dist/print.inc" -P"./dist/read.inc"  -o $$dir.o $$dir.asm && \
+			ld -m elf_i386 -o $$dir.bin $$dir.o dist/libprint.a dist/libread.a  && \
+			echo "\033[33m[ok]\033[0m \033[32m$$dir\033[0m built successfully. run ./$${dir}.bin to watch result" || \
+			echo "\033[31m[no]\033[0m \033[32m$$dir\033[0m"; \
 		done
 
 run: main

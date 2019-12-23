@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void initName(){
+void initName() {
   nameTable[(int)MAIN] = enum2str(MAIN);
   nameTable[(int)LP] = enum2str(LP);
   nameTable[(int)RP] = enum2str(RP);
@@ -67,10 +67,10 @@ void initName(){
 }
 
 string getName(int token) {
-    if (nameTable.find(token) != nameTable.end()) {
-        return nameTable[token];
-    }
-    return string("unknown");
+  if (nameTable.find(token) != nameTable.end()) {
+    return nameTable[token];
+  }
+  return string("unknown");
 }
 
 void yyUserActon() {
@@ -82,5 +82,6 @@ void yyUserActon() {
   yylloc.first_column = yycolumn;
   yylloc.last_column = yycolumn + yyleng;
   yycolumn += yyleng;
-  // cout << endl << yylloc.first_line << ", " << yylloc.last_line << ", " << yylloc.first_column << ", " << yylloc.last_column << endl;
+  // cout << endl << yylloc.first_line << ", " << yylloc.last_line << ", " <<
+  // yylloc.first_column << ", " << yylloc.last_column << endl;
 }

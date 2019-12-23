@@ -94,7 +94,8 @@ public:
   inline void recordEnd() { offset = stkpop(); }
   inline void assignEmit(size_t left, size_t right) {}
   inline string address2pointer(size_t addr) {
-    long long addrll = addr; long long sub = -1 - addrll;
+    long long addrll = addr;
+    long long sub = -1 - addrll;
     if (addrll < 0) {
       if (sub >= sectionData.size() || sub < 0) {
         return "BadAddr";
@@ -106,12 +107,9 @@ public:
   inline void returnEmit(size_t addr) {
     gen("return", address2pointer(addr), "_", "_", 0);
   }
-  inline void exitEmit() {
-    gen("exit", "_", "_", "_", 0);
-  }
+  inline void exitEmit() { gen("exit", "_", "_", "_", 0); }
   inline void fcEmit(const string &symbol, size_t node_id) {
     gen("call", "_", "_", symbol, node_id);
-
   }
 
   string getVarPointer(size_t id);
