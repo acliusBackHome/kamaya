@@ -112,7 +112,9 @@ class Assembler {
   }
   inline void cmp(string dist, string src) {
     static string cmpins = "cmp\tdword";
-    of << cmpins << T << dist << C << src << N;
+    of << "mov\tdword" << T << "eax" << C << dist << N;
+    of << "mov\tdword" << T << "ebx" << C << src << N;
+    of << cmpins << T << "eax" << C << "ebx" << N;
   }
   inline void jlt(string block_name) {
     static string jlt = "jl";
