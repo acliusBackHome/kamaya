@@ -27,16 +27,7 @@ clean:
 	-mv dist/*.output dist/*.cpp dist/*.hpp test/*.out trash
 
 test: main
-	make dev
-
-dev:
-	for dir in $(shell ls test/*.c);\
-		do \
-			./dist/bin/main $$dir $$dir.asm > $$dir.out; \
-			nasm -f elf32 -P"./dist/print.inc" -P"./dist/read.inc"  -o $$dir.o $$dir.asm; \
-			ld -m elf_i386 -o $$dir.bin $$dir.o dist/libprint.a dist/libread.a ; \
-			echo "run ./$${dir}.bin to watch result"; \
-		done
+	make only_test
 
 only_test:
 	for dir in $(shell ls test/*.c);\
