@@ -194,6 +194,28 @@ void Assembler::quaGE(const Qua &qua) {}
 void Assembler::quaEQ(const Qua &qua) {}
 
 void Assembler::quaNE(const Qua &qua) {}
+void Assembler::quaLOGICAND(const Qua &qua) {
+  // (||,[ebp+28],[ebp+29],[ebp+30])
+  const string &a = get<1>(qua);
+  const string &b = get<2>(qua);
+  const string &c = get<3>(qua);
+  TAB; mov("eax", a);
+  TAB; mov("ebx", b);
+  TAB; _and("eax", "ebx");
+  TAB; mov(c, "eax");
+}
+void Assembler::quaLOGICOR(const Qua &qua) {
+  // (||,[ebp+28],[ebp+29],[ebp+30])
+  const string &a = get<1>(qua);
+  const string &b = get<2>(qua);
+  const string &c = get<3>(qua);
+  TAB; mov("eax", a);
+  TAB; mov("ebx", b);
+  TAB; _or("eax", "ebx");
+  TAB; mov(c, "eax");
+}
+void Assembler::quaLOGICNOT(const Qua &qua) {
+}
 
 void Assembler::quaJMP(const Qua &qua) {
   const string &jto = get<3>(qua);

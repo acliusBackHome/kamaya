@@ -35,6 +35,9 @@ enum QuaType {
   Q_READ,
   Q_PRINT,
   Q_EXIT,
+  Q_LOGICOR,
+  Q_LOGICAND,
+  Q_LOGICNOT
 };
 class Assembler {
   // CodeHolder *code;
@@ -228,6 +231,12 @@ public:
         std::bind(&Assembler::quaPRINT, this, std::placeholders::_1);
     quaEmit[QuaType::Q_EXIT] =
         std::bind(&Assembler::quaEXIT, this, std::placeholders::_1);
+        quaEmit[QuaType::Q_LOGICAND] =
+        std::bind(&Assembler::quaLOGICAND, this, std::placeholders::_1);
+        quaEmit[QuaType::Q_LOGICOR] =
+        std::bind(&Assembler::quaLOGICOR, this, std::placeholders::_1);
+            quaEmit[QuaType::Q_LOGICNOT] =
+        std::bind(&Assembler::quaLOGICNOT, this, std::placeholders::_1);
     quaMap = map<string, QuaType>{
         {"+", QuaType::Q_ADD},         {"-", QuaType::Q_SUB},
         {"*", QuaType::Q_MUL},         {"/", QuaType::Q_DIV},
@@ -242,7 +251,11 @@ public:
         {"alloc", QuaType::Q_ALLOC},   {".data", QuaType::Q_DATA},
         {"call", QuaType::Q_CALL},     {"return", QuaType::Q_RET},
         {"function", QuaType::Q_FUNC}, {"read", QuaType::Q_READ},
-        {"print", QuaType::Q_PRINT},   {"exit", QuaType::Q_EXIT}};
+        {"print", QuaType::Q_PRINT},   {"exit", QuaType::Q_EXIT},
+        {"&&", QuaType::Q_LOGICAND},   {"||", QuaType::Q_LOGICOR},
+        {"!", QuaType::Q_LOGICNOT}
+        
+        };
     wideMap = map<size_t, string>{{1, "db"}, {2, "dw"}, {4, "dd"}, {8, "dq"}};
   }
   string getWideStr(size_t size);
@@ -283,6 +296,9 @@ public:
   void quaREAD(const Qua &qua);
   void quaPRINT(const Qua &qua);
   void quaEXIT(const Qua &qua);
+  void quaLOGICAND(const Qua &qua);
+  void quaLOGICOR(const Qua &qua);
+  void quaLOGICNOT(const Qua &qua);
   string getBlockName(string jto);
   void getBaseBlockMap();
   void get_begin_index();
