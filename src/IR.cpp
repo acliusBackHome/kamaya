@@ -216,6 +216,7 @@ void IR::exprEmit(const ParseExpression &init_expr, const ParseType &this_type,
     }
     case ExpressionType::E_FUN: {
       gen("call", "_", "_", (init_expr.get_functions()[0])->get_symbol(), node_id);
+      gen(":=", "eax", "_", address2pointer(init_expr.get_address()), node_id);
       return;
     }
     case ExpressionType::E_NOT:

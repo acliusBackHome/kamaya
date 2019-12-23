@@ -52,6 +52,7 @@ ParseTree::ParseTree(const string &msg) {
     search_able.insert(HasNodeKey(K_EXPRESSION, N_DECLARATOR, N_DIRECT_DEC));
     search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_EXPRESSION));
     search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_CONST));
+    search_able.insert(HasNodeKey(K_EXPRESSION, N_INITIALIZER, N_FUNCTION_CALL));
 }
 
 string ParseTree::get_msg(size_t node_id) const {

@@ -232,10 +232,7 @@ postfix_expression
           // 找到了声明
           found = true;
           // 返回一个临时变量生成的表达式
-          size_t addr = -1;
-          if (generating_code) {
-            addr = ir.allocEmit(scope_now, ir.newTemp(), each_func->get_ret_type().get_size(), $$);
-          }
+          size_t addr = tree.node($1).get_expression().get_address();
           tree.node($$).set_expression(ParseExpression(ParseVariable(each_func->get_ret_type(), "func_ret", addr)));
           break;
         }

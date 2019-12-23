@@ -111,6 +111,7 @@ public:
   }
   inline void fcEmit(const string &symbol, size_t node_id) {
     gen("call", "_", "_", symbol, node_id);
+
   }
 
   string getVarPointer(size_t id);

@@ -159,10 +159,12 @@ void Assembler::quaASSIGN(const Qua &qua) {
   // (:=,0,_,[esp+0])
   const string &dist = get<3>(qua);
   const string &src = get<1>(qua);
-  TAB;
-  mov("eax", src);
-  TAB;
-  mov(dist, "eax");
+  if (dist == "eax" || src == "eax") {
+    TAB; mov(dist, src);
+  } else {
+    TAB; mov("eax", src);
+    TAB; mov(dist, "eax");
+  }
 }
 
 void Assembler::quaALLOC(const Qua &qua) {
