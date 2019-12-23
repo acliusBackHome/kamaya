@@ -281,7 +281,10 @@ void Assembler::quaJNE(const Qua &qua) {
 
 void Assembler::quaDATA(const Qua &qua) {
 }
-void Assembler::quaCALL(const Qua &qua) {}
+void Assembler::quaCALL(const Qua &qua) {
+  const string &func = get<3>(qua);
+  of << T << "call" << T << func << N;
+}
 void Assembler::quaRET(const Qua &qua) {
   const string &rv = get<1>(qua);
   if (rv != "_") {
@@ -289,7 +292,7 @@ void Assembler::quaRET(const Qua &qua) {
     mov("eax", rv);
   }
   TAB;
-  pop("ebx");
+  pop("ebp");
   // TAB; of << "leave" << N;
   TAB;
   of << "ret" << N;
@@ -325,7 +328,7 @@ void Assembler::quaEXIT(const Qua &qua) {
 void Assembler::getBaseBlockMap() { bbla = BaseBlock::get_base_blocks(quas); }
 
 void Assembler::handleQuas() {
-  const string beginning = "global main";
+  const string beginning = "global _start";
   const string block_prefix = "block";
   const string text_label = "[section .text]";
   const string data_label = "[section .data]";
@@ -334,6 +337,11 @@ void Assembler::handleQuas() {
   of << beginning << N;
   // 标记指令区
   of << text_label << N;
+  of << "_start:\n"\
+        "call main\n"\
+        "mov ebx, eax\n"\
+        "mov eax, 1\n"\
+        "int 0x80\n";
   // 打印汇编指令
   map<size_t, size_t> &lineNumToBlockID = get<1>(bbla);
   vector<BaseBlock> &baseblock = get<0>(bbla);

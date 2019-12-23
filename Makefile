@@ -27,6 +27,9 @@ clean:
 	-mv dist/*.output dist/*.cpp dist/*.hpp test/*.out trash
 
 test: main
+	make dev
+
+dev:
 	for dir in $(shell ls test/*.c);\
 		do \
 			./dist/bin/main $$dir $$dir.asm > $$dir.out; \
