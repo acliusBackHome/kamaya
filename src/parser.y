@@ -565,7 +565,7 @@ equality_expression
 
     if (generating_code) {
       ParseNode& B = tree.node($$);
-      B.set_false_list(ir.makelist(ir.getNextinstr()));
+      B.set_true_list(ir.makelist(ir.getNextinstr()));
       ir.gen("jmp", "_", "_", "_", $$);
     }
   }
@@ -574,7 +574,7 @@ equality_expression
 
     if (generating_code) {
       ParseNode& B = tree.node($$);
-      B.set_true_list(ir.makelist(ir.getNextinstr()));
+      B.set_false_list(ir.makelist(ir.getNextinstr()));
       ir.gen("jmp", "_", "_", "_", $$);
     }
   }
