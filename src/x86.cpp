@@ -13,16 +13,16 @@ string Assembler::getWideStr(size_t size) {
   }
   return wideMap[size];
 }
-void Assembler::handleData() {
-  for (auto i : sectionData) {
-    of << i.first << L << T
-       << Assembler::getWideStr(i.second.get_type().get_size()) << T << "0"
-       << N;
-  }
-}
-void Assembler::setSectionData(map<string, ParseVariable> data) {
-  sectionData = data;
-}
+// void Assembler::handleData() {
+//   for (auto i : sectionData) {
+//     of << i.first << L << T
+//        << Assembler::getWideStr(i.second.get_type().get_size()) << T << "0"
+//        << N;
+//   }
+// }
+// void Assembler::setSectionData(map<string, ParseVariable> data) {
+//   sectionData = data;
+// }
 void Assembler::setSectionText(map<string, ParseFunction> text) {
   sectionText = text;
 }
@@ -34,7 +34,7 @@ void Assembler::handleNasm() {
     handleFunction(i.second);
   }
   of << T << "section" << T << ".data" << N;
-  handleData();
+  // handleData();
 }
 void Assembler::handleProgram() { of << T << "global main" << N; }
 void Assembler::handleFunction(ParseFunction func) {
@@ -282,6 +282,16 @@ void Assembler::quaJNE(const Qua &qua) {
 }
 
 void Assembler::quaDATA(const Qua &qua) {
+  // 0	(.data,dd,0,a)
+  // 1	(.data,dd,0,b)
+  const string &symbol = get<3>(qua);
+  const string &init = get<2>(qua);
+  const string &wide = get<1>(qua);
+  sectionData.push_back(DataVar{
+    .symbol = symbol,
+    .init = init,
+    .wide = wide
+  });
 }
 void Assembler::quaCALL(const Qua &qua) {
   const string &func = get<3>(qua);
@@ -365,6 +375,10 @@ void Assembler::handleQuas() {
       continue;
     }
     quaEmit[quaType](qua);
+  }
+  of << data_label << N;
+  for (int i = 0; i < sectionData.size(); i++) {
+    of << sectionData[i].symbol << ":" << T << sectionData[i].wide << T << sectionData[i].init << N;
   }
 }
 

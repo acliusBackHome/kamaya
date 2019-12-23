@@ -38,15 +38,20 @@ enum QuaType {
 };
 class Assembler {
   // CodeHolder *code;
+  struct DataVar{
+    string symbol;
+    string init;
+    string wide;
+  };
   ostream &of;
   static const string T, C, N, L;
   static int pow_count;
-  map<string, ParseVariable> sectionData;
   map<string, ParseFunction> sectionText;
   map<string, QuaType> quaMap;
   map<size_t, string> wideMap;
   map<QuaType, std::function<void(const Qua &)>> quaEmit;
   vector<Qua> &quas;
+  vector<DataVar> sectionData;
   map<size_t, size_t> beginIndexToBlockID;
   BaseBlockListAndMap bbla;
   inline static string getReg() { return "TODO"; }
@@ -243,11 +248,11 @@ public:
   string getWideStr(size_t size);
   void handleNasm();
   void handleProgram();
-  void handleData();
+  // void handleData();
   void handleExpr(ParseExpression expr);
   void handleFunction(ParseFunction func);
   void handleQuas();
-  void setSectionData(map<string, ParseVariable> data);
+  // void setSectionData(map<string, ParseVariable> data);
   void setSectionText(map<string, ParseFunction> text);
   void log(const string &str);
   void quaADD(const Qua &qua);

@@ -51,11 +51,11 @@ string IR::getConstValueStr(const ParseExpression &init_expr) {
   string arg1;
   switch (con_type) {
   case ConstValueType::C_SIGNED:
-    return to_string(E.get_signed());
+    return to_string((int)E.get_signed());
   case ConstValueType::C_UNSIGNED:
-    return to_string(E.get_unsigned());
+    return to_string((int)E.get_unsigned());
   case ConstValueType::C_FLOAT:
-    return to_string(E.get_float());
+    return to_string((int)E.get_float());
   case ConstValueType::C_BOOL:
     return to_string((int)E.get_bool());
   case ConstValueType::C_STRING:

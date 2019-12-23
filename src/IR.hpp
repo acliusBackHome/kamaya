@@ -100,7 +100,7 @@ public:
         return "BadAddr";
       }
     }
-    return (addrll < 0) ? sectionData[sub].name
+    return (addrll < 0) ? (string("[") + sectionData[sub].name + string("]"))
                         : ("[ebp+" + to_string(addrll) + "]");
   }
   inline void returnEmit(size_t addr) {
