@@ -935,7 +935,7 @@ struct_declaration_list
   }
   | struct_declaration_list struct_declaration {
     $$ = $1;
-    tree.set_parent($1, $$);
+    tree.set_parent($2, $$);
   }
   ;
 
