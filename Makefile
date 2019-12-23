@@ -24,7 +24,7 @@ main:
 
 clean:
 	clear
-	-mv dist/*.output dist/*.cpp dist/*.hpp test/*.out trash
+	-mv dist/*.output dist/*.cpp dist/*.hpp test/*.out test/*.o test/*.out test/*.bin test/*.asm trash
 
 test: main
 	make only_test
