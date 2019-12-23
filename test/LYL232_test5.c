@@ -5,6 +5,7 @@
 // 错误恢复
 int main () {
     char *c = "abcdefg";
+    char d[] = "hijklmnopq";
     int a, output;
     output = a + c;
     return 0;
