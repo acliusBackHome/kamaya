@@ -1493,8 +1493,25 @@ backpatch_next_list : {
   }
 }
 
+bool_expression 
+  : expression {
+    const ParseExpression &expr1 = tree.node($$).get_expression();
+    if(expr1.get_ret_type().get_id() != T_BOOL) {
+      const ParseExpression &expr2 = ParseExpression(ParseConstant((long long) 0));
+      size_t temp_node = tree.make_expression_node(expr2);
+      $$ = handle_expression($1, temp_node, E_NE);
+      tree.set_parent($1, $$);
+      tree.set_parent(temp_node, $$);
+      if (generating_code) {
+        ir.relopEmit(tree, $$, $1, temp_node, "j!=", $$);
+      }
+    } else {
+      $$ = $1;
+    }
+}
+
 selection_statement
-  : IF LP expression RP backpatch_instr statement {
+  : IF LP bool_expression RP backpatch_instr statement {
     $$ = tree.new_node(N_IF_STMT);
     tree.set_parent($3, $$);
     tree.set_parent($5, $$);
@@ -1512,7 +1529,7 @@ selection_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | IF LP expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
+  | IF LP bool_expression RP backpatch_instr statement backpatch_next_list ELSE backpatch_instr statement {
     $$ = tree.new_node(N_IF_STMT);
     tree.set_parent($3, $$);
     tree.set_parent($5, $$);
@@ -1551,8 +1568,13 @@ for
   }
   ;
 
+bool_expression_statement 
+: bool_expression SEMICOLON {
+    $$ = $1;
+};
+
 iteration_statement
-  : WHILE LP backpatch_instr expression RP backpatch_instr statement {
+  : WHILE LP backpatch_instr bool_expression RP backpatch_instr statement {
     $$ = tree.new_node("while statement");
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
@@ -1572,7 +1594,7 @@ iteration_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | DO backpatch_instr statement WHILE LP backpatch_instr expression RP SEMICOLON {
+  | DO backpatch_instr statement WHILE LP backpatch_instr bool_expression RP SEMICOLON {
     $$ = tree.new_node("do while statement");
     tree.set_parent($2, $$);
     tree.set_parent($3, $$);
@@ -1593,7 +1615,7 @@ iteration_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | for LP expression_statement backpatch_instr expression_statement RP backpatch_instr statement {
+  | for LP expression_statement backpatch_instr bool_expression_statement RP backpatch_instr statement {
     $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
@@ -1618,7 +1640,7 @@ iteration_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | for LP expression_statement backpatch_instr expression_statement backpatch_instr expression backpatch_next_list RP backpatch_instr statement {
+  | for LP expression_statement backpatch_instr bool_expression_statement backpatch_instr expression backpatch_next_list RP backpatch_instr statement {
     $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
@@ -1651,7 +1673,7 @@ iteration_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | for LP declaration backpatch_instr expression_statement RP backpatch_instr statement {
+  | for LP declaration backpatch_instr bool_expression_statement RP backpatch_instr statement {
     $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
@@ -1676,7 +1698,7 @@ iteration_statement
       ir.backpatch(S.get_next_list(), ir.getNextinstr());
     }
   }
-  | for LP declaration backpatch_instr expression_statement backpatch_instr expression backpatch_next_list RP backpatch_instr statement {
+  | for LP declaration backpatch_instr bool_expression_statement backpatch_instr expression backpatch_next_list RP backpatch_instr statement {
     $$ = tree.make_for_statement_node();
     tree.set_parent($3, $$);
     tree.set_parent($4, $$);
